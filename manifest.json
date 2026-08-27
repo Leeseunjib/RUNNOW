@@ -1,0 +1,24 @@
+{
+  "name": "RUNNOW - Nike x Tamagotchi Runner",
+  "short_name": "RUNNOW",
+  "description": "달리는 만큼 진화하는 나만의 사이버 펫 러닝 GPS 트래커",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#08090C",
+  "theme_color": "#08090C",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "assets/hero_mascot.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/hero_mascot.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
