@@ -28,6 +28,12 @@ export class GPSRunner {
     this.watchId = null;
     this.userWeightKg = options.weightKg || 70;
     this.gpsAccuracy = "탐색중";
+    this.runMode = "gps";
+    this.treadmillSpeedKmh = 8;
+    this.motionGated = false;
+    this.lastMotionAt = 0;
+    this.lastStepAt = 0;
+    this._onMotion = null;
   }
 
   setWeight(weightKg) {
@@ -35,9 +41,15 @@ export class GPSRunner {
   }
 
   startRun(useSimulation = false) {
+    this.stopMotionSensor();
+    if (this.timerId) {
+      clearInterval(this.timerId);
+      this.timerId = null;
+    }
     this.isTracking = true;
     this.isPaused = false;
     this.isSimulation = useSimulation;
+    this.runMode = "gps";
     this.totalMeters = 0;
     this.elapsedSeconds = 0;
     this.positions = [];
@@ -51,12 +63,14 @@ export class GPSRunner {
         this.elapsedSeconds += 1;
         if (this.isSimulation) {
           this.simulateStep();
+        } else if (this.runMode === "treadmill") {
+          this.tickTreadmill();
         }
         this.emitUpdate();
       }
     }, 1000);
 
-    if (this.isSimulation) return;
+    if (this.isSimulation || this.runMode === "treadmill") return;
 
     if (!window.isSecureContext) {
       this.gpsAccuracy = "HTTPS에서만 GPS 사용 가능";
@@ -115,6 +129,84 @@ export class GPSRunner {
       onError,
       geoOptions
     );
+  }
+
+  async startTreadmill(speedKmh = 8) {
+    this.runMode = "treadmill";
+    this.treadmillSpeedKmh = Number(speedKmh) || 8;
+    this.isTracking = true;
+    this.isPaused = false;
+    this.isSimulation = false;
+    this.totalMeters = 0;
+    this.elapsedSeconds = 0;
+    this.positions = [];
+    this.lastValidPos = null;
+    this.lastMotionAt = Date.now();
+    this.lastStepAt = 0;
+    this.gpsAccuracy = `트레드밀 ${this.treadmillSpeedKmh} km/h · 준비`;
+    this.emitUpdate();
+
+    if (this.timerId) clearInterval(this.timerId);
+    this.timerId = setInterval(() => {
+      if (!this.isPaused) {
+        this.elapsedSeconds += 1;
+        this.tickTreadmill();
+        this.emitUpdate();
+      }
+    }, 1000);
+
+    const motionOk = await this.enableMotionSensor();
+    this.motionGated = motionOk;
+    if (!motionOk) {
+      this.gpsAccuracy = `트레드밀 ${this.treadmillSpeedKmh} km/h · 속도 기준 기록`;
+      this.emitUpdate();
+    }
+  }
+
+  tickTreadmill() {
+    const moving = !this.motionGated || (Date.now() - this.lastMotionAt < 3000) || this.elapsedSeconds <= 2;
+    if (moving) {
+      this.totalMeters += (this.treadmillSpeedKmh * 1000) / 3600;
+      this.gpsAccuracy = `트레드밀 ${this.treadmillSpeedKmh} km/h`;
+    } else {
+      this.gpsAccuracy = "움직임이 약합니다. 폰을 잡고 달려 주세요";
+    }
+  }
+
+  async enableMotionSensor() {
+    try {
+      if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
+        const state = await DeviceMotionEvent.requestPermission();
+        if (state !== "granted") return false;
+      }
+      if (typeof DeviceMotionEvent === "undefined") return false;
+      this.stopMotionSensor();
+      this._onMotion = (event) => this.handleDeviceMotion(event);
+      window.addEventListener("devicemotion", this._onMotion);
+      return true;
+    } catch (err) {
+      console.warn("DeviceMotion 권한 실패:", err);
+      return false;
+    }
+  }
+
+  stopMotionSensor() {
+    if (this._onMotion) {
+      window.removeEventListener("devicemotion", this._onMotion);
+      this._onMotion = null;
+    }
+    this.motionGated = false;
+  }
+
+  handleDeviceMotion(event) {
+    const acc = event.accelerationIncludingGravity || event.acceleration;
+    if (!acc) return;
+    const mag = Math.sqrt((acc.x || 0) ** 2 + (acc.y || 0) ** 2 + (acc.z || 0) ** 2);
+    const now = Date.now();
+    if (mag > 12.5 && now - this.lastStepAt > 280) {
+      this.lastStepAt = now;
+      this.lastMotionAt = now;
+    }
   }
 
   handleGeoSuccess(position) {
@@ -192,6 +284,7 @@ export class GPSRunner {
       navigator.geolocation.clearWatch(this.watchId);
       this.watchId = null;
     }
+    this.stopMotionSensor();
   }
 
   stopRun() {
@@ -206,6 +299,7 @@ export class GPSRunner {
     this.positions = [];
     this.lastValidPos = null;
     this.isSimulation = false;
+    this.runMode = "gps";
     this.gpsAccuracy = "대기중";
     this.emitUpdate();
   }
@@ -241,7 +335,9 @@ export class GPSRunner {
       pace: paceStr,
       calories: caloriesInt,
       gpsAccuracy: this.gpsAccuracy,
-      routePoints: this.positions
+      routePoints: this.positions,
+      runMode: this.runMode,
+      treadmillSpeedKmh: this.runMode === "treadmill" ? this.treadmillSpeedKmh : null
     };
   }
 

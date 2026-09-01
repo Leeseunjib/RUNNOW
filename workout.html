@@ -406,7 +406,8 @@
             document.getElementById("studio-active-controls").style.display = "flex";
             this.motionSound.speakCoaching(`${this.motionTracker.currentExercise.name} 트레이닝을 시작합니다.`);
           } catch (e) {
-            alert(`카메라 연결 오류: ${e.message}\n브라우저 카메라 권한을 허용해 주세요.`);
+            console.error("Camera Start Error:", e);
+            alert(`${e.message}`);
             document.getElementById("studio-standby-overlay").style.display = "flex";
           } finally {
             btnStart.disabled = false;

@@ -73,6 +73,8 @@ class AppController {
 
     this.motionSound = new MotionSound();
     this.currentWorkoutMode = "list";
+    this.runPlaceMode = "gps";
+    this.treadmillSpeedKmh = 8;
     this.targetMotionReps = 10;
     this.motionTracker = new MotionTracker({
       weightKg: this.userProfile.weightKg,
@@ -1287,12 +1289,20 @@ class AppController {
     const activeBox = document.getElementById("run-active-controls");
     const metricCircle = document.getElementById("metric-circle");
 
+    this.bindRunPlaceMode();
+
     if (btnStartLive) {
-      btnStartLive.addEventListener("click", () => {
-        this.gpsRunner.startRun(false);
+      btnStartLive.addEventListener("click", async () => {
+        this.gpsRunner.setWeight(this.userProfile.weightKg);
+        if (this.runPlaceMode === "treadmill") {
+          await this.gpsRunner.startTreadmill(this.treadmillSpeedKmh);
+        } else {
+          this.gpsRunner.startRun(false);
+        }
         initBox.style.display = "none";
         activeBox.style.display = "flex";
         metricCircle.classList.add("active-pulse");
+        this.lockRunPlaceUi(true);
       });
     }
 
@@ -1356,6 +1366,7 @@ class AppController {
         initBox.style.display = "block";
         activeBox.style.display = "none";
         metricCircle.classList.remove("active-pulse");
+        this.lockRunPlaceUi(false);
 
         const paceParts = stats.pace.replace('"', '').split("'");
         const paceSec = (parseInt(paceParts[0], 10) || 6) * 60 + (parseInt(paceParts[1], 10) || 0);
@@ -1371,7 +1382,9 @@ class AppController {
           calories: stats.calories,
           earnedXp: result.earnedXp,
           earnedCoins: earnedCoins,
-          workoutType: result.workoutType
+          workoutType: result.workoutType,
+          runMode: stats.runMode || this.runPlaceMode,
+          treadmillSpeedKmh: stats.treadmillSpeedKmh || null
         };
 
         const savedLog = this.firebaseSandbox.addWorkoutLog(this.currentUserId, workoutPayload);
@@ -1428,7 +1441,65 @@ class AppController {
     if (paceEl) paceEl.textContent = `--'--"`;
     if (timeEl) timeEl.textContent = "00:00";
     if (calEl) calEl.textContent = "0";
-    if (accuracyEl) accuracyEl.textContent = "🛰️ 실시간 GPS 대기중";
+    if (accuracyEl) {
+      accuracyEl.textContent = this.runPlaceMode === "treadmill"
+        ? `트레드밀 ${this.treadmillSpeedKmh} km/h 대기중`
+        : "🛰️ 야외 GPS 대기중";
+    }
+    this.lockRunPlaceUi(false);
+  }
+
+  bindRunPlaceMode() {
+    const speedRow = document.getElementById("treadmill-speed-row");
+    const startLabel = document.getElementById("btn-start-live-label");
+    const accuracyEl = document.getElementById("live-gps-accuracy");
+    const cardLabel = document.getElementById("run-card-label");
+
+    const applyPlace = (mode) => {
+      this.runPlaceMode = mode;
+      document.querySelectorAll(".run-place-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.runPlace === mode);
+      });
+      if (speedRow) speedRow.style.display = mode === "treadmill" ? "flex" : "none";
+      if (startLabel) {
+        startLabel.textContent = mode === "treadmill" ? "트레드밀 러닝 시작" : "야외 GPS 러닝 시작";
+      }
+      if (cardLabel) {
+        cardLabel.textContent = mode === "treadmill" ? "GYM TREADMILL" : "LIVE GPS RUNNER";
+      }
+      if (accuracyEl && !this.gpsRunner.isTracking) {
+        accuracyEl.textContent = mode === "treadmill"
+          ? `트레드밀 ${this.treadmillSpeedKmh} km/h 대기중`
+          : "🛰️ 야외 GPS 대기중";
+      }
+    };
+
+    document.querySelectorAll(".run-place-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (this.gpsRunner.isTracking) return;
+        applyPlace(btn.dataset.runPlace);
+      });
+    });
+
+    document.querySelectorAll("#treadmill-speed-chips .target-chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        if (this.gpsRunner.isTracking) return;
+        document.querySelectorAll("#treadmill-speed-chips .target-chip").forEach((c) => c.classList.remove("active"));
+        chip.classList.add("active");
+        this.treadmillSpeedKmh = parseFloat(chip.dataset.speed) || 8;
+        if (this.runPlaceMode === "treadmill" && accuracyEl && !this.gpsRunner.isTracking) {
+          accuracyEl.textContent = `트레드밀 ${this.treadmillSpeedKmh} km/h 대기중`;
+        }
+      });
+    });
+
+    applyPlace(this.runPlaceMode);
+  }
+
+  lockRunPlaceUi(locked) {
+    document.querySelectorAll(".run-place-btn, #treadmill-speed-chips .target-chip").forEach((el) => {
+      el.disabled = !!locked;
+    });
   }
 
   // 러닝·21일·퀘스트·펫·코인 전체 기록 초기화 (로그인 프로필은 유지)

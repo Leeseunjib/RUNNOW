@@ -4,6 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>RUNNOW | Nike Run Club x Tamagotchi GPS Runner</title>
+  <script>
+    (function syncMobileViewport() {
+      function apply() {
+        var vv = window.visualViewport;
+        var h = vv ? Math.round(vv.height) : window.innerHeight;
+        document.documentElement.style.setProperty("--app-height", h + "px");
+      }
+      apply();
+      window.addEventListener("resize", apply);
+      window.addEventListener("orientationchange", apply);
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", apply);
+        window.visualViewport.addEventListener("scroll", apply);
+      }
+    })();
+  </script>
   
   <!-- PWA & Mobile Web App Meta -->
   <link rel="manifest" href="manifest.json">
@@ -14,7 +30,7 @@
   <link rel="apple-touch-icon" href="assets/hero_mascot.jpg">
   <link rel="icon" type="image/jpeg" href="assets/hero_mascot.jpg">
 
-  <link rel="stylesheet" href="styles.css?v=4.0">
+  <link rel="stylesheet" href="styles.css?v=4.2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
@@ -174,7 +190,7 @@
       </div>
 
       <!-- Onboarding Form Body -->
-      <div style="display:flex; flex-direction:column; gap:14px; overflow-y:auto; max-height:calc(100vh - 200px); padding-right:2px;">
+      <div class="ob-form-scroll">
         
         <!-- 1. Name & Gender & Age -->
         <div style="background:var(--surface-carbon); border:1px solid var(--border-glass); border-radius:14px; padding:14px;">
@@ -261,7 +277,7 @@
       </div>
 
       <!-- Onboarding Submit Button -->
-      <div style="margin-top:16px;">
+      <div class="ob-submit-wrap">
         <button type="button" class="btn-primary-volt" id="btn-submit-onboarding" style="width:100%; padding:14px; font-size:15px; font-weight:900;">
           <span>설정 완료하고 파트너 선택하기 ➔</span>
         </button>
@@ -301,7 +317,7 @@
     </div>
 
     <!-- STEP 4: Main App Container (Sticky Top Bar + Active Tab View + Bottom Nav) -->
-    <div id="main-app-container" style="display:none; flex-direction:column; min-height:100vh;">
+    <div id="main-app-container">
 
       <!-- Top Sticky App Header -->
       <header class="app-header">
@@ -344,7 +360,7 @@
                   <img class="ex-pick-photo" src="./assets/exercises/run.jpg" alt="러닝">
                   <span class="ex-pick-body">
                     <strong>러닝</strong>
-                    <span>GPS로 거리·페이스·칼로리를 잽니다</span>
+                    <span>야외는 GPS, 헬스장은 트레드밀 속도로 거리를 잽니다</span>
                   </span>
                   <span class="ex-pick-badge">GPS</span>
                 </button>
@@ -404,7 +420,22 @@
           <div id="workout-view-gps" style="display:none;">
             <div class="nrc-card glow-volt live-run-hero">
               <button type="button" class="btn-back-exercise-list" data-back-from="gps">← 운동 목록</button>
-              <div class="card-label">LIVE GPS RUNNER</div>
+              <div class="card-label" id="run-card-label">LIVE RUNNER</div>
+
+              <div class="run-place-row">
+                <button type="button" class="run-place-btn active" data-run-place="gps">야외 GPS</button>
+                <button type="button" class="run-place-btn" data-run-place="treadmill">헬스장 트레드밀</button>
+              </div>
+
+              <div id="treadmill-speed-row" class="pose-target-row" style="display:none;">
+                <span>트레드밀 속도</span>
+                <div class="motion-target-chips" id="treadmill-speed-chips">
+                  <button type="button" class="target-chip" data-speed="6">6 km/h</button>
+                  <button type="button" class="target-chip active" data-speed="8">8 km/h</button>
+                  <button type="button" class="target-chip" data-speed="10">10 km/h</button>
+                  <button type="button" class="target-chip" data-speed="12">12 km/h</button>
+                </div>
+              </div>
               
               <!-- 실시간 정밀 거리 메트릭 서클 -->
               <div class="metric-circle" id="metric-circle">
@@ -412,7 +443,7 @@
                 <div class="main-distance-unit" id="live-distance-unit">METERS (m)</div>
                 <div id="live-distance-sub" style="font-size:13px; color:var(--cyber-cyan); font-weight:800; margin-top:4px; letter-spacing:0.5px;">0.000 km</div>
               </div>
-              <div class="gps-badge" id="live-gps-accuracy">🛰️ 실시간 GPS 대기중</div>
+              <div class="gps-badge" id="live-gps-accuracy">🛰️ 야외 GPS 대기중</div>
 
               <!-- 3대 러닝 메트릭 그리드 (페이스, 시간, 칼로리) -->
               <div class="hud-grid">
@@ -446,7 +477,7 @@
 
               <div id="run-init-controls">
                 <button class="btn-primary-volt" id="btn-start-live">
-                  <span>⚡ REAL GPS RUN START</span>
+                  <span id="btn-start-live-label">야외 GPS 러닝 시작</span>
                 </button>
               </div>
 
@@ -1203,7 +1234,7 @@
   </div>
 
   <!-- App Entry Script & PWA Service Worker Registration -->
-  <script type="module" src="app.js?v=4.0"></script>
+  <script type="module" src="app.js?v=4.2"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

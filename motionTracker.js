@@ -225,32 +225,75 @@ export class MotionTracker {
       throw new Error("관절 인식 모델을 불러오지 못했습니다. 인터넷 연결 후 다시 시도해 주세요.");
     }
 
-    const constraints = {
-      video: {
-        facingMode: this.facingMode,
-        width: { ideal: 640 },
-        height: { ideal: 480 }
-      },
-      audio: false
-    };
+    let stream = null;
+    const isUserMode = this.facingMode === "user";
+
+    // 1순위: 이상적 해상도 요청
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: isUserMode ? "user" : "environment",
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        },
+        audio: false
+      });
+    } catch (e1) {
+      console.warn("Camera constraint 1 failed, trying fallback:", e1);
+      // 2순위: facingMode만 요청
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: isUserMode ? "user" : "environment" },
+          audio: false
+        });
+      } catch (e2) {
+        console.warn("Camera constraint 2 failed, trying bare video constraint:", e2);
+        // 3순위: 기본 video 요청
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        } catch (e3) {
+          console.error("Camera access failed completely:", e3);
+          if (e3.name === "NotAllowedError" || e3.name === "PermissionDeniedError") {
+            throw new Error("카메라 권한이 차단되어 있습니다.\n브라우저 주소창 좌측의 🔒(자물쇠) 또는 사이트 설정에서 '카메라 사용 권한'을 '허용'으로 변경해 주세요.");
+          } else if (e3.name === "NotReadableError" || e3.name === "TrackStartError") {
+            throw new Error("다른 앱(카카오톡, 기본 카메라 등)에서 카메라를 이미 사용 중입니다. 다른 앱을 닫고 다시 시도해 주세요.");
+          } else if (e3.name === "NotFoundError" || e3.name === "DevicesNotFoundError") {
+            throw new Error("사용 가능한 카메라 장치를 찾을 수 없습니다.");
+          } else {
+            throw new Error(`카메라를 실행할 수 없습니다 (${e3.name || e3.message}).\nChrome(크롬) 또는 Safari(사파리) 브라우저에서 열어주세요.`);
+          }
+        }
+      }
+    }
 
     if (this.stream) {
       this.stopCamera();
     }
 
-    this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+    this.stream = stream;
     this.videoEl.srcObject = this.stream;
+    this.videoEl.setAttribute("playsinline", "true");
+    this.videoEl.setAttribute("webkit-playsinline", "true");
+    this.videoEl.muted = true;
     
-    return new Promise((resolve) => {
-      this.videoEl.onloadedmetadata = () => {
-        this.videoEl.play();
-        this.isRunning = true;
-        this.requestWakeLock();
-        this.startTime = Date.now();
-        this.startTimer();
-        this.predictWebcamLoop();
-        resolve(true);
+    return new Promise((resolve, reject) => {
+      this.videoEl.onloadedmetadata = async () => {
+        try {
+          await this.videoEl.play();
+          this.isRunning = true;
+          this.requestWakeLock();
+          this.startTime = Date.now();
+          this.startTimer();
+          this.predictWebcamLoop();
+          resolve(true);
+        } catch (playErr) {
+          console.error("Video play error:", playErr);
+          this.isRunning = true;
+          this.predictWebcamLoop();
+          resolve(true);
+        }
       };
+      this.videoEl.onerror = (err) => reject(err);
     });
   }
 
