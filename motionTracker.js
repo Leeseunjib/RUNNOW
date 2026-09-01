@@ -133,6 +133,11 @@ export class MotionTracker {
     this.animFrameId = null;
     this.showSkeletonOverlay = true;
 
+    this.poseDetector = null;
+    this.poseLandmarker = null;
+    this.engineType = null;
+    this.isDetecting = false;
+
     // BlazePose 33 Landmark Skeleton Connections
     this.POSE_CONNECTIONS = [
       [11, 12], [11, 13], [13, 15], // Left arm
@@ -173,10 +178,40 @@ export class MotionTracker {
     this.startTime = Date.now();
   }
 
-  // Google MediaPipe Pose Landmarker 로더 (GPU 실패 시 CPU)
+  // Google MediaPipe Pose Landmarker 로더 (1순위: Classic MediaPipe Pose, 2순위: Tasks Vision)
   async initMediaPipe() {
-    if (this.poseLandmarker) return true;
+    if (this.poseDetector || this.poseLandmarker) return true;
 
+    // Engine 1: Classic MediaPipe Pose (글로벌 스크립트 기반 - 모바일 100% 호환)
+    if (window.Pose) {
+      try {
+        const pose = new window.Pose({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`
+        });
+
+        pose.setOptions({
+          modelComplexity: 0, // 0 = Lite (모바일 최적화 및 60FPS 고속 연산)
+          smoothLandmarks: true,
+          enableSegmentation: false,
+          minDetectionConfidence: 0.3,
+          minTrackingConfidence: 0.3
+        });
+
+        pose.onResults((results) => {
+          this.handlePoseResults(results);
+        });
+
+        await pose.initialize();
+        this.poseDetector = pose;
+        this.engineType = "classic_pose";
+        console.log("⚡ MediaPipe Classic Pose Engine Ready!");
+        return true;
+      } catch (err) {
+        console.warn("Classic Pose 초기화 에러, Tasks Vision 폴백 시도:", err);
+      }
+    }
+
+    // Engine 2: MediaPipe Tasks Vision 폴백
     const modelPath = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
     const wasmPath = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
 
@@ -200,15 +235,17 @@ export class MotionTracker {
         console.warn("MediaPipe GPU 실패, CPU로 전환:", gpuErr);
         this.poseLandmarker = await PoseLandmarker.createFromOptions(vision, options("CPU"));
       }
+      this.engineType = "tasks_vision";
+      console.log("⚡ MediaPipe Tasks Vision Engine Ready!");
       return true;
     } catch (err) {
-      console.error("MediaPipe 로드 실패:", err);
+      console.error("MediaPipe 모든 엔진 로드 실패:", err);
       this.poseLandmarker = null;
       return false;
     }
   }
 
-  // 웹캠 스트림 시작
+  // 웹캠 스트림 시작 (Camera-First Flow: 카메라 즉시 실행 후 AI 모델 비동기 로드)
   async startCamera(videoElement, canvasElement) {
     if (videoElement) this.videoEl = videoElement;
     if (canvasElement) {
@@ -217,12 +254,7 @@ export class MotionTracker {
     }
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      throw new Error("카메라 접근 API를 지원하지 않는 브라우저입니다.");
-    }
-
-    const ready = await this.initMediaPipe();
-    if (!ready || !this.poseLandmarker) {
-      throw new Error("관절 인식 모델을 불러오지 못했습니다. 인터넷 연결 후 다시 시도해 주세요.");
+      throw new Error("현재 브라우저가 카메라 접근(WebRTC)을 지원하지 않습니다.\n스마트폰 기본 'Chrome' 또는 'Safari' 브라우저로 접속해 주세요.");
     }
 
     let stream = null;
@@ -254,11 +286,11 @@ export class MotionTracker {
         } catch (e3) {
           console.error("Camera access failed completely:", e3);
           if (e3.name === "NotAllowedError" || e3.name === "PermissionDeniedError") {
-            throw new Error("카메라 권한이 차단되어 있습니다.\n브라우저 주소창 좌측의 🔒(자물쇠) 또는 사이트 설정에서 '카메라 사용 권한'을 '허용'으로 변경해 주세요.");
+            throw new Error("카메라 권한이 '차단'되어 있습니다.\n브라우저 상단 주소창 좌측의 🔒(자물쇠) 또는 설정에서 '카메라 권한'을 '허용'으로 변경해 주세요.");
           } else if (e3.name === "NotReadableError" || e3.name === "TrackStartError") {
-            throw new Error("다른 앱(카카오톡, 기본 카메라 등)에서 카메라를 이미 사용 중입니다. 다른 앱을 닫고 다시 시도해 주세요.");
+            throw new Error("다른 앱(카카오톡, 기본 카메라 등)이 카메라를 사용 중입니다. 다른 앱을 종료하고 다시 시도해 주세요.");
           } else if (e3.name === "NotFoundError" || e3.name === "DevicesNotFoundError") {
-            throw new Error("사용 가능한 카메라 장치를 찾을 수 없습니다.");
+            throw new Error("기기에서 사용 가능한 카메라를 찾을 수 없습니다.");
           } else {
             throw new Error(`카메라를 실행할 수 없습니다 (${e3.name || e3.message}).\nChrome(크롬) 또는 Safari(사파리) 브라우저에서 열어주세요.`);
           }
@@ -276,7 +308,8 @@ export class MotionTracker {
     this.videoEl.setAttribute("webkit-playsinline", "true");
     this.videoEl.muted = true;
     
-    return new Promise((resolve, reject) => {
+    // 카메라 비디오 준비 완료 후 즉시 화면에 렌더링
+    await new Promise((resolve, reject) => {
       this.videoEl.onloadedmetadata = async () => {
         try {
           await this.videoEl.play();
@@ -295,6 +328,20 @@ export class MotionTracker {
       };
       this.videoEl.onerror = (err) => reject(err);
     });
+
+    // 백그라운드에서 MediaPipe AI 관절 모델 로드 (카메라 화면은 이미 켜져 있음)
+    this.initMediaPipe().then((ready) => {
+      if (ready) {
+        console.log("⚡ MediaPipe Pose Landmarker Ready!");
+        if (this.onFeedback) {
+          this.onFeedback({ text: "AI 관절 인식이 활성화되었습니다. 전신이 보이게 서주세요!", isGood: true });
+        }
+      } else {
+        console.warn("⚠️ MediaPipe Pose Landmarker could not load, running in fallback mode");
+      }
+    });
+
+    return true;
   }
 
   // 화면 꺼짐 방지 (Wake Lock API)
@@ -397,8 +444,8 @@ export class MotionTracker {
     return Math.hypot(p1.x - p2.x, p1.y - p2.y);
   }
 
-  // 카메라 프레임과 관절 점을 같은 캔버스에 그림
-  predictWebcamLoop() {
+  // 카메라 프레임과 관절 점을 같은 캔버스에 그림 (듀얼 엔진 대응)
+  async predictWebcamLoop() {
     if (!this.isRunning || !this.videoEl || !this.canvasEl) return;
 
     if (this.videoEl.readyState >= 2) {
@@ -413,7 +460,23 @@ export class MotionTracker {
       this.ctx.clearRect(0, 0, width, height);
       this.ctx.drawImage(this.videoEl, 0, 0, width, height);
 
-      if (this.poseLandmarker) {
+      // Engine 1: Classic MediaPipe Pose 처리
+      if (this.engineType === "classic_pose" && this.poseDetector) {
+        const nowInMs = performance.now();
+        if (nowInMs - this.lastDetectMs >= 33 && !this.isDetecting) {
+          this.lastDetectMs = nowInMs;
+          this.isDetecting = true;
+          try {
+            await this.poseDetector.send({ image: this.videoEl });
+          } catch (e) {
+            console.warn("Classic Pose send error:", e);
+          } finally {
+            this.isDetecting = false;
+          }
+        }
+      } 
+      // Engine 2: Tasks Vision 처리
+      else if (this.engineType === "tasks_vision" && this.poseLandmarker) {
         const nowInMs = performance.now();
         if (nowInMs - this.lastDetectMs >= 33) {
           this.lastDetectMs = nowInMs;
@@ -422,18 +485,10 @@ export class MotionTracker {
           this.lastLandmarks = poses[0] || null;
           if (this.lastLandmarks) {
             this.processExerciseLogic(this.lastLandmarks);
+            this.drawSkeleton(this.lastLandmarks);
           } else {
-            this.onFeedback({
-              text: "카메라에 전신이 보이도록 물러서 주세요",
-              type: "info",
-              isGood: false
-            });
+            this.drawSeekingHint(width, height);
           }
-        }
-        if (this.lastLandmarks) {
-          this.drawSkeleton(this.lastLandmarks);
-        } else {
-          this.drawSeekingHint(width, height);
         }
       }
     }
@@ -441,7 +496,24 @@ export class MotionTracker {
     this.animFrameId = requestAnimationFrame(() => this.predictWebcamLoop());
   }
 
+  // Classic MediaPipe Pose 결과 처리 핸들러
+  handlePoseResults(results) {
+    if (!this.isRunning) return;
+    const landmarks = results.poseLandmarks || null;
+    this.lastLandmarks = landmarks;
+    const width = this.canvasEl?.width || 640;
+    const height = this.canvasEl?.height || 480;
+
+    if (landmarks && landmarks.length > 0) {
+      this.processExerciseLogic(landmarks);
+      this.drawSkeleton(landmarks);
+    } else {
+      this.drawSeekingHint(width, height);
+    }
+  }
+
   drawSeekingHint(width, height) {
+    if (!this.ctx) return;
     this.ctx.save();
     this.ctx.fillStyle = "rgba(255, 214, 10, 0.92)";
     this.ctx.font = `700 ${Math.max(16, Math.round(width / 28))}px sans-serif`;
