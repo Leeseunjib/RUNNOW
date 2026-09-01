@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+    <defs>
+      <linearGradient id="bgGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#E8F5E9"/>
+        <stop offset="100%" stop-color="#C8E6C9"/>
+      </linearGradient>
+    </defs>
+    <circle cx="250" cy="250" r="235" fill="url(#bgGrad2)" stroke="#81C784" stroke-width="4"/>
+    
+    <!-- Butterfly -->
+    <path d="M 370 120 Q 385 100 400 115 Q 400 135 375 130 Z" fill="#FF4081"/>
+    <path d="M 370 120 Q 385 140 395 135 Z" fill="#FF80AB"/>
+    <circle cx="370" cy="122" r="3" fill="#333"/>
+
+    <!-- Ears -->
+    <polygon points="160,150 120,50 210,120" fill="#FFFFFF" stroke="#333333" stroke-width="8" stroke-linejoin="round"/>
+    <polygon points="165,135 135,70 195,115" fill="#FFB6C1"/>
+    <polygon points="340,150 380,50 290,120" fill="#FFFFFF" stroke="#333333" stroke-width="8" stroke-linejoin="round"/>
+    <polygon points="335,135 365,70 305,115" fill="#FFB6C1"/>
+
+    <!-- Body Running Pose -->
+    <ellipse cx="230" cy="330" rx="130" ry="90" fill="#FFFFFF" stroke="#333333" stroke-width="8"/>
+    
+    <!-- Tail curved high with excitement -->
+    <path d="M 120 320 Q 70 260 90 200 Q 110 180 120 220 Q 110 270 150 310 Z" fill="#FFA07A" stroke="#333333" stroke-width="6"/>
+
+    <!-- Cat Head looking up -->
+    <circle cx="270" cy="190" r="105" fill="#FFFFFF" stroke="#333333" stroke-width="8"/>
+    
+    <!-- Eyes sparkling at butterfly -->
+    <ellipse cx="235" cy="180" rx="20" ry="24" fill="#00C73C"/>
+    <circle cx="235" cy="180" r="12" fill="#1A1A1A"/>
+    <circle cx="230" cy="172" r="6" fill="#FFFFFF"/>
+
+    <ellipse cx="315" cy="180" rx="20" ry="24" fill="#00C73C"/>
+    <circle cx="315" cy="180" r="12" fill="#1A1A1A"/>
+    <circle cx="310" cy="172" r="6" fill="#FFFFFF"/>
+
+    <ellipse cx="215" cy="210" rx="14" ry="8" fill="#FF85A2" opacity="0.6"/>
+    <ellipse cx="335" cy="210" rx="14" ry="8" fill="#FF85A2" opacity="0.6"/>
+
+    <!-- Happy Open Mouth -->
+    <polygon points="275,198 268,192 282,192" fill="#FF85A2"/>
+    <path d="M 265 204 Q 275 224 285 204 Z" fill="#FF5252" stroke="#333333" stroke-width="4"/>
+
+    <!-- Running Shoes / Paws -->
+    <ellipse cx="330" cy="370" rx="35" ry="20" fill="#FF7043" stroke="#333333" stroke-width="6"/>
+    <ellipse cx="180" cy="390" rx="35" ry="20" fill="#FF7043" stroke="#333333" stroke-width="6"/>
+  </svg>

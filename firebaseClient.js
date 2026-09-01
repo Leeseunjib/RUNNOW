@@ -1,7 +1,14 @@
-// RUNNOW Real Cloud Firebase Client (Firestore SDK & Google Authentication)
+// RUNNOW Firebase Auth + Firestore 클라우드 클라이언트
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { firebaseConfig } from "./firebaseConfig.js";
 
 class FirebaseCloudClient {
@@ -21,7 +28,7 @@ class FirebaseCloudClient {
       this.db = getFirestore(this.app);
       this.auth = getAuth(this.app);
       this.googleProvider = new GoogleAuthProvider();
-      this.googleProvider.setCustomParameters({ prompt: 'select_account' }); // 항상 구글 계정 선택창 표시
+      this.googleProvider.setCustomParameters({ prompt: "select_account" });
       this.isInitialized = true;
       console.log("🔥 RUNNOW Cloud Firebase & Auth connected successfully!");
     } catch (err) {
@@ -29,33 +36,55 @@ class FirebaseCloudClient {
     }
   }
 
-  // Google 원클릭 로그인
+  sessionFromUser(user) {
+    const sessionData = {
+      uid: user.uid,
+      displayName: user.displayName || user.email?.split("@")[0] || "러너",
+      email: user.email || "",
+      photoURL: user.photoURL || "",
+      expiresAt: Date.now() + (12 * 60 * 60 * 1000)
+    };
+    this.currentUser = user;
+    localStorage.setItem("RUNNOW_AUTH_SESSION", JSON.stringify(sessionData));
+    localStorage.setItem("RUNNOW_CURRENT_USER_ID", user.uid);
+    return sessionData;
+  }
+
+  authErrorMessage(err) {
+    const code = err?.code || "";
+    if (code === "auth/popup-blocked") return "팝업이 차단되었습니다. 브라우저에서 팝업을 허용해 주세요.";
+    if (code === "auth/popup-closed-by-user") return "로그인이 취소되었습니다.";
+    if (code === "auth/unauthorized-domain") return "이 도메인은 Firebase 로그인 허용 목록에 없습니다.";
+    if (code === "auth/email-already-in-use") return "이미 가입된 이메일입니다. 로그인하세요.";
+    if (code === "auth/invalid-email") return "이메일 형식이 올바르지 않습니다.";
+    if (code === "auth/weak-password") return "비밀번호는 6자 이상이어야 합니다.";
+    if (code === "auth/user-not-found" || code === "auth/wrong-password" || code === "auth/invalid-credential") {
+      return "이메일 또는 비밀번호가 올바르지 않습니다.";
+    }
+    if (code === "auth/operation-not-allowed") return "이 로그인 방식이 Firebase에서 아직 켜져 있지 않습니다.";
+    return err?.message || "로그인에 실패했습니다.";
+  }
+
   async signInWithGoogle() {
     if (!this.auth || !this.googleProvider) {
       throw new Error("Firebase Auth가 초기화되지 않았습니다.");
     }
-    try {
-      const result = await signInWithPopup(this.auth, this.googleProvider);
-      const user = result.user;
-      this.currentUser = user;
-      
-      // 12시간 세션 타임스탬프 기록
-      const sessionData = {
-        uid: user.uid,
-        displayName: user.displayName || "러너",
-        email: user.email,
-        photoURL: user.photoURL,
-        expiresAt: Date.now() + (12 * 60 * 60 * 1000) // 12시간 후 자동 만료
-      };
-      localStorage.setItem("RUNNOW_AUTH_SESSION", JSON.stringify(sessionData));
-      return sessionData;
-    } catch (err) {
-      console.error("Google Sign-In Error:", err);
-      throw err;
-    }
+    const result = await signInWithPopup(this.auth, this.googleProvider);
+    return this.sessionFromUser(result.user);
   }
 
-  // 로그아웃
+  async signUpWithEmail(email, password) {
+    if (!this.auth) throw new Error("Firebase Auth가 초기화되지 않았습니다.");
+    const result = await createUserWithEmailAndPassword(this.auth, email, password);
+    return this.sessionFromUser(result.user);
+  }
+
+  async signInWithEmail(email, password) {
+    if (!this.auth) throw new Error("Firebase Auth가 초기화되지 않았습니다.");
+    const result = await signInWithEmailAndPassword(this.auth, email, password);
+    return this.sessionFromUser(result.user);
+  }
+
   async logOut() {
     if (this.auth) {
       await signOut(this.auth);
@@ -65,20 +94,66 @@ class FirebaseCloudClient {
     this.currentUser = null;
   }
 
-  // 유효한 세션(12시간 이내) 확인
   getCurrentSession() {
     try {
       const raw = localStorage.getItem("RUNNOW_AUTH_SESSION");
       if (!raw) return null;
       const session = JSON.parse(raw);
       if (Date.now() > session.expiresAt) {
-        console.log("⏰ 세션이 만료되었습니다. (12시간 경과)");
         this.logOut();
         return null;
       }
       return session;
     } catch {
       return null;
+    }
+  }
+
+  async getUser(userId) {
+    if (!this.isInitialized || !this.db || !userId) return null;
+    try {
+      const snap = await getDoc(doc(this.db, "users", userId));
+      return snap.exists() ? snap.data() : null;
+    } catch (err) {
+      console.error("Firestore getUser error:", err);
+      return null;
+    }
+  }
+
+  async getTamagotchi(userId) {
+    if (!this.isInitialized || !this.db || !userId) return null;
+    try {
+      const snap = await getDoc(doc(this.db, "tamagotchi", userId));
+      return snap.exists() ? snap.data() : null;
+    } catch (err) {
+      console.error("Firestore getTamagotchi error:", err);
+      return null;
+    }
+  }
+
+  async getChallenge(userId) {
+    if (!this.isInitialized || !this.db || !userId) return null;
+    try {
+      const snap = await getDoc(doc(this.db, "challenges_progress", userId));
+      return snap.exists() ? snap.data() : null;
+    } catch (err) {
+      console.error("Firestore getChallenge error:", err);
+      return null;
+    }
+  }
+
+  async syncUser(userId, userData) {
+    if (!this.isInitialized || !this.db || !userId) return false;
+    try {
+      await setDoc(doc(this.db, "users", userId), {
+        ...userData,
+        uid: userId,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error("Firestore syncUser error:", err);
+      return false;
     }
   }
 
@@ -90,7 +165,6 @@ class FirebaseCloudClient {
         ...workoutData,
         timestamp: new Date().toISOString()
       });
-      console.log("☁️ Workout synced to Cloud Firestore:", docRef.id);
       return docRef.id;
     } catch (err) {
       console.error("Firestore saveWorkout error:", err);
@@ -105,7 +179,6 @@ class FirebaseCloudClient {
         ...petData,
         updatedAt: new Date().toISOString()
       }, { merge: true });
-      console.log("☁️ Tamagotchi synced to Cloud Firestore!");
       return true;
     } catch (err) {
       console.error("Firestore syncTamagotchi error:", err);
@@ -120,7 +193,6 @@ class FirebaseCloudClient {
         ...challengeData,
         updatedAt: new Date().toISOString()
       }, { merge: true });
-      console.log("☁️ Challenge Progress synced to Cloud Firestore!");
       return true;
     } catch (err) {
       console.error("Firestore syncChallenge error:", err);

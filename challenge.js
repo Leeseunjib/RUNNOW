@@ -27,7 +27,7 @@ export const CHALLENGE_DAYS = [
   { day: 2, week: 1, title: "리듬 조깅 & 수분 충전", targetKm: 2.0, desc: "2.0km 편안한 호흡으로 조깅 + 물 1.5L 마시기", xpReward: 180, coinReward: 50 },
   { day: 3, week: 1, title: "가벼운 회복 워킹 & 코어", targetKm: 1.0, desc: "1.0km 쿨다운 산책 + 플랭크 1분 3세트", xpReward: 120, coinReward: 50 },
   { day: 4, week: 1, title: "페이스 유지 2.5km 러닝", targetKm: 2.5, desc: "일정한 속도로 2.5km 지속 달리기", xpReward: 200, coinReward: 60 },
-  { day: 5, week: 1, title: "다마고치와 함께 인터벌 런", targetKm: 2.0, desc: "빠르게 1분 + 천천히 1분 x 5세트 인터벌", xpReward: 220, coinReward: 70 },
+  { day: 5, week: 1, title: "펫과 함께 인터벌 런", targetKm: 2.0, desc: "빠르게 1분 + 천천히 1분 x 5세트 인터벌", xpReward: 220, coinReward: 70 },
   { day: 6, week: 1, title: "주말 3km 챌린지", targetKm: 3.0, desc: "한 주의 노력을 확인하는 3.0km 런", xpReward: 250, coinReward: 80 },
   { day: 7, week: 1, title: "1주차 완주! 전신 리커버리", targetKm: 1.5, desc: "1.5km 릴랙스 조깅 + 1주차 미스터리 박스 오픈", xpReward: 350, coinReward: 120, isMilestone: true },
 

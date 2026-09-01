@@ -42,9 +42,10 @@ export class GPSRunner {
     this.elapsedSeconds = 0;
     this.positions = [];
     this.lastValidPos = null;
+    this._deniedAlerted = false;
     this.gpsAccuracy = useSimulation ? "시뮬레이션" : "GPS 신호 탐색중...";
+    this.emitUpdate();
 
-    // 1초 타이머 가동
     this.timerId = setInterval(() => {
       if (!this.isPaused) {
         this.elapsedSeconds += 1;
@@ -55,22 +56,65 @@ export class GPSRunner {
       }
     }, 1000);
 
-    // 실제 Geolocation 시작
-    if (!this.isSimulation && navigator.geolocation) {
-      this.watchId = navigator.geolocation.watchPosition(
-        (pos) => this.handleGeoSuccess(pos),
-        (err) => {
-          console.warn("GPS Access Error/Fallback to Simulation:", err.message);
-          this.gpsAccuracy = "GPS 신호 약함 (실내/오차)";
-          this.emitUpdate();
-        },
-        {
-          enableHighAccuracy: true,
-          maximumAge: 1000,
-          timeout: 10000
-        }
-      );
+    if (this.isSimulation) return;
+
+    if (!window.isSecureContext) {
+      this.gpsAccuracy = "HTTPS에서만 GPS 사용 가능";
+      this.emitUpdate();
+      return;
     }
+
+    if (!navigator.geolocation) {
+      this.gpsAccuracy = "이 기기는 GPS를 지원하지 않습니다";
+      this.emitUpdate();
+      alert("이 브라우저/기기는 위치 정보(GPS)를 지원하지 않습니다.");
+      return;
+    }
+
+    const geoOptions = {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 60000
+    };
+
+    const onError = (err) => {
+      const code = err && err.code;
+      if (code === 3 && this.positions.length > 0) return;
+      if (code === 1) {
+        this.gpsAccuracy = "위치 권한이 거부됨. 브라우저 설정에서 허용하세요";
+        if (!this._deniedAlerted) {
+          this._deniedAlerted = true;
+          alert("위치 권한이 꺼져 있습니다. Safari/Chrome 사이트 설정에서 위치 접근을 허용한 뒤 다시 START를 눌러 주세요.");
+        }
+      } else if (code === 2) {
+        this.gpsAccuracy = "GPS 신호를 찾을 수 없음. 야외로 이동해 보세요";
+      } else if (code === 3) {
+        this.gpsAccuracy = "GPS 수신 대기 중... 야외에서 잠시 기다려 주세요";
+      } else {
+        this.gpsAccuracy = `GPS 오류 (${err && err.message ? err.message : code})`;
+      }
+      this.emitUpdate();
+    };
+
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: "geolocation" }).then((status) => {
+        if (status.state === "denied") {
+          onError({ code: 1, message: "denied" });
+        }
+      }).catch(() => {});
+    }
+
+    this.watchId = navigator.geolocation.watchPosition(
+      (pos) => this.handleGeoSuccess(pos),
+      onError,
+      geoOptions
+    );
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => this.handleGeoSuccess(pos),
+      onError,
+      geoOptions
+    );
   }
 
   handleGeoSuccess(position) {
@@ -144,7 +188,7 @@ export class GPSRunner {
       clearInterval(this.timerId);
       this.timerId = null;
     }
-    if (this.watchId && navigator.geolocation) {
+    if (this.watchId != null && navigator.geolocation) {
       navigator.geolocation.clearWatch(this.watchId);
       this.watchId = null;
     }

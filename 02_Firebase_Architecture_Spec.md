@@ -1,7 +1,7 @@
 # 🔥 Firebase MCP: 인증, 데이터베이스, 스토리지 및 배포 아키텍처 사양서
 
-> **프로젝트명**: RunGotchi (글로벌 GPS 러너 & 다마고치 육성 3주 챌린지)  
-> **백엔드 스택**: Firebase Authentication, Cloud Firestore, Cloud Storage, Firebase Hosting  
+> **프로젝트명**: RunGotchi (글로벌 GPS 러너 & 다마고치 육성 3주 챌린지)
+> **백엔드 스택**: Firebase Authentication, Cloud Firestore, Cloud Storage, Firebase Hosting
 > **적용 도구**: Firebase MCP Server (`firebase-tools@latest mcp`)
 
 ---
@@ -9,12 +9,14 @@
 ## 1. Firebase Authentication (인증 시스템)
 
 ### 1.1 지원 인증 공급자
+
 - **Email / Password**: 기본 계정 생성 및 비밀번호 재설정
 - **Google OAuth (One-Tap / Pop-up)**: 글로벌 유저 간편 로그인
 - **Apple Sign-In**: iOS 앱스토어 심사 및 크로스 플랫폼 필수 인증
 - **Anonymous (게스트 모드)**: 가입 전 다마고치 알(Egg) 부화 체험 지원 후 영구 계정 전환(Link With Credential)
 
 ### 1.2 온보딩 사용자 프로필 필드
+
 ```typescript
 interface UserProfile {
   uid: string;
@@ -67,31 +69,31 @@ Firestore Root
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+  
     // 유저 데이터: 본인만 읽기/쓰기 가능
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
-      
+  
       match /tamagotchi/{docId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
+  
       match /workouts/{workoutId} {
         allow read, create: if request.auth != null && request.auth.uid == userId;
         allow update, delete: if false; // 운동 기록 위변조 방지
       }
-      
+  
       match /challenge_progress/{dayId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
-    
+  
     // 상점 아이템: 누구나 조회 가능, 쓰기는 관리자만
     match /shop_items/{itemId} {
       allow read: if true;
       allow write: if false;
     }
-    
+  
     // 리더보드: 누구나 조회 가능
     match /leaderboard/{period} {
       allow read: if true;
@@ -106,6 +108,7 @@ service cloud.firestore {
 ## 4. Firebase Hosting & CI/CD 배포 구성
 
 ### `firebase.json` 설정
+
 ```json
 {
   "hosting": {

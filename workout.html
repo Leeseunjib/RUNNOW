@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>RUNNOW AI Studio | Google MediaPipe Vision Fitness</title>
+
+  <!-- PWA & Mobile Web App Meta -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#08090C">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="RUNNOW AI Studio">
+  <link rel="apple-touch-icon" href="assets/hero_mascot.jpg">
+  <link rel="icon" type="image/jpeg" href="assets/hero_mascot.jpg">
+
+  <link rel="stylesheet" href="styles.css?v=3.7">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background: #08090C;
+      color: #FFFFFF;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .studio-viewport {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 12px 14px 24px;
+      box-sizing: border-box;
+    }
+
+    .studio-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-back-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface-elevated, #1A202C);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #FFF;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .camera-container {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      background: #000;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 2px solid var(--border-card, rgba(255,255,255,0.1));
+      box-shadow: 0 8px 30px rgba(0,0,0,0.7), inset 0 0 20px rgba(0,240,255,0.15);
+      margin-bottom: 14px;
+    }
+
+    .camera-container video, .camera-container canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .ex-card-carousel {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .ex-card-item {
+      flex: 0 0 130px;
+      background: #12161F;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 10px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .ex-card-item.active {
+      border-color: #CCFF00 !important;
+      background: #1A202C;
+      box-shadow: 0 0 16px rgba(204, 255, 0, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="studio-viewport">
+    
+    <!-- Top Header -->
+    <header class="studio-header">
+      <a href="index.html" class="btn-back-home">
+        <span>← 메인 앱</span>
+      </a>
+      <div style="text-align:center;">
+        <div style="font-size:10px; font-weight:900; color:#00F0FF; letter-spacing:1px;">MEDIAPIPE VISION EDGE</div>
+        <strong style="font-size:15px; color:#FFF;">AI MOTION STUDIO</strong>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button type="button" id="btn-skeleton-toggle" title="스켈레톤 AR 오버레이 토글" style="width:34px; height:34px; border-radius:50%; background:#1A202C; border:1px solid #CCFF00; color:#CCFF00; font-size:13px; cursor:pointer;">
+          👁️
+        </button>
+        <button type="button" id="btn-sound-toggle" style="width:34px; height:34px; border-radius:50%; background:#1A202C; border:1px solid rgba(255,255,255,0.15); color:#FFF; font-size:13px; cursor:pointer;">
+          🔊
+        </button>
+        <button type="button" id="btn-camera-flip" style="width:34px; height:34px; border-radius:50%; background:#1A202C; border:1px solid rgba(255,255,255,0.15); color:#FFF; font-size:13px; cursor:pointer;">
+          🔄
+        </button>
+      </div>
+    </header>
+
+    <!-- 6 Exercise Selection Carousel -->
+    <div class="ex-card-carousel" id="studio-ex-carousel">
+      <div class="ex-card-item active" data-exercise="squat">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <span style="font-size:22px;">🦵</span>
+          <span style="font-size:9px; font-weight:900; color:#CCFF00; background:rgba(204,255,0,0.15); padding:2px 5px; border-radius:4px;">MIGHT</span>
+        </div>
+        <strong style="font-size:12px; color:#FFF; display:block;">AI 스쿼트</strong>
+        <span style="font-size:10px; color:#888;">무릎 90도 굴곡</span>
+      </div>
+
+      <div class="ex-card-item" data-exercise="pushup">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <span style="font-size:22px;">💪</span>
+          <span style="font-size:9px; font-weight:900; color:#00F0FF; background:rgba(0,240,255,0.15); padding:2px 5px; border-radius:4px;">AGILITY</span>
+        </div>
+        <strong style="font-size:12px; color:#FFF; display:block;">AI 팔굽혀펴기</strong>
+        <span style="font-size:10px; color:#888;">팔꿈치 90도 수축</span>
+      </div>
+
+      <div class="ex-card-item" data-exercise="situp">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <span style="font-size:22px;">🧘</span>
+          <span style="font-size:9px; font-weight:900; color:#FF7043; background:rgba(255,112,67,0.15); padding:2px 5px; border-radius:4px;">SPIRIT</span>
+        </div>
+        <strong style="font-size:12px; color:#FFF; display:block;">AI 윗몸일으키기</strong>
+        <span style="font-size:10px; color:#888;">코어 75도 수축</span>
+      </div>
+
+      <div class="ex-card-item" data-exercise="plank">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <span style="font-size:22px;">⏱️</span>
+          <span style="font-size:9px; font-weight:900; color:#FF7043; background:rgba(255,112,67,0.15); padding:2px 5px; border-radius:4px;">SPIRIT</span>
+        </div>
+        <strong style="font-size:12px; color:#FFF; display:block;">AI 플랭크</strong>
+        <span style="font-size:10px; color:#888;">수평 5초 버티기</span>
+      </div>
+
+      <div class="ex-card-item" data-exercise="lunge">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <span style="font-size:22px;">🦵</span>
+          <span style="font-size:9px; font-weight:900; color:#CCFF00; background:rgba(204,255,0,0.15); padding:2px 5px; border-radius:4px;">MIGHT</span>
+        </div>
+        <strong style="font-size:12px; color:#FFF; display:block;">AI 런지</strong>
+        <span style="font-size:10px; color:#888;">하체 밸런스 90°</span>
+      </div>
+
+      <div class="ex-card-item" data-exercise="jumpingjack">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <span style="font-size:22px;">⭐</span>
+          <span style="font-size:9px; font-weight:900; color:#CCFF00; background:rgba(204,255,0,0.15); padding:2px 5px; border-radius:4px;">ALL</span>
+        </div>
+        <strong style="font-size:12px; color:#FFF; display:block;">AI 점핑잭</strong>
+        <span style="font-size:10px; color:#888;">전신 유산소 카디오</span>
+      </div>
+    </div>
+
+    <!-- Camera Vision Viewport -->
+    <div class="camera-container">
+      <video id="studio-video" playsinline webkit-playsinline muted autoplay style="transform:scaleX(-1);"></video>
+      <canvas id="studio-canvas" style="transform:scaleX(-1); pointer-events:none;"></canvas>
+
+      <!-- Standby Overlay -->
+      <div id="studio-standby-overlay" style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(8,9,12,0.88); backdrop-filter:blur(6px); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center; z-index:10;">
+        <div style="width:68px; height:68px; border-radius:50%; background:rgba(204,255,0,0.12); border:2px solid #CCFF00; display:flex; align-items:center; justify-content:center; font-size:32px; margin-bottom:12px; animation:pulse 2s infinite;">
+          📹
+        </div>
+        <strong style="font-size:17px; color:#FFF; margin-bottom:6px;" id="studio-target-title">AI 스쿼트 트레이닝</strong>
+        <p style="font-size:12px; color:#AAA; line-height:1.45; max-width:280px; margin-bottom:16px;" id="studio-target-desc">
+          카메라에 전신이 나오도록 위치시킨 후 시작을 누르면 AI가 관절 각도를 실시간 추적합니다.
+        </p>
+        <button type="button" class="btn-primary-volt" id="btn-studio-start" style="padding:13px 28px; font-size:15px; font-weight:900;">
+          <span>⚡ AI 카메라 트레이닝 시작</span>
+        </button>
+      </div>
+
+      <!-- Live Top HUD -->
+      <div style="position:absolute; top:12px; left:12px; right:12px; display:flex; justify-content:space-between; align-items:center; pointer-events:none; z-index:5;">
+        <div style="display:flex; align-items:center; gap:6px; background:rgba(18,22,31,0.88); padding:4px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.15);">
+          <span id="studio-hud-icon" style="font-size:14px;">🦵</span>
+          <strong id="studio-hud-name" style="font-size:12px; color:#CCFF00;">스쿼트</strong>
+          <span id="studio-hud-angle" style="font-size:12px; color:#00F0FF; font-weight:800;">180°</span>
+        </div>
+      </div>
+
+      <!-- Live Coaching Pill -->
+      <div id="studio-coaching-pill" style="position:absolute; top:52px; left:50%; transform:translateX(-50%); background:rgba(18,22,31,0.92); border:1px solid #CCFF00; color:#CCFF00; font-size:11px; font-weight:800; padding:5px 14px; border-radius:20px; white-space:nowrap; z-index:5; display:none;">
+        자세를 준비해 주세요 ✨
+      </div>
+
+      <!-- Massive Rep Counter -->
+      <div style="position:absolute; bottom:64px; left:0; right:0; text-align:center; pointer-events:none; z-index:5;">
+        <div style="display:inline-flex; flex-direction:column; align-items:center; background:rgba(8,9,12,0.75); backdrop-filter:blur(6px); padding:6px 22px; border-radius:18px; border:1px solid rgba(255,255,255,0.12);">
+          <div style="display:flex; align-items:baseline; gap:4px;">
+            <span id="studio-live-reps" style="font-size:42px; font-weight:900; color:#CCFF00; line-height:1; font-family:'Montserrat', sans-serif; text-shadow:0 0 20px rgba(204,255,0,0.6);">0</span>
+            <span style="font-size:13px; font-weight:800; color:#888;">REPS</span>
+          </div>
+          <div style="width:140px; height:6px; background:rgba(255,255,255,0.15); border-radius:3px; overflow:hidden; margin-top:4px;">
+            <div id="studio-depth-bar" style="width:0%; height:100%; background:linear-gradient(90deg, #00F0FF, #CCFF00); transition:width 0.1s ease-out;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Companion Mascot Cheer -->
+      <div style="position:absolute; bottom:10px; left:10px; right:10px; display:flex; align-items:center; gap:8px; background:rgba(18,22,31,0.92); backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:6px 10px; z-index:5;">
+        <div id="studio-mascot-icon" style="font-size:22px; flex-shrink:0;">🐶</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:10px; color:#888; font-weight:700;" id="studio-mascot-name">파트너 댕댕이</div>
+          <div style="font-size:11px; color:#CCFF00; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="studio-mascot-speech">"대표님, 멋진 스쿼트로 도파민을 채워봐요! 🔥"</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Telemetry HUD Grid -->
+    <div class="hud-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px;">
+      <div class="hud-item" style="background:#12161F; border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:10px; text-align:center;">
+        <div class="hud-val" id="studio-time" style="font-size:18px; font-weight:900; color:#FFF;">00:00</div>
+        <div class="hud-lbl" style="font-size:10px; color:#888;">TIME (시간)</div>
+      </div>
+      <div class="hud-item" style="background:#12161F; border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:10px; text-align:center;">
+        <div class="hud-val" id="studio-calories" style="font-size:18px; font-weight:900; color:#00F0FF;">0.0</div>
+        <div class="hud-lbl" style="font-size:10px; color:#888;">CALORIES (kcal)</div>
+      </div>
+      <div class="hud-item" style="background:#12161F; border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:10px; text-align:center;">
+        <div class="hud-val" id="studio-stat-gain" style="font-size:18px; font-weight:900; color:#CCFF00;">+0</div>
+        <div class="hud-lbl" style="font-size:10px; color:#888;" id="studio-stat-label">MIGHT GAIN</div>
+      </div>
+    </div>
+
+    <!-- Active Controls -->
+    <div id="studio-active-controls" style="display:none; gap:8px;">
+      <button type="button" class="btn-secondary" id="btn-studio-pause" style="flex:1; padding:12px;">일시정지</button>
+      <button type="button" class="btn-primary-volt" id="btn-studio-finish" style="flex:2; background:#FF5722; color:#FFF; border-color:#FF5722; padding:12px; font-weight:900;">
+        <span>운동 완료 및 저장 ➔</span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Studio Completion Celebration Modal -->
+  <div id="studio-modal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); backdrop-filter:blur(6px); z-index:100; align-items:center; justify-content:center; padding:16px;">
+    <div class="modal-card glow-volt" style="max-width:380px; width:100%; text-align:center; background:#12161F; border:2px solid #CCFF00; border-radius:20px; padding:22px 18px;">
+      <div style="font-size:44px; margin-bottom:8px;">🏆</div>
+      <div style="display:inline-block; background:rgba(0,240,255,0.15); color:#00F0FF; font-size:11px; font-weight:800; padding:3px 10px; border-radius:12px; margin-bottom:6px;">
+        AI VISION CLEAR
+      </div>
+      <h2 style="font-size:22px; font-weight:900; color:#CCFF00; margin-bottom:4px;" id="sm-title">스쿼트 완료!</h2>
+      <p style="font-size:12px; color:#AAA; margin-bottom:14px;">인공지능 비전이 관절 각도를 정밀 판정했습니다.</p>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; background:#08090C; border-radius:12px; padding:12px 8px; margin-bottom:14px;">
+        <div>
+          <div style="font-size:10px; color:#888;">REPS</div>
+          <div style="font-size:17px; font-weight:900; color:#CCFF00;" id="sm-reps">20 REPS</div>
+        </div>
+        <div>
+          <div style="font-size:10px; color:#888;">TIME</div>
+          <div style="font-size:17px; font-weight:900; color:#FFF;" id="sm-time">01:45</div>
+        </div>
+        <div>
+          <div style="font-size:10px; color:#888;">CALORIES</div>
+          <div style="font-size:17px; font-weight:900; color:#00F0FF;" id="sm-cal">18.4 kcal</div>
+        </div>
+      </div>
+
+      <div style="background:rgba(204,255,0,0.08); border:1px solid #CCFF00; border-radius:12px; padding:12px; margin-bottom:16px;">
+        <div style="font-size:11px; font-weight:800; color:#CCFF00; margin-bottom:6px;">즉각 도파민 보상 & 펫 성장</div>
+        <div style="display:flex; justify-content:space-around; align-items:center;">
+          <div>
+            <div style="font-size:18px; font-weight:900; color:#FFF;" id="sm-xp">+160 XP</div>
+            <div style="font-size:9px; color:#888;">펫 경험치</div>
+          </div>
+          <div style="font-size:18px; color:#CCFF00;">+</div>
+          <div>
+            <div style="font-size:18px; font-weight:900; color:#CCFF00;" id="sm-vc">+40 VC</div>
+            <div style="font-size:9px; color:#888;">볼트 코인 획득</div>
+          </div>
+        </div>
+        <div style="margin-top:8px; font-size:11px; font-weight:700; color:#00F0FF;" id="sm-stat">
+          ✨ 지구력(MIGHT) +10 성장!
+        </div>
+      </div>
+
+      <button type="button" class="btn-primary-volt" id="btn-sm-close" style="width:100%; padding:13px; font-size:14px;">
+        <span>보상 수령하고 메인 앱으로 가기 ➔</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Studio Script -->
+  <script type="module">
+    import { MotionTracker, EXERCISE_TYPES } from './motionTracker.js';
+    import { MotionSound } from './motionSound.js';
+    import { FirebaseSandbox } from './firebaseSandbox.js';
+    import { firebaseCloud } from './firebaseClient.js';
+    import { TamagotchiEngine } from './tamagotchi.js';
+
+    class StudioApp {
+      constructor() {
+        this.firebaseSandbox = new FirebaseSandbox();
+        this.currentUserId = localStorage.getItem("RUNNOW_CURRENT_USER_ID") || "user_geonu_ceo";
+        const db = this.firebaseSandbox.getDB();
+        const userDoc = db.users?.[this.currentUserId] || {};
+        const petDoc = db.tamagotchi?.[this.currentUserId] || { name: "댕댕이", petType: "dog", level: 1 };
+
+        this.userProfile = {
+          name: userDoc.displayName || "이건우 대표님",
+          weightKg: userDoc.weightKg || 70,
+          coins: userDoc.coins || 0
+        };
+        this.tamagotchi = new TamagotchiEngine(petDoc);
+        this.motionSound = new MotionSound();
+
+        const videoEl = document.getElementById("studio-video");
+        const canvasEl = document.getElementById("studio-canvas");
+
+        this.motionTracker = new MotionTracker({
+          videoEl,
+          canvasEl,
+          weightKg: this.userProfile.weightKg,
+          onRepCount: (data) => this.handleRep(data),
+          onFeedback: (data) => this.handleFeedback(data),
+          onStateUpdate: (data) => this.handleState(data)
+        });
+
+        this.bindEvents();
+        this.updateMascot();
+      }
+
+      bindEvents() {
+        const carousel = document.getElementById("studio-ex-carousel");
+        const items = carousel.querySelectorAll(".ex-card-item");
+        items.forEach(item => {
+          item.addEventListener("click", () => {
+            if (this.motionTracker.isRunning) {
+              if (!confirm("운동 진행 중입니다. 종목을 변경하시겠습니까?")) return;
+              this.motionTracker.stopCamera();
+              this.restoreIdle();
+            }
+            items.forEach(i => i.classList.remove("active"));
+            item.classList.add("active");
+
+            const exKey = item.dataset.exercise;
+            this.motionTracker.setExercise(exKey);
+
+            const curEx = this.motionTracker.currentExercise;
+            document.getElementById("studio-target-title").textContent = `${curEx.name} 트레이닝`;
+            document.getElementById("studio-target-desc").textContent = curEx.description;
+            document.getElementById("studio-hud-icon").textContent = curEx.icon;
+            document.getElementById("studio-hud-name").textContent = curEx.name.replace("AI ", "");
+            document.getElementById("studio-stat-label").textContent = `${curEx.targetStat.toUpperCase()} GAIN`;
+            this.updateMascot();
+          });
+        });
+
+        // Start Camera
+        const btnStart = document.getElementById("btn-studio-start");
+        btnStart.addEventListener("click", async () => {
+          btnStart.disabled = true;
+          btnStart.textContent = "AI 비전 로딩 중...";
+          try {
+            this.motionSound.ensureAudioUnlocked();
+            await this.motionTracker.startCamera(
+              document.getElementById("studio-video"),
+              document.getElementById("studio-canvas")
+            );
+            document.getElementById("studio-standby-overlay").style.display = "none";
+            document.getElementById("studio-active-controls").style.display = "flex";
+            this.motionSound.speakCoaching(`${this.motionTracker.currentExercise.name} 트레이닝을 시작합니다.`);
+          } catch (e) {
+            alert(`카메라 연결 오류: ${e.message}\n브라우저 카메라 권한을 허용해 주세요.`);
+            document.getElementById("studio-standby-overlay").style.display = "flex";
+          } finally {
+            btnStart.disabled = false;
+            btnStart.textContent = "⚡ AI 카메라 트레이닝 시작";
+          }
+        });
+
+        // Skeleton Overlay Toggle
+        const btnSkeleton = document.getElementById("btn-skeleton-toggle");
+        if (btnSkeleton) {
+          btnSkeleton.addEventListener("click", () => {
+            const isVisible = this.motionTracker.toggleSkeletonOverlay();
+            btnSkeleton.textContent = isVisible ? "👁️" : "🕶️";
+            btnSkeleton.style.color = isVisible ? "#CCFF00" : "#888";
+            btnSkeleton.style.borderColor = isVisible ? "#CCFF00" : "rgba(255,255,255,0.15)";
+          });
+        }
+
+        // Sound Toggle
+        const btnSound = document.getElementById("btn-sound-toggle");
+        btnSound.addEventListener("click", () => {
+          const isMuted = btnSound.textContent.trim() === "🔇";
+          btnSound.textContent = isMuted ? "🔊" : "🔇";
+          this.motionSound.setSoundEnabled(isMuted);
+          this.motionSound.setTtsEnabled(isMuted);
+        });
+
+        // Camera Flip
+        const btnFlip = document.getElementById("btn-camera-flip");
+        btnFlip.addEventListener("click", () => {
+          this.motionTracker.toggleCamera();
+        });
+
+        // Pause
+        const btnPause = document.getElementById("btn-studio-pause");
+        btnPause.addEventListener("click", () => {
+          if (this.motionTracker.isRunning) {
+            this.motionTracker.isRunning = false;
+            btnPause.textContent = "이어하기";
+          } else {
+            this.motionTracker.isRunning = true;
+            this.motionTracker.predictWebcamLoop();
+            btnPause.textContent = "일시정지";
+          }
+        });
+
+        // Finish
+        const btnFinish = document.getElementById("btn-studio-finish");
+        btnFinish.addEventListener("click", () => {
+          this.finishWorkout();
+        });
+
+        // Modal Close
+        const btnSmClose = document.getElementById("btn-sm-close");
+        btnSmClose.addEventListener("click", () => {
+          window.location.href = "index.html";
+        });
+      }
+
+      updateMascot() {
+        const petIcon = this.tamagotchi.petType === "cat" ? "🐱" : "🐶";
+        const petName = this.tamagotchi.name || "댕댕이";
+        document.getElementById("studio-mascot-icon").textContent = petIcon;
+        document.getElementById("studio-mascot-name").textContent = `파트너 ${petName}`;
+        document.getElementById("studio-mascot-speech").textContent = `"${this.userProfile.name}, 멋진 ${this.motionTracker.currentExercise.name}로 도파민을 채워봐요! 🔥"`;
+      }
+
+      handleRep(data) {
+        this.motionSound.playRepBeep(data.reps);
+        this.motionSound.speakRep(data.reps);
+
+        const repEl = document.getElementById("studio-live-reps");
+        repEl.textContent = data.reps;
+        repEl.classList.remove("pop-anim");
+        void repEl.offsetWidth;
+        repEl.classList.add("pop-anim");
+
+        const speechEl = document.getElementById("studio-mascot-speech");
+        if (data.reps === 1) {
+          speechEl.textContent = `"첫 번째 횟수 성공! 나이스 스타트! 🔥"`;
+        } else if (data.reps % 5 === 0) {
+          speechEl.textContent = `"${data.reps}회 돌파! 대단합니다 대표님! ✨"`;
+        }
+      }
+
+      handleFeedback(data) {
+        const pill = document.getElementById("studio-coaching-pill");
+        if (data.text) {
+          pill.style.display = "block";
+          pill.textContent = data.text;
+          pill.style.color = data.isGood ? "#CCFF00" : "#FF7043";
+          pill.style.borderColor = data.isGood ? "#CCFF00" : "#FF5722";
+        }
+      }
+
+      handleState(data) {
+        document.getElementById("studio-hud-angle").textContent = `${data.angle}°`;
+        document.getElementById("studio-depth-bar").style.width = `${data.depthProgress}%`;
+
+        const mins = Math.floor(data.elapsedSeconds / 60);
+        const secs = data.elapsedSeconds % 60;
+        document.getElementById("studio-time").textContent = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+        document.getElementById("studio-calories").textContent = data.calories.toFixed(1);
+        document.getElementById("studio-stat-gain").textContent = `+${Math.round(data.reps * (data.exercise.statGain[data.exercise.targetStat] || 1) / 2)}`;
+      }
+
+      finishWorkout() {
+        const summary = this.motionTracker.getWorkoutSummary();
+        this.motionTracker.stopCamera();
+
+        if (summary.reps <= 0) {
+          alert("최소 1회 이상 완료해야 저장됩니다.");
+          this.restoreIdle();
+          return;
+        }
+
+        this.motionSound.playFinishFanfare();
+
+        this.tamagotchi.addXp(summary.xpGained);
+        this.userProfile.coins += summary.vcGained;
+
+        if (summary.statIncreases.might) this.tamagotchi.might = (this.tamagotchi.might || 10) + summary.statIncreases.might;
+        if (summary.statIncreases.agility) this.tamagotchi.agility = (this.tamagotchi.agility || 10) + summary.statIncreases.agility;
+        if (summary.statIncreases.spirit) this.tamagotchi.spirit = (this.tamagotchi.spirit || 10) + summary.statIncreases.spirit;
+
+        const payload = {
+          exerciseType: summary.exerciseId,
+          exerciseName: summary.exerciseName,
+          reps: summary.reps,
+          durationSec: summary.durationSec,
+          calories: summary.calories,
+          xpGained: summary.xpGained,
+          vcGained: summary.vcGained,
+          statIncreases: summary.statIncreases,
+          workoutCategory: "ai_motion",
+          createdAt: summary.timestamp
+        };
+
+        this.firebaseSandbox.addWorkoutLog(this.currentUserId, payload);
+        this.firebaseSandbox.setDoc("tamagotchi", this.currentUserId, this.tamagotchi.toJSON());
+        firebaseCloud.saveWorkout(this.currentUserId, payload);
+        firebaseCloud.syncTamagotchi(this.currentUserId, this.tamagotchi.toJSON());
+
+        // Show Modal
+        const mins = Math.floor(summary.durationSec / 60);
+        const secs = summary.durationSec % 60;
+        document.getElementById("sm-title").textContent = `${summary.exerciseName} 완벽 완수!`;
+        document.getElementById("sm-reps").textContent = `${summary.reps} REPS`;
+        document.getElementById("sm-time").textContent = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+        document.getElementById("sm-cal").textContent = `${summary.calories} kcal`;
+        document.getElementById("sm-xp").textContent = `+${summary.xpGained} XP`;
+        document.getElementById("sm-vc").textContent = `+${summary.vcGained} VC`;
+
+        const parts = [];
+        if (summary.statIncreases.might) parts.push(`지구력 +${summary.statIncreases.might}`);
+        if (summary.statIncreases.agility) parts.push(`민첩성 +${summary.statIncreases.agility}`);
+        if (summary.statIncreases.spirit) parts.push(`정신력 +${summary.statIncreases.spirit}`);
+        document.getElementById("sm-stat").textContent = `✨ ${parts.join(" · ")} 성장 달성!`;
+
+        document.getElementById("studio-modal").style.display = "flex";
+      }
+
+      restoreIdle() {
+        document.getElementById("studio-standby-overlay").style.display = "flex";
+        document.getElementById("studio-active-controls").style.display = "none";
+        document.getElementById("studio-live-reps").textContent = "0";
+        document.getElementById("studio-depth-bar").style.width = "0%";
+        document.getElementById("studio-time").textContent = "00:00";
+        document.getElementById("studio-calories").textContent = "0.0";
+        document.getElementById("studio-stat-gain").textContent = "+0";
+        document.getElementById("studio-coaching-pill").style.display = "none";
+        this.motionTracker.resetExerciseStats();
+        this.updateMascot();
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      new StudioApp();
+    });
+  </script>
+</body>
+</html>

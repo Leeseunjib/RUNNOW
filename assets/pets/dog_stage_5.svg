@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+    <defs>
+      <linearGradient id="bgGradD5" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#FFF9C4"/>
+        <stop offset="100%" stop-color="#FFE082"/>
+      </linearGradient>
+    </defs>
+    <circle cx="250" cy="250" r="235" fill="url(#bgGradD5)" stroke="#FFA000" stroke-width="4"/>
+
+    <!-- Laurel Wreath & Champion Stars -->
+    <path d="M 100 220 Q 90 120 250 90 Q 410 120 400 220" fill="none" stroke="#4CAF50" stroke-width="14" stroke-linecap="round"/>
+    <polygon points="250,55 258,72 276,75 263,88 266,106 250,97 234,106 237,88 224,75 242,72" fill="#FFD700" stroke="#B8860B" stroke-width="3"/>
+
+    <!-- Golden Champion Cape -->
+    <path d="M 150 260 Q 250 220 350 260 L 390 440 Q 250 470 110 440 Z" fill="#FF9800" stroke="#E65100" stroke-width="6"/>
+
+    <!-- Ears -->
+    <path d="M 140 140 Q 90 180 105 260 Q 130 280 160 240 Z" fill="#E6A15C" stroke="#333333" stroke-width="7"/>
+    <path d="M 360 140 Q 410 180 395 260 Q 370 280 340 240 Z" fill="#E6A15C" stroke="#333333" stroke-width="7"/>
+
+    <!-- Dog Body & Head -->
+    <ellipse cx="250" cy="340" rx="140" ry="110" fill="#F5C082" stroke="#333333" stroke-width="8"/>
+    <circle cx="250" cy="190" r="115" fill="#F5C082" stroke="#333333" stroke-width="8"/>
+
+    <!-- Joyful Radiant Eyes -->
+    <ellipse cx="195" cy="175" rx="20" ry="24" fill="#3E2723"/>
+    <circle cx="188" cy="167" r="8" fill="#FFFFFF"/>
+    <circle cx="204" cy="184" r="4" fill="#FFFFFF"/>
+
+    <ellipse cx="305" cy="175" rx="20" ry="24" fill="#3E2723"/>
+    <circle cx="298" cy="167" r="8" fill="#FFFFFF"/>
+    <circle cx="314" cy="184" r="4" fill="#FFFFFF"/>
+
+    <!-- Smiling Mouth with Cute Tongue -->
+    <ellipse cx="250" cy="215" rx="45" ry="32" fill="#FFF3E0" stroke="#333333" stroke-width="5"/>
+    <ellipse cx="250" cy="200" rx="16" ry="12" fill="#2E1C0C"/>
+    <path d="M 240 228 Q 250 258 260 228 Z" fill="#FF5252" stroke="#333" stroke-width="3"/>
+
+    <!-- Grand Trophy / Championship Crest -->
+    <circle cx="250" cy="335" r="32" fill="#FFD700" stroke="#B8860B" stroke-width="5"/>
+    <text x="250" y="346" font-family="sans-serif" font-weight="900" font-size="30" fill="#B8860B" text-anchor="middle">🏆</text>
+  </svg>

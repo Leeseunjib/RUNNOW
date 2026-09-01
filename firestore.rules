@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // users/{userId}: uid, displayName, age, gender, heightCm, weightKg, coins, onboarded
+    // tamagotchi/{userId}: petType, petChosen, name, level, xp, totalKm, hunger, happiness, energy
+    // challenges_progress/{userId}: completedDays, currentDay, streak, habitCue
+    // workouts/{workoutId}: userId, distanceKm, calories, elapsedSeconds, workoutCategory
+    // ===============================================================
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isValidUser() {
+      return request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasAll(['uid', 'displayName']);
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidUser();
+      allow delete: if false;
+    }
+
+    match /tamagotchi/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /challenges_progress/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /workouts/{workoutId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+  }
+}

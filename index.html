@@ -7,14 +7,14 @@
   
   <!-- PWA & Mobile Web App Meta -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#08090C">
+  <meta name="theme-color" content="#00C73C">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="RUNNOW">
   <link rel="apple-touch-icon" href="assets/hero_mascot.jpg">
   <link rel="icon" type="image/jpeg" href="assets/hero_mascot.jpg">
 
-  <link rel="stylesheet" href="styles.css?v=3.0">
+  <link rel="stylesheet" href="styles.css?v=4.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
@@ -22,34 +22,32 @@
 <body>
   <div class="app-viewport">
 
-    <!-- STEP 1: Fullscreen Auth Page (Google / Email Only + Large Supreme Hero Mascot) -->
+    <!-- STEP 1: Fullscreen Auth Page -->
     <div id="view-auth" class="view-auth">
       
       <!-- Top Branding -->
-      <div class="auth-brand">
-        <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(204,255,0,0.15); border:1px solid rgba(204,255,0,0.4); padding:4px 12px; border-radius:20px; margin-bottom:6px;">
-          <span style="background:var(--primary-volt); color:#000; font-size:10px; font-weight:900; padding:1px 5px; border-radius:4px;">NRC</span>
-          <span style="color:var(--primary-volt); font-size:11px; font-weight:800; letter-spacing:1px;">KINETIC RUNNER</span>
+      <div class="auth-brand" style="text-align:center; margin-bottom:16px;">
+        <div style="display:inline-flex; align-items:center; gap:6px; background:var(--primary-accent-subtle); border:1px solid var(--border-card); padding:4px 12px; border-radius:20px; margin-bottom:8px;">
+          <span style="background:var(--primary-accent); color:var(--primary-accent-text); font-size:10px; font-weight:900; padding:2px 6px; border-radius:4px;">RUN</span>
+          <span style="color:var(--primary-accent); font-size:11px; font-weight:800; letter-spacing:0.5px;">WEBTOON RUNNER</span>
         </div>
-        <h1>
-          RUN<span style="color:var(--primary-volt);">NOW</span>
+        <h1 style="font-size:28px; font-weight:900; color:var(--text-main); margin-bottom:4px;">
+          RUN<span style="color:var(--primary-accent);">NOW</span>
         </h1>
-        <p style="font-size:12px; color:var(--text-muted); font-weight:500;">
-          달리는 만큼 진화하는 나만의 사이버 펫 러닝
+        <p style="font-size:13px; color:var(--text-sub); font-weight:600;">
+          달리는 만큼 함께 자라는 나만의 귀여운 웹툰 펫 러닝
         </p>
       </div>
 
-      <div class="auth-mascot">
-        <div class="auth-mascot-aura"></div>
-        <div class="auth-mascot-img">
-          <img src="assets/hero_mascot.jpg" alt="Supreme Cyber Runner Mascot">
+      <div class="auth-mascot" style="text-align:center; margin-bottom:20px;">
+        <div class="auth-mascot-img" style="width:170px; height:170px; margin:0 auto; border-radius:50%; overflow:hidden; border:4px solid var(--primary-accent); box-shadow:var(--card-shadow-hover);">
+          <img src="assets/pets/dog_stage_1.jpg" alt="귀여운 아기 댕댕이" style="width:100%; height:100%; object-fit:cover;">
         </div>
-        <div class="auth-mascot-badge">⚡ FINAL FORM : CYBERWOLF</div>
+        <div style="display:inline-block; margin-top:8px; background:var(--primary-accent-subtle); color:var(--primary-accent); font-size:11px; font-weight:800; padding:3px 10px; border-radius:12px;">🐶 귀여운 웹툰 댕댕이와 함께 달려요!</div>
       </div>
 
-      <!-- Auth Card (3 Action Buttons: Google Login / Email Sign-Up / Email Login) -->
+      <!-- Auth Card -->
       <div class="auth-card">
-        
         <!-- Button 1: Google Sign In -->
         <button type="button" id="btn-page-google-login" style="width:100%; padding:14px; font-size:15px; font-weight:800; border-radius:12px; background:#ffffff; color:#050505; border:none; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; box-shadow:0 4px 15px rgba(255,255,255,0.15); transition:transform 0.1s;">
           <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
@@ -62,8 +60,13 @@
         </button>
 
         <!-- Button 3: Email Sign-Up -->
-        <button type="button" class="btn-secondary" id="btn-open-email-signup" style="width:100%; padding:13px; font-size:14px; font-weight:700; color:var(--text-white); border-color:rgba(255,255,255,0.2);">
+        <button type="button" class="btn-secondary" id="btn-open-email-signup" style="width:100%; padding:13px; font-size:14px; font-weight:700;">
           <span>⚡ 이메일로 회원가입</span>
+        </button>
+
+        <!-- Button 4: Guest Direct Login -->
+        <button type="button" id="btn-quick-guest-login" style="width:100%; padding:10px; font-size:12px; font-weight:600; background:transparent; border:1px solid rgba(255,255,255,0.15); color:var(--text-muted); border-radius:10px; cursor:pointer;">
+          <span>👤 게스트로 먼저 둘러보기</span>
         </button>
 
         <div style="margin-top:4px; font-size:11px; color:var(--text-muted);">
@@ -113,15 +116,14 @@
       </div>
     </div>
 
-    <!-- Dedicated Google Account Selection Modal (Instant & Reliable) -->
+    <!-- Dedicated Google Account Selection Modal -->
     <div id="google-account-modal" class="modal-overlay" style="display:none;">
       <div class="modal-card" style="max-width:380px; text-align:left; background:#12161F; border:1px solid rgba(255,255,255,0.15); border-radius:20px; padding:22px 18px;">
         
-        <!-- Google Header -->
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:12px;">
           <div style="display:flex; align-items:center; gap:8px;">
             <svg width="22" height="22" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-            <strong style="font-size:15px; color:#fff;">Google 계정 선택</strong>
+            <strong style="font-size:15px; color:var(--text-main);">Google 계정 선택</strong>
           </div>
           <button type="button" id="btn-close-google-modal" style="background:none; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;">✕</button>
         </div>
@@ -130,44 +132,40 @@
           RUNNOW에 로그인할 Google 계정을 선택해 주세요.
         </p>
 
-        <!-- Account List Item 1: CEO Account (One-click) -->
+        <!-- CEO Account -->
         <button type="button" id="btn-google-account-ceo" style="width:100%; display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--surface-elevated); border:1px solid rgba(0,240,255,0.3); border-radius:12px; margin-bottom:10px; cursor:pointer; text-align:left; transition:background 0.2s;">
           <div style="width:36px; height:36px; border-radius:50%; background:#4285F4; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px;">
             G
           </div>
           <div style="flex:1;">
-            <div style="font-size:13px; font-weight:800; color:#fff;">이건우 대표님</div>
+            <div style="font-size:13px; font-weight:800; color:var(--text-main);">이건우 대표님</div>
             <div style="font-size:11px; color:var(--cyber-cyan);">dnswlq456@gmail.com</div>
           </div>
           <span style="color:var(--primary-volt); font-size:18px;">➔</span>
         </button>
 
-        <!-- Account List Item 2: Custom Google Account Input -->
+        <!-- Custom Google Account -->
         <div style="background:var(--surface-elevated); border:1px solid var(--border-glass); border-radius:12px; padding:12px 14px; margin-bottom:14px;">
           <div style="font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:8px;">➕ 다른 Google 계정으로 로그인</div>
           <input type="email" id="google-custom-email" placeholder="google_account@gmail.com" class="form-input" style="width:100%; padding:9px; font-size:12px; margin-bottom:8px;">
           <input type="text" id="google-custom-name" placeholder="이름 (예: 홍길동)" class="form-input" style="width:100%; padding:9px; font-size:12px; margin-bottom:8px;">
           <button type="button" class="btn-primary-volt" id="btn-google-custom-submit" style="width:100%; padding:10px; font-size:12px;">
-            <span>이 Google 계정으로 계속하기</span>
+            <span>이 계정으로 로그인</span>
           </button>
-        </div>
-
-        <div style="font-size:10px; color:var(--text-muted); text-align:center;">
-          🔒 Google OAuth 2.0 보안 정책에 따라 12시간 동안 안전하게 연결됩니다.
         </div>
       </div>
     </div>
 
     <!-- STEP 2: Body Stats, Diet & Fitness Goal Onboarding View -->
-    <div id="view-onboarding" style="display:none; flex-direction:column; justify-content:space-between; min-height:100vh; padding:25px 18px; text-align:left; background:radial-gradient(circle at 50% 10%, rgba(0,240,255,0.12) 0%, #050505 70%);">
+    <div id="view-onboarding" class="view-onboarding">
       
       <!-- Top Step Indicator -->
       <div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <span style="font-size:11px; font-weight:800; color:var(--cyber-cyan); background:rgba(0,240,255,0.15); padding:3px 8px; border-radius:12px;">STEP 2 / 2</span>
+          <span style="font-size:11px; font-weight:800; color:var(--cyber-cyan); background:rgba(0,240,255,0.15); padding:3px 8px; border-radius:12px;">STEP 2 / 3</span>
           <span style="font-size:11px; color:var(--text-muted);">러너 맞춤형 신체 분석</span>
         </div>
-        <h2 style="font-size:22px; font-weight:900; margin-bottom:4px; color:#fff;">
+        <h2 style="font-size:22px; font-weight:900; margin-bottom:4px; color:var(--text-main);">
           인체 스펙 & <span style="color:var(--primary-volt);">다이어트 목표</span>
         </h2>
         <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">
@@ -205,7 +203,7 @@
             </div>
           </div>
           <!-- BMI / BMR Card -->
-          <div style="background:#08090C; border:1px solid rgba(0,240,255,0.25); border-radius:10px; padding:10px; display:grid; grid-template-columns:1fr 1fr; gap:8px; text-align:center;">
+          <div style="background:var(--surface-elevated); border:1px solid var(--border-card); border-radius:10px; padding:10px; display:grid; grid-template-columns:1fr 1fr; gap:8px; text-align:center;">
             <div>
               <div style="font-size:10px; color:var(--text-muted);">예상 BMI 지수</div>
               <div style="font-size:16px; font-weight:900; color:var(--cyber-cyan);" id="ob-calc-bmi">22.9 (정상)</div>
@@ -217,25 +215,24 @@
           </div>
         </div>
 
-        <!-- 3. Diet & Fitness Goal (목표 선택) -->
+        <!-- 3. Diet & Fitness Goal -->
         <div style="background:var(--surface-carbon); border:1px solid var(--border-glass); border-radius:14px; padding:14px;">
           <label style="font-size:12px; font-weight:800; color:var(--primary-volt); margin-bottom:8px; display:block;">3. 다이어트 및 러닝 목표</label>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px;" id="ob-goals-grid">
-            <div class="ob-goal-card active" data-goal="DIET" style="padding:10px; border-radius:8px; background:var(--surface-elevated); border:1px solid var(--primary-volt); color:#fff; cursor:pointer; font-size:11px; text-align:center;">
+            <div class="ob-goal-card active" data-goal="DIET" style="padding:10px; border-radius:8px; background:var(--surface-elevated); border:1px solid var(--primary-accent); color:var(--text-main); cursor:pointer; font-size:11px; text-align:center;">
               🔥 <strong>체지방 감량</strong><br><span style="font-size:9px; color:var(--primary-volt);">다이어트 & 칼로리 버닝</span>
             </div>
-            <div class="ob-goal-card" data-goal="MARATHON" style="padding:10px; border-radius:8px; background:var(--surface-elevated); border:1px solid var(--border-glass); color:#fff; cursor:pointer; font-size:11px; text-align:center;">
+            <div class="ob-goal-card" data-goal="MARATHON" style="padding:10px; border-radius:8px; background:var(--surface-elevated); border:1px solid var(--border-card); color:var(--text-main); cursor:pointer; font-size:11px; text-align:center;">
               🏃 <strong>5km 완주</strong><br><span style="font-size:9px; color:var(--text-muted);">지구력 & 페이스업</span>
             </div>
-            <div class="ob-goal-card" data-goal="FITNESS" style="padding:10px; border-radius:8px; background:var(--surface-elevated); border:1px solid var(--border-glass); color:#fff; cursor:pointer; font-size:11px; text-align:center;">
+            <div class="ob-goal-card" data-goal="FITNESS" style="padding:10px; border-radius:8px; background:var(--surface-elevated); border:1px solid var(--border-card); color:var(--text-main); cursor:pointer; font-size:11px; text-align:center;">
               ⚡ <strong>기초 체력</strong><br><span style="font-size:9px; color:var(--text-muted);">심폐 강화 & 활력</span>
             </div>
-            <div class="ob-goal-card" data-goal="HABIT" style="padding:10px; border-radius:8px; background:var(--surface-elevated); border:1px solid var(--border-glass); color:#fff; cursor:pointer; font-size:11px; text-align:center;">
+            <div class="ob-goal-card" data-goal="HABIT" style="padding:10px; border-radius:8px; background:var(--surface-elevated); border:1px solid var(--border-card); color:var(--text-main); cursor:pointer; font-size:11px; text-align:center;">
               🧠 <strong>습관 형성</strong><br><span style="font-size:9px; color:var(--text-muted);">21일 도파민 루틴</span>
             </div>
           </div>
 
-          <!-- Goal Target Weight -->
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
             <div>
               <span style="font-size:10px; color:var(--text-muted);">목표 체중 (kg)</span>
@@ -243,7 +240,7 @@
             </div>
             <div>
               <span style="font-size:10px; color:var(--text-muted);">주간 운동 빈도</span>
-              <select id="ob-frequency" class="form-input" style="width:100%; padding:8px; font-size:12px; background:#08090C;">
+              <select id="ob-frequency" class="form-input" style="width:100%; padding:8px; font-size:12px;">
                 <option value="3">주 3회 (권장)</option>
                 <option value="5">주 5회 (파워)</option>
                 <option value="7">매일 챌린지</option>
@@ -252,466 +249,735 @@
           </div>
         </div>
 
-        <!-- 4. Habit Stacking Cue (습관 트리거 단서) -->
+        <!-- 4. Habit Stacking Cue -->
         <div style="background:var(--surface-carbon); border:1px solid var(--border-glass); border-radius:14px; padding:14px;">
-          <label style="font-size:12px; font-weight:800; color:var(--primary-volt); margin-bottom:4px; display:block;">4. 나만의 습관 연결 단서 (Habit Cue)</label>
-          <p style="font-size:10px; color:var(--text-muted); margin-bottom:8px;">특정 일상 행동 뒤에 러닝을 연결하면 성공 확률이 3배 높아집니다.</p>
-          <input type="text" id="ob-habit-cue" value="퇴근 후 현관에서 러닝화 신고 바로 출발" class="form-input" style="width:100%; padding:10px; font-size:12px; color:var(--primary-volt); font-weight:700;">
+          <label style="font-size:12px; font-weight:800; color:var(--primary-volt); margin-bottom:6px; display:block;">4. 나의 러닝 습관 연결 고리 (Cue)</label>
+          <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">
+            기존 일상 직후에 즉시 러닝화를 신는 트리거 문장을 설정하세요.
+          </p>
+          <input type="text" id="ob-habit-cue" value="퇴근 후 현관에서 러닝화 신고 바로 출발" class="form-input" style="width:100%; padding:9px; font-size:12px;">
         </div>
 
       </div>
 
-      <!-- Save and Enter Main App -->
-      <div style="margin-top:14px;">
-        <button type="button" class="btn-primary-volt" id="btn-save-onboarding" style="width:100%; padding:14px; font-size:15px; font-weight:800;">
-          <span>⚡ 설정 저장하고 메인 홈으로 시작하기 ➔</span>
+      <!-- Onboarding Submit Button -->
+      <div style="margin-top:16px;">
+        <button type="button" class="btn-primary-volt" id="btn-submit-onboarding" style="width:100%; padding:14px; font-size:15px; font-weight:900;">
+          <span>설정 완료하고 파트너 선택하기 ➔</span>
         </button>
       </div>
 
     </div>
 
-    <!-- Main App Container (Visible when Authenticated & Onboarded) -->
-    <div id="main-app-container" style="display:none; flex-direction:column;">
-      
-      <!-- Top Global Header -->
+    <!-- STEP 3: 강아지 vs 고양이 파트너 선택 전용 페이지 -->
+    <div id="view-pet-select" class="view-pet-select">
+      <div>
+        <div class="ps-step-row">
+          <span class="ps-step-badge">STEP 3 / 3</span>
+          <span class="ps-step-hint">한 번 고르면 그 친구를 키웁니다</span>
+        </div>
+        <h2 class="ps-title">함께 달릴 <span>파트너</span>를 고르세요</h2>
+        <p class="ps-desc">강아지 또는 고양이 중 한 친구를 선택하면, 러닝과 함께 그 펫이 자랍니다.</p>
+      </div>
+
+      <div class="ps-card-grid" id="ps-card-grid">
+        <button type="button" class="ps-card" data-pet="dog" id="ps-card-dog">
+          <img src="./assets/pets/dog_stage_1.jpg" alt="아기 댕댕이" class="ps-card-img">
+          <strong class="ps-card-name">🐶 댕댕이</strong>
+          <span class="ps-card-role">근지구력 &amp; 파워 특화</span>
+          <span class="ps-card-tag">장거리 러닝과 함께 든든하게 자랍니다</span>
+        </button>
+        <button type="button" class="ps-card" data-pet="cat" id="ps-card-cat">
+          <img src="./assets/pets/cat_stage_1.jpg" alt="아기 냥냥이" class="ps-card-img">
+          <strong class="ps-card-name">🐱 냥냥이</strong>
+          <span class="ps-card-role">스피드 &amp; 민첩성 특화</span>
+          <span class="ps-card-tag">빠른 페이스와 함께 날렵하게 자랍니다</span>
+        </button>
+      </div>
+
+      <button type="button" class="btn-primary-volt" id="btn-confirm-pet" disabled>
+        <span id="btn-confirm-pet-label">파트너를 먼저 선택해 주세요</span>
+      </button>
+    </div>
+
+    <!-- STEP 4: Main App Container (Sticky Top Bar + Active Tab View + Bottom Nav) -->
+    <div id="main-app-container" style="display:none; flex-direction:column; min-height:100vh;">
+
+      <!-- Top Sticky App Header -->
       <header class="app-header">
         <div class="brand-logo">
-          <span class="brand-badge">NRC</span>
-          <span class="brand-title">RUNNOW</span>
+          <span class="brand-badge">RUN</span>
+          <span class="brand-title">RUN<span>NOW</span></span>
         </div>
         <div class="user-status-pill">
-          <button id="btn-open-login" style="background:var(--surface-carbon); border:1px solid var(--border-glass); color:var(--text-main); font-size:11px; font-weight:700; padding:4px 8px; border-radius:14px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+          <!-- Mobile Phone Connection Modal Button -->
+          <button id="btn-open-login" style="background:var(--surface-elevated); border:1px solid var(--border-card); color:var(--text-main); font-size:11px; font-weight:700; padding:4px 8px; border-radius:14px; display:flex; align-items:center; gap:4px; cursor:pointer;">
             <span id="header-user-icon">👤</span>
             <span id="header-user-name">이건우 대표님</span>
           </button>
-          <div class="coin-badge" id="header-coins">⚡ 0 VC</div>
-          <div class="coin-badge" id="header-level" style="color:#00F0FF; border-color:rgba(0,240,255,0.3)">Lv. 1</div>
+          <div class="coin-badge" id="header-coins">🪙 0 VC</div>
+          <div class="coin-badge" id="header-level" style="color:var(--primary-accent); border-color:var(--border-card);">Lv. 1</div>
         </div>
       </header>
 
-    <!-- Tab 1: Live Run (NRC GPS HUD) -->
-    <section id="tab-run" class="tab-pane active">
-      <div class="nrc-card glow-volt live-run-hero">
-        <div class="card-label">LIVE GPS RUNNER</div>
+      <!-- Theme Selector Quick Bar -->
+      <div class="theme-selector-bar" id="app-theme-bar">
+        <button type="button" class="theme-btn active" data-theme-val="webtoon">🟢 웹툰 에디션</button>
+        <button type="button" class="theme-btn" data-theme-val="minimal">⚪ 모던 미니멀</button>
+        <button type="button" class="theme-btn" data-theme-val="forest">🌲 내추럴 포레스트</button>
+        <button type="button" class="theme-btn" data-theme-val="pastel">🌸 소프트 파스텔</button>
+      </div>
+
+      <!-- TAB PANES (5 TABS) -->
+      <main class="app-main-content">
         
-        <!-- 실시간 정밀 거리 메트릭 서클 -->
-        <div class="metric-circle" id="metric-circle">
-          <div class="main-distance-num" id="live-distance">0</div>
-          <div class="main-distance-unit" id="live-distance-unit">METERS (m)</div>
-          <div id="live-distance-sub" style="font-size:13px; color:var(--cyber-cyan); font-weight:800; margin-top:4px; letter-spacing:0.5px;">0.000 km</div>
-          <div class="gps-badge" id="live-gps-accuracy">🛰️ 실시간 GPS 대기중</div>
-        </div>
+        <!-- Tab 1: Exercise catalog + GPS run + camera pose pages -->
+        <section id="tab-run" class="tab-pane active">
 
-        <!-- 3대 러닝 메트릭 그리드 (페이스, 시간, 칼로리) -->
-        <div class="hud-grid">
-          <div class="hud-item">
-            <div class="hud-val" id="live-pace">--'--"</div>
-            <div class="hud-lbl">AVG PACE (1km 소요)</div>
-          </div>
-          <div class="hud-item">
-            <div class="hud-val" id="live-time">00:00</div>
-            <div class="hud-lbl">TIME (러닝 시간)</div>
-          </div>
-          <div class="hud-item">
-            <div class="hud-val" id="live-calories">0</div>
-            <div class="hud-lbl">CALORIES (kcal)</div>
-          </div>
-        </div>
-
-        <!-- 페이스 가이드 팁 안내바 -->
-        <div style="font-size:11px; color:var(--text-muted); background:rgba(255,255,255,0.03); border:1px solid var(--border-glass); border-radius:8px; padding:6px 10px; margin-bottom:14px; text-align:center;">
-          💡 <strong>AVG PACE</strong>: 1km를 달리는 데 걸리는 시간 (예: 5'30" = 1km당 5분 30초)
-        </div>
-
-        <!-- Mini Tamagotchi status during run -->
-        <div style="display:flex; align-items:center; justify-content:center; gap:10px; background:var(--surface-elevated); padding:10px; border-radius:12px; margin-bottom:15px; border:1px solid var(--border-glass);">
-          <div id="mini-tamagotchi-icon" style="font-size:24px;">🥚</div>
-          <div style="font-size:12px; text-align:left;">
-            <strong id="mini-tamagotchi-name">볼트몽 (누적 0m)</strong>
-            <div style="color:var(--primary-volt); font-size:11px;" id="mini-tamagotchi-msg">"첫 번째 러닝을 시작해 볼트를 부화시키세요!"</div>
-          </div>
-        </div>
-
-        <div id="run-init-controls">
-          <button class="btn-primary-volt" id="btn-start-live">
-            <span>⚡ REAL GPS RUN START</span>
-          </button>
-        </div>
-
-        <div class="run-controls" id="run-active-controls" style="display:none; flex-wrap:wrap;">
-          <button class="btn-secondary" id="btn-pause-run">일시정지</button>
-          <button class="btn-primary-volt" id="btn-stop-run" style="background:#FF5722; color:#fff;">완주 및 기록 저장</button>
-          <button type="button" class="btn-secondary" id="btn-discard-run" style="width:100%; padding:11px; font-size:13px; font-weight:700; color:#FF5722; border-color:rgba(255,87,34,0.4);">
-            <span>🔄 새로고침 (기록 없이 취소)</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Tab 2: Tamagotchi Evolution -->
-    <section id="tab-tamagotchi" class="tab-pane">
-      <div class="nrc-card glow-volt tamagotchi-stage">
-        <div class="card-label">TAMAGOTCHI EVOLUTION & PHYSIOLOGY</div>
-        <div class="t-avatar-box" id="t-avatar-container">
-          <!-- Dynamic SVG inserted by JS -->
-        </div>
-        <div class="t-name-badge" id="t-display-name">볼트몽</div>
-        <div class="t-stage-pill" id="t-stage-pill">Phase 3: 어반 러너 (20km+)</div>
-        <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px;" id="t-tagline">바람을 가르는 날렵한 도심의 질주자</p>
-
-        <!-- Physiology 3-Pill Grid (NotebookLM Research: Physiology replaces XP) -->
-        <div class="physio-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:18px;">
-          <div class="physio-card" style="background:var(--surface-elevated); border:1px solid rgba(255,87,34,0.3); border-radius:10px; padding:8px 6px; text-align:center;">
-            <div style="font-size:11px; color:#FF7043; font-weight:800;">MIGHT (지구력)</div>
-            <div style="font-size:16px; font-weight:900; color:#fff;" id="stat-might">45</div>
-            <div style="font-size:9px; color:var(--text-muted);">장거리 러닝 누적</div>
-          </div>
-          <div class="physio-card" style="background:var(--surface-elevated); border:1px solid rgba(204,255,0,0.3); border-radius:10px; padding:8px 6px; text-align:center;">
-            <div style="font-size:11px; color:var(--primary-volt); font-weight:800;">AGILITY (스피드)</div>
-            <div style="font-size:16px; font-weight:900; color:#fff;" id="stat-agility">52</div>
-            <div style="font-size:9px; color:var(--text-muted);">페이스 속도 비례</div>
-          </div>
-          <div class="physio-card" style="background:var(--surface-elevated); border:1px solid rgba(0,240,255,0.3); border-radius:10px; padding:8px 6px; text-align:center;">
-            <div style="font-size:11px; color:var(--cyber-cyan); font-weight:800;">SPIRIT (정신력)</div>
-            <div style="font-size:16px; font-weight:900; color:#fff;" id="stat-spirit">60</div>
-            <div style="font-size:9px; color:var(--text-muted);">연속 실천&리커버리</div>
-          </div>
-        </div>
-
-        <!-- Main Stats -->
-        <div class="stat-row">
-          <div class="stat-header">
-            <span>GROWTH EXP (Level <span id="t-lvl-num">3</span>)</span>
-            <span id="t-xp-val">180 / 750 XP</span>
-          </div>
-          <div class="stat-bar-bg">
-            <div class="stat-bar-fill fill-volt" id="t-xp-bar" style="width: 24%;"></div>
-          </div>
-        </div>
-
-        <div class="stat-row">
-          <div class="stat-header">
-            <span>HUNGER (포만감)</span>
-            <span id="t-hunger-val">85%</span>
-          </div>
-          <div class="stat-bar-bg">
-            <div class="stat-bar-fill fill-orange" id="t-hunger-bar" style="width: 85%;"></div>
-          </div>
-        </div>
-
-        <div class="stat-row">
-          <div class="stat-header">
-            <span>HAPPINESS (행복도)</span>
-            <span id="t-happy-val">90%</span>
-          </div>
-          <div class="stat-bar-bg">
-            <div class="stat-bar-fill fill-cyan" id="t-happy-bar" style="width: 90%;"></div>
-          </div>
-        </div>
-
-        <div class="stat-row">
-          <div class="stat-header">
-            <span>ENERGY (체력)</span>
-            <span id="t-energy-val">100%</span>
-          </div>
-          <div class="stat-bar-bg">
-            <div class="stat-bar-fill fill-volt" id="t-energy-bar" style="width: 100%;"></div>
-          </div>
-        </div>
-
-        <!-- Tamagotchi Care Actions -->
-        <div class="t-actions-row">
-          <button class="t-btn-action" id="btn-t-feed">
-            <span style="font-size:22px;">🍎</span>
-            <span>영양 간식</span>
-          </button>
-          <button class="t-btn-action" id="btn-t-play">
-            <span style="font-size:22px;">⚽</span>
-            <span>미니 스프린트</span>
-          </button>
-          <button class="t-btn-action" id="btn-t-rest">
-            <span style="font-size:22px;">💤</span>
-            <span>에너지 회복</span>
-          </button>
-          <button class="t-btn-action" id="btn-t-rescue" style="border-color:rgba(0,240,255,0.4); background:rgba(0,240,255,0.08);">
-            <span style="font-size:22px;">⚡</span>
-            <span>볼트 긴급구제</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Tab 3: 100 Quests & 21-Day Habit Challenge -->
-    <section id="tab-challenge" class="tab-pane">
-      <div class="nrc-card glow-volt">
-        <div class="card-label">RUNNOW QUESTS & HABIT SYSTEM</div>
-
-        <!-- Sub-View Switcher (100 퀘스트 vs 21일 챌린지) -->
-        <div style="display:flex; background:rgba(0,0,0,0.5); border-radius:12px; padding:4px; margin-bottom:14px; border:1px solid rgba(255,255,255,0.1);">
-          <button type="button" id="tab-btn-quest100" class="btn-primary-volt" style="flex:1; padding:9px; font-size:12px; font-weight:800; border-radius:8px;">
-            <span>📜 100 퀘스트</span>
-          </button>
-          <button type="button" id="tab-btn-chal21" class="btn-secondary" style="flex:1; padding:9px; font-size:12px; font-weight:700; color:var(--text-muted); border:none; background:none;">
-            <span>📅 21일 챌린지</span>
-          </button>
-        </div>
-
-        <!-- VIEW 1: 100 Quests View -->
-        <div id="subview-quests-100">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <div>
-              <h3 style="font-size:17px; font-weight:800; color:#fff;">100 퀘스트 마스터 로드맵</h3>
-              <p style="font-size:11px; color:var(--text-muted);">미션을 완수하고 XP와 VC를 획득하여 볼트몽을 육성하세요</p>
-            </div>
-            <div style="text-align:right;">
-              <span id="quest-progress-count" style="font-size:14px; font-weight:900; color:var(--primary-volt);">0 / 100 완료</span>
+          <div id="workout-view-list">
+            <div class="nrc-card">
+              <div class="card-label">EXERCISE</div>
+              <h2 class="ex-list-title">어떤 운동을 할까요?</h2>
+              <p class="ex-list-lead">종목을 누르면 전용 화면으로 들어갑니다. 근력 운동은 카메라 위에 관절 점을 같이 띄웁니다.</p>
+              <div class="exercise-catalog" id="exercise-catalog">
+                <button type="button" class="ex-pick-card" data-workout="run">
+                  <img class="ex-pick-photo" src="./assets/exercises/run.jpg" alt="러닝">
+                  <span class="ex-pick-body">
+                    <strong>러닝</strong>
+                    <span>GPS로 거리·페이스·칼로리를 잽니다</span>
+                  </span>
+                  <span class="ex-pick-badge">GPS</span>
+                </button>
+                <button type="button" class="ex-pick-card" data-workout="motion" data-exercise="pushup">
+                  <img class="ex-pick-photo" src="./assets/exercises/pushup.jpg" alt="팔굽혀펴기">
+                  <span class="ex-pick-body">
+                    <strong>팔굽혀펴기</strong>
+                    <span>카메라 + 팔꿈치 랜드마크로 횟수 측정</span>
+                  </span>
+                  <span class="ex-pick-badge">AI</span>
+                </button>
+                <button type="button" class="ex-pick-card" data-workout="motion" data-exercise="situp">
+                  <img class="ex-pick-photo" src="./assets/exercises/situp.jpg" alt="윗몸일으키기">
+                  <span class="ex-pick-body">
+                    <strong>윗몸일으키기</strong>
+                    <span>카메라 + 골반 랜드마크로 코어 측정</span>
+                  </span>
+                  <span class="ex-pick-badge">AI</span>
+                </button>
+                <button type="button" class="ex-pick-card" data-workout="motion" data-exercise="squat">
+                  <img class="ex-pick-photo" src="./assets/exercises/squat.jpg" alt="스쿼트">
+                  <span class="ex-pick-body">
+                    <strong>스쿼트</strong>
+                    <span>카메라 + 무릎 각도로 깊이 측정</span>
+                  </span>
+                  <span class="ex-pick-badge">AI</span>
+                </button>
+                <button type="button" class="ex-pick-card" data-workout="motion" data-exercise="plank">
+                  <img class="ex-pick-photo" src="./assets/exercises/plank.jpg" alt="플랭크">
+                  <span class="ex-pick-body">
+                    <strong>플랭크</strong>
+                    <span>어깨-골반-발목을 일직선으로 유지</span>
+                  </span>
+                  <span class="ex-pick-badge">AI</span>
+                </button>
+                <button type="button" class="ex-pick-card" data-workout="motion" data-exercise="lunge">
+                  <img class="ex-pick-photo" src="./assets/exercises/lunge.jpg" alt="런지">
+                  <span class="ex-pick-body">
+                    <strong>런지</strong>
+                    <span>앞무릎 90도 랜드마크로 밸런스 측정</span>
+                  </span>
+                  <span class="ex-pick-badge">AI</span>
+                </button>
+                <button type="button" class="ex-pick-card" data-workout="motion" data-exercise="jumpingjack">
+                  <img class="ex-pick-photo" src="./assets/exercises/jumpingjack.jpg" alt="점핑잭">
+                  <span class="ex-pick-body">
+                    <strong>점핑잭</strong>
+                    <span>팔·다리 벌림을 관절 점으로 카운트</span>
+                  </span>
+                  <span class="ex-pick-badge">AI</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          <!-- Total Quest Progress Bar -->
-          <div class="stat-bar" style="margin-bottom:14px; height:8px; background:rgba(255,255,255,0.08);">
-            <div class="bar-fill volt" id="quest-progress-bar" style="width:0%;"></div>
-          </div>
+          <!-- SUB-VIEW: GPS Live Runner -->
+          <div id="workout-view-gps" style="display:none;">
+            <div class="nrc-card glow-volt live-run-hero">
+              <button type="button" class="btn-back-exercise-list" data-back-from="gps">← 운동 목록</button>
+              <div class="card-label">LIVE GPS RUNNER</div>
+              
+              <!-- 실시간 정밀 거리 메트릭 서클 -->
+              <div class="metric-circle" id="metric-circle">
+                <div class="main-distance-num" id="live-distance">0</div>
+                <div class="main-distance-unit" id="live-distance-unit">METERS (m)</div>
+                <div id="live-distance-sub" style="font-size:13px; color:var(--cyber-cyan); font-weight:800; margin-top:4px; letter-spacing:0.5px;">0.000 km</div>
+              </div>
+              <div class="gps-badge" id="live-gps-accuracy">🛰️ 실시간 GPS 대기중</div>
 
-          <!-- Quest Category Filter Bar -->
-          <div class="quest-category-bar" id="quest-category-bar">
-            <button class="filter-chip active" data-qcat="all">전체 (100)</button>
-            <button class="filter-chip" data-qcat="starter">🐣 입문 (20)</button>
-            <button class="filter-chip" data-qcat="distance">🏃 거리 (20)</button>
-            <button class="filter-chip" data-qcat="speed">⚡ 페이스 (20)</button>
-            <button class="filter-chip" data-qcat="habit">🔥 습관 (20)</button>
-            <button class="filter-chip" data-qcat="growth">🐺 육성 (20)</button>
-          </div>
+              <!-- 3대 러닝 메트릭 그리드 (페이스, 시간, 칼로리) -->
+              <div class="hud-grid">
+                <div class="hud-item">
+                  <div class="hud-val" id="live-pace">--'--"</div>
+                  <div class="hud-lbl">AVG PACE (1km 소요)</div>
+                </div>
+                <div class="hud-item">
+                  <div class="hud-val" id="live-time">00:00</div>
+                  <div class="hud-lbl">TIME (러닝 시간)</div>
+                </div>
+                <div class="hud-item">
+                  <div class="hud-val" id="live-calories">0</div>
+                  <div class="hud-lbl">CALORIES (kcal)</div>
+                </div>
+              </div>
 
-          <!-- 100 Quests Dynamic List -->
-          <div class="quest-list-container" id="quest-list-container">
-            <!-- Populated by JS -->
-          </div>
-        </div>
+              <!-- 페이스 가이드 팁 안내바 -->
+              <div style="font-size:11px; color:var(--text-muted); background:rgba(255,255,255,0.03); border:1px solid var(--border-glass); border-radius:8px; padding:6px 10px; margin-bottom:14px; text-align:center;">
+                💡 <strong>AVG PACE</strong>: 1km를 달리는 데 걸리는 시간 (예: 5'30" = 1km당 5분 30초)
+              </div>
 
-        <!-- VIEW 2: 21-Day Habit Challenge View (Toggleable) -->
-        <div id="subview-challenge-21" style="display:none;">
-          <!-- Habit Stacking Cue Card (NotebookLM Insight) -->
-          <div style="background:rgba(204,255,0,0.08); border:1px dashed var(--primary-volt); border-radius:12px; padding:12px 14px; margin-bottom:14px;">
-            <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-              <span style="font-size:14px;">🎯</span>
-              <strong style="color:var(--primary-volt); font-size:12px;">나의 습관 연결 단서 (Habit Stacking Cue)</strong>
-            </div>
-            <p style="font-size:12px; color:#fff;" id="habit-cue-display">"퇴근 후 현관에서 러닝화 신고 바로 출발"</p>
-          </div>
+              <!-- Mini Tamagotchi status during run -->
+              <div style="display:flex; align-items:center; justify-content:center; gap:10px; background:var(--surface-elevated); padding:10px; border-radius:12px; margin-bottom:15px; border:1px solid var(--border-glass);">
+                <div id="mini-tamagotchi-icon" style="font-size:24px;">🥚</div>
+                <div style="font-size:12px; text-align:left;">
+                  <strong id="mini-tamagotchi-name">볼트몽 (누적 0m)</strong>
+                  <div style="color:var(--primary-volt); font-size:11px;" id="mini-tamagotchi-msg">"첫 번째 러닝을 시작해 파트너 펫을 부화시키세요!"</div>
+                </div>
+              </div>
 
-          <!-- Chapter Narrative Banner -->
-          <div style="background:var(--surface-elevated); border-radius:12px; padding:12px 14px; margin-bottom:15px;" id="chapter-banner">
-            <div style="color:var(--cyber-cyan); font-weight:800; font-size:13px;" id="chapter-title">Chapter 1: ⚡ 각성의 불꽃</div>
-            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;" id="chapter-desc">작은 시작(Tiny Habits)으로 뇌의 기저핵에 첫 러닝 루틴을 각인하는 단계입니다.</div>
-          </div>
+              <div id="run-init-controls">
+                <button class="btn-primary-volt" id="btn-start-live">
+                  <span>⚡ REAL GPS RUN START</span>
+                </button>
+              </div>
 
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:12px;">
-            <div style="flex:1; min-width:0;">
-              <h3 style="font-size:17px; font-weight:800;">21일 습관 완성</h3>
-              <p style="font-size:11px; color:var(--text-muted); line-height:1.45; margin-top:4px;">
-                실제 러닝 기록으로 미션 달성<br>
-                다음날 00시에 다음 데이 개방
-              </p>
-            </div>
-            <div style="text-align:right; flex-shrink:0;">
-              <div style="font-size:18px; font-weight:900; color:var(--primary-volt); white-space:nowrap;" id="challenge-streak">🔥 0일 연속</div>
-              <div style="font-size:11px; color:var(--text-muted);" id="challenge-percent">진행률 0%</div>
-            </div>
-          </div>
-
-          <!-- 21 Day Matrix Grid -->
-          <div class="challenge-grid" id="challenge-grid">
-            <!-- 1~21 days populated by JS -->
-          </div>
-
-          <!-- Selected Day Details Card -->
-          <div style="background:var(--surface-elevated); border-radius:14px; padding:16px; margin-top:15px;" id="day-detail-box">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <span style="color:var(--primary-volt); font-weight:800; font-size:13px;" id="detail-day-tag">DAY 1 (1주차)</span>
-              <span style="background:rgba(204,255,0,0.15); color:var(--primary-volt); font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px;" id="detail-reward-tag">+150 XP, 50 VC</span>
-            </div>
-            <h4 style="font-size:15px; font-weight:800; margin-bottom:6px;" id="detail-title">첫 걸음 런 & 스트레칭</h4>
-            <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;" id="detail-desc">집 주변 가볍게 1.5km 달리기 + 발목/무릎 스트레칭</p>
-            <div id="detail-run-record" style="display:none; background:#08090C; border:1px solid rgba(0,240,255,0.25); border-radius:10px; padding:10px; margin-bottom:10px;"></div>
-            <p id="detail-mission-msg" style="font-size:12px; color:var(--cyber-cyan); line-height:1.45; margin-bottom:12px;"></p>
-            <button class="btn-primary-volt" id="btn-complete-day" style="padding:12px; font-size:13px;">
-              <span>오늘 미션 완료 및 보상 받기</span>
-            </button>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- Tab 4: 20 Shop Items & PayPal Store -->
-    <section id="tab-shop" class="tab-pane">
-      <div class="nrc-card">
-        <div class="card-label">VOLT SHOP & PAYPAL CHECKOUT</div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-          <div>
-            <h3 style="font-size:18px; font-weight:800;">프리미엄 러너 상점</h3>
-            <p style="font-size:12px; color:var(--text-muted);">총 20개 공식 기어 & 페이팔 글로벌 결제</p>
-          </div>
-          <span style="background:rgba(0,48,135,0.4); border:1px solid #0079C1; color:#00F0FF; font-size:11px; font-weight:800; padding:4px 8px; border-radius:8px;">PayPal Verified</span>
-        </div>
-
-        <!-- Filter Bar -->
-        <div class="shop-filter-bar" id="shop-filter-bar">
-          <button class="filter-chip active" data-cat="all">전체 (20)</button>
-          <button class="filter-chip" data-cat="shoes">러닝화 (4)</button>
-          <button class="filter-chip" data-cat="energy">에너지&회복 (4)</button>
-          <button class="filter-chip" data-cat="skin">스킨&코스튬 (4)</button>
-          <button class="filter-chip" data-cat="wearable">기어 (4)</button>
-          <button class="filter-chip" data-cat="pass">패스&부스터 (4)</button>
-        </div>
-
-        <!-- 20 Shop Items Grid -->
-        <div class="shop-items-grid" id="shop-items-grid">
-          <!-- Populated by JS -->
-        </div>
-      </div>
-    </section>
-
-    <!-- Tab 5: Profile & Settings -->
-    <section id="tab-profile" class="tab-pane">
-      <div class="nrc-card glow-volt">
-        <div class="card-label">RUNNER PROFILE & METRICS</div>
-        <h3 style="font-size:18px; font-weight:800; margin-bottom:15px;">대표님 러너 설정</h3>
-        
-        <form id="profile-form">
-          <div class="form-group">
-            <label class="form-label">이름 / 닉네임</label>
-            <input type="text" class="form-input" id="prof-name" placeholder="러너 이름">
-          </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <div class="form-group">
-              <label class="form-label">키 (cm)</label>
-              <input type="number" class="form-input" id="prof-height">
-            </div>
-            <div class="form-group">
-              <label class="form-label">몸무게 (kg)</label>
-              <input type="number" class="form-input" id="prof-weight">
-            </div>
-          </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <div class="form-group">
-              <label class="form-label">나이</label>
-              <input type="number" class="form-input" id="prof-age">
-            </div>
-            <div class="form-group">
-              <label class="form-label">목표 체중 (kg)</label>
-              <input type="number" class="form-input" id="prof-target-weight">
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">성별</label>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-              <button type="button" class="prof-gender-btn" data-gender="M" style="padding:8px; border-radius:8px; background:var(--surface-elevated); border:1px solid var(--border-glass); color:var(--text-muted); font-size:12px; font-weight:700; cursor:pointer;">남성 ♂</button>
-              <button type="button" class="prof-gender-btn" data-gender="F" style="padding:8px; border-radius:8px; background:var(--surface-elevated); border:1px solid var(--border-glass); color:var(--text-muted); font-size:12px; font-weight:700; cursor:pointer;">여성 ♀</button>
+              <div class="run-controls" id="run-active-controls" style="display:none; flex-wrap:wrap;">
+                <button class="btn-secondary" id="btn-pause-run">일시정지</button>
+                <button class="btn-primary-volt" id="btn-stop-run" style="background:#FF5722; color:#fff;">완주 및 기록 저장</button>
+                <button type="button" class="btn-secondary" id="btn-discard-run" style="width:100%; padding:11px; font-size:13px; font-weight:700; color:#FF5722; border-color:rgba(255,87,34,0.4);">
+                  <span>🔄 새로고침 (기록 없이 취소)</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          <!-- Habit Stacking Cue Input (NotebookLM Cue Engineering) -->
-          <div class="form-group">
-            <label class="form-label">나만의 습관 연결 단서 (Habit Stacking Cue)</label>
-            <input type="text" class="form-input" id="prof-cue">
-            <span style="font-size:11px; color:var(--text-muted); display:block; margin-top:4px;">예: "아침 커피 마신 후 러닝복 입기", "퇴근 후 신발장 앞에서 러닝화 신기"</span>
-          </div>
+          <!-- SUB-VIEW: Camera + pose landmarks for one exercise -->
+          <div id="workout-view-motion" style="display:none;">
+            <div class="nrc-card motion-studio-card">
+              <button type="button" class="btn-back-exercise-list" data-back-from="motion">← 운동 목록</button>
+              <div class="motion-page-head">
+                <span id="motion-hud-icon">🦵</span>
+                <strong id="motion-page-title">스쿼트</strong>
+              </div>
 
-          <div style="background:var(--surface-elevated); border-radius:12px; padding:15px; margin:15px 0;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px;">
-              <span style="color:var(--text-muted);">계산된 BMI 지수:</span>
-              <strong style="color:var(--primary-volt);" id="calc-bmi">22.7 (정상)</strong>
+              <div class="pose-target-row">
+                <span>목표 횟수</span>
+                <div class="motion-target-chips" id="motion-target-chips">
+                  <button type="button" class="target-chip active" data-target="10">10회</button>
+                  <button type="button" class="target-chip" data-target="20">20회</button>
+                  <button type="button" class="target-chip" data-target="30">30회</button>
+                  <button type="button" class="target-chip" data-target="0">무제한</button>
+                </div>
+              </div>
+
+              <div class="pose-stage" id="motion-viewport-container">
+                <video id="motion-video" playsinline muted autoplay></video>
+                <canvas id="motion-canvas"></canvas>
+
+                <div id="motion-standby-overlay" class="pose-standby">
+                  <img id="motion-cover-img" class="pose-cover-img" alt="" src="./assets/exercises/squat.jpg">
+                  <div class="pose-standby-icon">📹</div>
+                  <strong id="motion-standby-title">AI 스쿼트 트레이닝</strong>
+                  <p id="motion-standby-desc">전신이 나오게 선 뒤 시작하면, 카메라 화면 위에 관절 점이 같이 그려집니다.</p>
+                  <button type="button" class="btn-primary-volt" id="btn-start-camera">
+                    <span>카메라와 랜드마크 시작</span>
+                  </button>
+                </div>
+
+                <div class="pose-badge pose-badge-reps">
+                  <span id="motion-live-reps">0</span>
+                  <span class="pose-badge-meta">
+                    <span id="motion-target-denom">/ 10</span>
+                    <span id="motion-rep-unit">SQUATS</span>
+                  </span>
+                </div>
+
+                <div class="pose-badge pose-badge-angle">
+                  <span id="motion-hud-angle">180°</span>
+                  <span id="motion-angle-label">KNEE</span>
+                </div>
+
+                <div class="pose-hud-tools">
+                  <button type="button" id="btn-toggle-skeleton" title="관절 점 켜기/끄기">👁️</button>
+                  <button type="button" id="btn-toggle-sound">🔊</button>
+                  <button type="button" id="btn-switch-camera">🔄</button>
+                </div>
+
+                <div class="pose-mascot" id="motion-mascot-cheer">
+                  <div id="motion-mascot-icon">🐶</div>
+                  <div>
+                    <div id="motion-mascot-name">파트너 댕댕이</div>
+                    <div id="motion-mascot-speech">전신이 보이게 서면 관절 점이 카메라 위에 겹칩니다.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="motion-coaching-pill" class="pose-feedback">자세를 준비해 주세요</div>
+
+              <div class="pose-progress-card">
+                <div class="pose-progress-head">
+                  <strong>Progress</strong>
+                  <span id="motion-progress-count">0/10</span>
+                </div>
+                <div class="pose-progress-track">
+                  <div id="motion-progress-fill"></div>
+                  <div id="motion-depth-bar" class="pose-depth-ghost"></div>
+                </div>
+                <div class="pose-progress-dots" id="motion-progress-dots"></div>
+              </div>
+
+              <div class="pose-tips-card">
+                <div class="pose-tips-head">💡 <strong id="motion-tips-title">Squat Tips</strong></div>
+                <ul id="motion-tips-list">
+                  <li>무릎이 발끝보다 앞으로 나가지 않게</li>
+                  <li>허리를 곧게 펴고 앉으세요</li>
+                </ul>
+              </div>
+
+              <div class="hud-grid pose-stats-grid">
+                <div class="hud-item">
+                  <div class="hud-val" id="motion-time">00:00</div>
+                  <div class="hud-lbl">TIME</div>
+                </div>
+                <div class="hud-item">
+                  <div class="hud-val" id="motion-calories">0.0</div>
+                  <div class="hud-lbl">CALORIES</div>
+                </div>
+                <div class="hud-item">
+                  <div class="hud-val" id="motion-stat-gain">+0</div>
+                  <div class="hud-lbl" id="motion-stat-label">MIGHT</div>
+                </div>
+              </div>
+
+              <div class="run-controls" id="motion-active-controls" style="display:none; flex-wrap:wrap;">
+                <button type="button" class="btn-secondary" id="btn-pause-motion" style="flex:1;">일시정지</button>
+                <button type="button" class="btn-primary-volt" id="btn-stop-motion" style="flex:2; background:#FF5722; color:#fff; border-color:#FF5722;">
+                  <span>운동 완료 및 보상 받기</span>
+                </button>
+                <button type="button" class="btn-secondary" id="btn-discard-motion" style="width:100%; padding:10px; font-size:12px; color:var(--text-muted);">
+                  <span>✕ 운동 취소 (기록 없이 종료)</span>
+                </button>
+              </div>
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:13px;">
-              <span style="color:var(--text-muted);">일일 기초대사량 (BMR):</span>
-              <strong style="color:var(--cyber-cyan);" id="calc-bmr">1,720 kcal</strong>
+          </div>
+
+        </section>
+
+        <!-- Tab 2: Tamagotchi Evolution -->
+        <section id="tab-tamagotchi" class="tab-pane">
+          <div class="nrc-card tamagotchi-stage">
+            
+            <div class="card-label">🐾 웹툰 펫 키우기 & 성장 다이어리</div>
+
+            <div class="t-avatar-box" id="t-avatar-container">
+              <img src="./assets/pets/dog_stage_1.jpg" alt="아기 댕댕이" class="t-img-avatar bounce-anim">
+            </div>
+            <div class="t-name-badge" id="t-display-name">댕댕이 (아기 댕댕이)</div>
+            <div class="t-stage-pill" id="t-stage-pill">1단계: 아기 댕댕이 (0km+)</div>
+            <p style="font-size:13px; color:var(--text-sub); margin-bottom:16px; font-weight:600;" id="t-tagline">귀를 쫑긋거리며 첫 러닝 헤어밴드를 찬 뽀송뽀송 사랑스러운 아기 강아지</p>
+
+            <!-- Physiology 3-Pill Grid -->
+            <div class="physio-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:18px;">
+              <div class="physio-card">
+                <div style="font-size:11px; color:var(--secondary-accent); font-weight:800;">MIGHT (지구력)</div>
+                <div style="font-size:16px; font-weight:900; color:var(--text-main);" id="stat-might">45</div>
+                <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">장거리 러닝 누적</div>
+              </div>
+              <div class="physio-card">
+                <div style="font-size:11px; color:var(--primary-accent); font-weight:800;">AGILITY (스피드)</div>
+                <div style="font-size:16px; font-weight:900; color:var(--text-main);" id="stat-agility">52</div>
+                <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">페이스 속도 비례</div>
+              </div>
+              <div class="physio-card">
+                <div style="font-size:11px; color:var(--highlight-color); font-weight:800;">SPIRIT (건강력)</div>
+                <div style="font-size:16px; font-weight:900; color:var(--text-main);" id="stat-spirit">60</div>
+                <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">연속 실천&리커버리</div>
+              </div>
+            </div>
+
+            <!-- Main Stats -->
+            <div class="stat-row">
+              <div class="stat-header">
+                <span>GROWTH EXP (Level <span id="t-lvl-num">3</span>)</span>
+                <span id="t-xp-val">180 / 750 XP</span>
+              </div>
+              <div class="stat-bar-bg">
+                <div class="stat-bar-fill fill-volt" id="t-xp-bar" style="width: 24%;"></div>
+              </div>
+            </div>
+
+            <div class="stat-row">
+              <div class="stat-header">
+                <span>HUNGER (포만감)</span>
+                <span id="t-hunger-val">85%</span>
+              </div>
+              <div class="stat-bar-bg">
+                <div class="stat-bar-fill fill-orange" id="t-hunger-bar" style="width: 85%;"></div>
+              </div>
+            </div>
+
+            <div class="stat-row">
+              <div class="stat-header">
+                <span>HAPPINESS (행복도)</span>
+                <span id="t-happy-val">90%</span>
+              </div>
+              <div class="stat-bar-bg">
+                <div class="stat-bar-fill fill-cyan" id="t-happy-bar" style="width: 90%;"></div>
+              </div>
+            </div>
+
+            <div class="stat-row">
+              <div class="stat-header">
+                <span>ENERGY (체력)</span>
+                <span id="t-energy-val">100%</span>
+              </div>
+              <div class="stat-bar-bg">
+                <div class="stat-bar-fill fill-volt" id="t-energy-bar" style="width: 100%;"></div>
+              </div>
+            </div>
+
+            <!-- Tamagotchi Care Actions -->
+            <div class="t-actions-row">
+              <button class="t-btn-action" id="btn-t-feed">
+                <span style="font-size:22px;">🍖</span>
+                <span>식사 주기</span>
+              </button>
+              <button class="t-btn-action" id="btn-t-play">
+                <span style="font-size:22px;">🎾</span>
+                <span>놀아주기</span>
+              </button>
+              <button class="t-btn-action" id="btn-t-rest">
+                <span style="font-size:22px;">💤</span>
+                <span>에너지 회복</span>
+              </button>
+              <button class="t-btn-action" id="btn-t-rescue" style="border-color:rgba(0,240,255,0.4); background:rgba(0,240,255,0.08);">
+                <span style="font-size:22px;">⚡</span>
+                <span>볼트 긴급구제</span>
+              </button>
             </div>
           </div>
+        </section>
 
-          <button type="submit" class="btn-primary-volt" style="padding:14px; font-size:14px; width:100%;">
-            <span>프로필 저장 및 업데이트</span>
-          </button>
-        </form>
+        <!-- Tab 3: Dynamic RPG Quests & 21-Day Habit Challenge -->
+        <section id="tab-challenge" class="tab-pane">
+          <div class="nrc-card glow-volt">
+            <div class="card-label">RUNNOW RPG QUEST & HABIT ECOSYSTEM</div>
 
-        <!-- 로컬 저장 시스템 컨트롤 패널 -->
-        <div style="background:rgba(255,87,34,0.08); border:1px solid rgba(255,87,34,0.3); border-radius:12px; padding:15px; margin-top:20px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div style="display:flex; align-items:center; gap:6px;">
-              <span style="font-size:14px;">💾</span>
-              <strong style="color:#FF7043; font-size:13px;">로컬 저장 시스템</strong>
+            <!-- 5-Way Sub-View Master Switcher -->
+            <div class="quest-master-tabs" id="quest-master-tabs" style="display:flex; background:var(--surface-elevated); border-radius:12px; padding:4px; margin-bottom:14px; border:1px solid var(--border-card); overflow-x:auto; gap:4px;">
+              <button type="button" class="quest-main-tab-btn active" data-view="daily" style="flex:1; padding:8px 6px; font-size:11px; font-weight:800; border-radius:8px; white-space:nowrap; background:var(--primary-accent); color:var(--primary-accent-text); border:none; cursor:pointer;">
+                ☀️ 일일
+              </button>
+              <button type="button" class="quest-main-tab-btn" data-view="weekly" style="flex:1; padding:8px 6px; font-size:11px; font-weight:700; border-radius:8px; white-space:nowrap; background:none; color:var(--text-muted); border:none; cursor:pointer;">
+                📅 주간
+              </button>
+              <button type="button" class="quest-main-tab-btn" data-view="bounty" style="flex:1; padding:8px 6px; font-size:11px; font-weight:700; border-radius:8px; white-space:nowrap; background:none; color:var(--text-muted); border:none; cursor:pointer;">
+                🎁 보상형
+              </button>
+              <button type="button" class="quest-main-tab-btn" data-view="chal21" style="flex:1; padding:8px 6px; font-size:11px; font-weight:700; border-radius:8px; white-space:nowrap; background:none; color:var(--text-muted); border:none; cursor:pointer;">
+                🏆 21일
+              </button>
+              <button type="button" class="quest-main-tab-btn" data-view="milestone" style="flex:1; padding:8px 6px; font-size:11px; font-weight:700; border-radius:8px; white-space:nowrap; background:none; color:var(--text-muted); border:none; cursor:pointer;">
+                💎 100업적
+              </button>
             </div>
-            <span style="background:#FF5722; color:#fff; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px;">100% LOCAL DB</span>
-          </div>
-          <p style="font-size:11px; color:var(--text-muted); margin-bottom:12px;">
-            버튼을 누르면 러닝 기록, 21일 챌린지, 100 퀘스트, 다마고치, 코인이 모두 처음 상태로 리셋됩니다. 로그인 프로필(나이·키·몸무게)은 유지됩니다.
-          </p>
-          <button type="button" class="btn-secondary" id="btn-open-reset-modal" style="width:100%; padding:11px; font-size:13px; font-weight:700; color:#FF5722; border-color:rgba(255,87,34,0.4);">
-            <span>🔄 전체 기록 초기화</span>
-          </button>
-        </div>
 
-        <!-- PWA Mobile App Install Card -->
-        <div style="background:radial-gradient(circle at 50% 0%, rgba(204,255,0,0.12) 0%, #12161F 80%); border:1px solid var(--primary-volt); border-radius:14px; padding:16px; margin-top:16px; text-align:left;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div style="display:flex; align-items:center; gap:6px;">
-              <span style="font-size:18px;">📲</span>
-              <strong style="color:var(--primary-volt); font-size:14px;">스마트폰에 앱으로 설치하기</strong>
+            <!-- SUBVIEW 1: Daily Quests (일일 반복 퀘스트) -->
+            <div id="subview-quests-daily">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <div>
+                  <h3 style="font-size:16px; font-weight:800; color:var(--text-main);">☀️ 매일 반복 일일 퀘스트</h3>
+                  <p style="font-size:11px; color:var(--text-muted);">매일 00:00 자정 리셋 · 오늘 완료 시 도파민 XP/VC 지급</p>
+                </div>
+                <span style="font-size:11px; color:var(--cyber-cyan); font-weight:800; background:rgba(0,240,255,0.12); padding:3px 8px; border-radius:10px;" id="daily-reset-timer">매일 자정 리셋</span>
+              </div>
+              <div class="quest-list-container" id="daily-quest-list">
+                <!-- Populated by JS -->
+              </div>
             </div>
-            <span style="background:var(--primary-volt); color:#000; font-size:10px; font-weight:900; padding:2px 6px; border-radius:4px;">PWA</span>
-          </div>
-          <p style="font-size:12px; color:var(--text-white); margin-bottom:10px; line-height:1.4;">
-            스마트폰 홈 화면에 추가하면 <strong>진짜 모바일 앱처럼 독립 실행</strong>되며, 주소창 없이 빠르고 쾌적하게 러닝을 즐길 수 있습니다.
-          </p>
-          <div style="background:#08090C; border-radius:10px; padding:10px; font-size:11px; color:var(--text-muted); line-height:1.5;">
-            <div style="margin-bottom:4px;">🍎 <strong>아이폰 (Safari)</strong>: 하단 <strong>공유 아이콘(↑)</strong> ➔ <strong>'홈 화면에 추가'</strong> 클릭</div>
-            <div>🤖 <strong>갤럭시 (Chrome)</strong>: 우측 상단 <strong>더보기(⋮)</strong> ➔ <strong>'홈 화면에 추가(앱 설치)'</strong> 클릭</div>
-          </div>
-        </div>
 
-        <!-- Account & Logout Card -->
-        <div style="background:var(--surface-carbon); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-top:16px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <div style="display:flex; align-items:center; gap:6px;">
-              <span style="font-size:16px;">🔒</span>
-              <strong style="color:#fff; font-size:13px;">로그인 계정 및 보안 세션</strong>
+            <!-- SUBVIEW 2: Weekly Quests (주간 퀘스트) -->
+            <div id="subview-quests-weekly" style="display:none;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <div>
+                  <h3 style="font-size:16px; font-weight:800; color:var(--text-main);">📅 주간 마일리지 퀘스트</h3>
+                  <p style="font-size:11px; color:var(--text-muted);">매주 월요일 00:00 리셋 · 대용량 보상 팩</p>
+                </div>
+                <span style="font-size:11px; color:var(--primary-volt); font-weight:800; background:rgba(204,255,0,0.12); padding:3px 8px; border-radius:10px;">매주 월요일 리셋</span>
+              </div>
+              <div class="quest-list-container" id="weekly-quest-list">
+                <!-- Populated by JS -->
+              </div>
             </div>
-            <span style="background:rgba(0,240,255,0.15); color:var(--cyber-cyan); font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px;">12H ACTIVE</span>
-          </div>
-          <p style="font-size:11px; color:var(--text-muted); margin-bottom:12px;">
-            현재 기기에서 안전하게 로그인되어 있습니다. 다른 기기를 사용하거나 계정을 전환하려면 로그아웃하세요.
-          </p>
-          <button type="button" class="btn-secondary" id="btn-tab-logout" style="width:100%; padding:12px; font-size:13px; font-weight:700; color:#FF5722; border-color:rgba(255,87,34,0.4); display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;">
-            <span>🚪 안전하게 로그아웃 (초기 화면으로)</span>
-          </button>
-        </div>
-      </div>
-    </section>
 
-    <!-- Bottom Global Navigation -->
-    <nav class="bottom-nav">
-      <button class="nav-item active" data-tab="tab-run">
-        <span class="nav-icon">🏃</span>
-        <span>런닝</span>
-      </button>
-      <button class="nav-item" data-tab="tab-tamagotchi">
-        <span class="nav-icon">🐣</span>
-        <span>다마고치</span>
-      </button>
-      <button class="nav-item" data-tab="tab-challenge">
-        <span class="nav-icon">📜</span>
-        <span>퀘스트(100)</span>
-      </button>
-      <button class="nav-item" data-tab="tab-shop">
-        <span class="nav-icon">🛍️</span>
-        <span>상점(20)</span>
-      </button>
-      <button class="nav-item" data-tab="tab-profile">
-        <span class="nav-icon">⚙️</span>
-        <span>설정</span>
-      </button>
-    </nav>
+            <!-- SUBVIEW 3: Bounty / Event Quests (특별 보상형 퀘스트) -->
+            <div id="subview-quests-bounty" style="display:none;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <div>
+                  <h3 style="font-size:16px; font-weight:800; color:var(--text-main);">🎁 특별 보상 & 바운티 퀘스트</h3>
+                  <p style="font-size:11px; color:var(--text-muted);">주말 버프 런 & 한정판 네온 배지 및 칭호 보상</p>
+                </div>
+                <span style="font-size:11px; color:#FF7043; font-weight:800; background:rgba(255,112,67,0.15); padding:3px 8px; border-radius:10px;">한정 이벤트</span>
+              </div>
+              <div class="quest-list-container" id="bounty-quest-list">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- SUBVIEW 4: 21-Day Habit Challenge View -->
+            <div id="subview-challenge-21" style="display:none;">
+              <!-- Habit Stacking Cue Card -->
+              <div style="background:rgba(204,255,0,0.08); border:1px dashed var(--primary-volt); border-radius:12px; padding:12px 14px; margin-bottom:14px;">
+                <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                  <span style="font-size:14px;">🎯</span>
+                  <strong style="color:var(--primary-volt); font-size:12px;">나의 습관 연결 단서 (Habit Stacking Cue)</strong>
+                </div>
+                <p style="font-size:12px; color:var(--text-main);" id="habit-cue-display">"퇴근 후 현관에서 러닝화 신고 바로 출발"</p>
+              </div>
+
+              <!-- Chapter Narrative Banner -->
+              <div style="background:var(--surface-elevated); border-radius:12px; padding:12px 14px; margin-bottom:15px;" id="chapter-banner">
+                <div style="color:var(--cyber-cyan); font-weight:800; font-size:13px;" id="chapter-title">Chapter 1: ⚡ 각성의 불꽃</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:2px;" id="chapter-desc">작은 시작(Tiny Habits)으로 뇌의 기저핵에 첫 러닝 루틴을 각인하는 단계입니다.</div>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:12px;">
+                <div style="flex:1; min-width:0;">
+                  <h3 style="font-size:17px; font-weight:800;">21일 습관 완성 로드맵</h3>
+                  <p style="font-size:11px; color:var(--text-muted); line-height:1.45; margin-top:4px;">
+                    실제 러닝 기록으로 미션 달성<br>
+                    완료 시 파트너 펫 진화 촉발
+                  </p>
+                </div>
+                <div style="text-align:right; flex-shrink:0;">
+                  <div style="font-size:18px; font-weight:900; color:var(--primary-volt); white-space:nowrap;" id="challenge-streak">🔥 0일 연속</div>
+                  <div style="font-size:11px; color:var(--text-muted);" id="challenge-percent">진행률 0%</div>
+                </div>
+              </div>
+
+              <!-- 21 Day Matrix Grid -->
+              <div class="challenge-grid" id="challenge-grid">
+                <!-- 1~21 days populated by JS -->
+              </div>
+
+              <!-- Selected Day Details Card -->
+              <div style="background:var(--surface-elevated); border-radius:14px; padding:16px; margin-top:15px;" id="day-detail-box">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="color:var(--primary-volt); font-weight:800; font-size:13px;" id="detail-day-tag">DAY 1 (1주차)</span>
+                  <span style="background:rgba(204,255,0,0.15); color:var(--primary-volt); font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px;" id="detail-reward-tag">+150 XP, 50 VC</span>
+                </div>
+                <h4 style="font-size:15px; font-weight:800; margin-bottom:6px;" id="detail-title">첫 걸음 런 & 스트레칭</h4>
+                <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;" id="detail-desc">집 주변 가볍게 1.5km 달리기 + 발목/무릎 스트레칭</p>
+                <div id="detail-run-record" style="display:none; background:var(--surface-elevated); border:1px solid var(--border-card); border-radius:10px; padding:10px; margin-bottom:10px;"></div>
+                <p id="detail-mission-msg" style="font-size:12px; color:var(--cyber-cyan); line-height:1.45; margin-bottom:12px;"></p>
+                <button class="btn-primary-volt" id="btn-complete-day" style="padding:12px; font-size:13px;">
+                  <span>오늘 미션 완료 및 보상 받기</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- SUBVIEW 5: 100 Lifetime Milestones View -->
+            <div id="subview-quests-100" style="display:none;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <div>
+                  <h3 style="font-size:17px; font-weight:800; color:var(--text-main);">💎 100대 영구 마일스톤 업적</h3>
+                  <p style="font-size:11px; color:var(--text-muted);">전체 카테고리를 정복하고 전설의 칭호를 획득하세요</p>
+                </div>
+                <div style="text-align:right;">
+                  <span id="quest-progress-count" style="font-size:14px; font-weight:900; color:var(--primary-volt);">0 / 100 완료</span>
+                </div>
+              </div>
+
+              <!-- Total Quest Progress Bar -->
+              <div class="stat-bar" style="margin-bottom:14px; height:8px; background:rgba(255,255,255,0.08);">
+                <div class="bar-fill volt" id="quest-progress-bar" style="width:0%;"></div>
+              </div>
+
+              <!-- Quest Category Filter Bar -->
+              <div class="quest-category-bar" id="quest-category-bar">
+                <button class="filter-chip active" data-qcat="all">전체 (100)</button>
+                <button class="filter-chip" data-qcat="starter">🐣 입문 (20)</button>
+                <button class="filter-chip" data-qcat="distance">🏃 거리 (20)</button>
+                <button class="filter-chip" data-qcat="speed">⚡ 페이스 (20)</button>
+                <button class="filter-chip" data-qcat="habit">🔥 습관 (20)</button>
+                <button class="filter-chip" data-qcat="growth">🐺 육성 (20)</button>
+              </div>
+
+              <!-- 100 Quests Dynamic List -->
+              <div class="quest-list-container" id="quest-list-container">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Tab 4: 20 Shop Items & PayPal Store -->
+        <section id="tab-shop" class="tab-pane">
+          <div class="nrc-card">
+            <div class="card-label">VOLT SHOP & PAYPAL CHECKOUT</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+              <div>
+                <h3 style="font-size:18px; font-weight:800;">프리미엄 러너 상점</h3>
+                <p style="font-size:12px; color:var(--text-muted);">총 20개 공식 기어 & 페이팔 글로벌 결제</p>
+              </div>
+              <span class="paypal-badge">PayPal Verified</span>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="shop-filter-bar" id="shop-filter-bar">
+              <button class="filter-chip active" data-cat="all">전체 (20)</button>
+              <button class="filter-chip" data-cat="shoes">러닝화 (4)</button>
+              <button class="filter-chip" data-cat="energy">에너지&회복 (4)</button>
+              <button class="filter-chip" data-cat="skin">스킨&코스튬 (4)</button>
+              <button class="filter-chip" data-cat="wearable">기어 (4)</button>
+              <button class="filter-chip" data-cat="pass">패스&부스터 (4)</button>
+            </div>
+
+            <!-- 20 Shop Items Grid -->
+            <div class="shop-items-grid" id="shop-items-grid">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 5: Profile & Settings -->
+        <section id="tab-profile" class="tab-pane">
+          <div class="nrc-card">
+            <div class="card-label">RUNNER PROFILE</div>
+            <h3>대표님 러너 설정</h3>
+            
+            <form id="profile-form">
+              <div class="form-group">
+                <label class="form-label">이름 / 닉네임</label>
+                <input type="text" class="form-input" id="prof-name" placeholder="러너 이름">
+              </div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">키 (cm)</label>
+                  <input type="number" class="form-input" id="prof-height">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">몸무게 (kg)</label>
+                  <input type="number" class="form-input" id="prof-weight">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">나이</label>
+                  <input type="number" class="form-input" id="prof-age">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">목표 체중 (kg)</label>
+                  <input type="number" class="form-input" id="prof-target-weight">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">성별</label>
+                <div class="form-grid">
+                  <button type="button" class="choice-btn prof-gender-btn" data-gender="M">남성 ♂</button>
+                  <button type="button" class="choice-btn prof-gender-btn" data-gender="F">여성 ♀</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">습관 연결 단서</label>
+                <input type="text" class="form-input" id="prof-cue">
+                <span class="form-hint">예: 퇴근 후 현관에서 러닝화 신고 바로 출발</span>
+              </div>
+
+              <div class="metric-box">
+                <div class="metric-row">
+                  <span>계산된 BMI</span>
+                  <strong id="calc-bmi">22.7 (정상)</strong>
+                </div>
+                <div class="metric-row">
+                  <span>일일 기초대사량</span>
+                  <strong id="calc-bmr">1,720 kcal</strong>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-primary-volt">
+                <span>프로필 저장</span>
+              </button>
+            </form>
+
+            <div class="panel-soft">
+              <div class="panel-head">
+                <strong>기록 초기화</strong>
+                <span class="panel-tag">로컬만 삭제</span>
+              </div>
+              <p>러닝·퀘스트·펫·코인이 처음 상태가 됩니다. 로그인 프로필은 유지됩니다.</p>
+              <button type="button" class="btn-secondary" id="btn-open-reset-modal">
+                <span>전체 기록 초기화</span>
+              </button>
+            </div>
+
+            <div class="panel-soft">
+              <div class="panel-head">
+                <strong>폰으로 열기</strong>
+                <span class="panel-tag">QR</span>
+              </div>
+              <p>같은 주소를 휴대전화에서 엽니다. 카메라는 폰이 더 편합니다.</p>
+              <button type="button" class="btn-secondary" id="btn-open-mobile-qr">
+                <span>📱 폰으로 열기</span>
+              </button>
+            </div>
+
+            <div class="panel-soft">
+              <div class="panel-head">
+                <strong>홈 화면에 설치</strong>
+                <span class="panel-tag">PWA</span>
+              </div>
+              <p>주소창 없이 앱처럼 실행됩니다.</p>
+              <p class="form-hint">아이폰 Safari 공유 → 홈 화면에 추가. 갤럭시 Chrome 더보기 → 앱 설치.</p>
+            </div>
+
+            <div class="panel-soft">
+              <div class="panel-head">
+                <strong>계정</strong>
+                <span class="panel-tag">12시간 세션</span>
+              </div>
+              <p>다른 기기로 바꾸려면 로그아웃하세요.</p>
+              <button type="button" class="btn-secondary" id="btn-tab-logout">
+                <span>로그아웃</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- Bottom Global Navigation -->
+      <nav class="bottom-nav">
+        <button class="nav-item active" data-tab="tab-run">
+          <span class="nav-icon">🏋️</span>
+          <span>운동</span>
+        </button>
+        <button class="nav-item" data-tab="tab-tamagotchi">
+          <span class="nav-icon">🐣</span>
+          <span>펫</span>
+        </button>
+        <button class="nav-item" data-tab="tab-challenge">
+          <span class="nav-icon">📜</span>
+          <span>퀘스트</span>
+        </button>
+        <button class="nav-item" data-tab="tab-shop">
+          <span class="nav-icon">🛍️</span>
+          <span>상점(20)</span>
+        </button>
+        <button class="nav-item" data-tab="tab-profile">
+          <span class="nav-icon">⚙️</span>
+          <span>설정</span>
+        </button>
+      </nav>
     </div> <!-- /#main-app-container -->
 
     <!-- Data Reset Confirmation Modal -->
@@ -725,11 +991,11 @@
           <button type="button" id="btn-close-reset-modal" style="background:none; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;">✕</button>
         </div>
 
-        <p style="font-size:13px; color:#fff; font-weight:700; margin-bottom:6px;">
+        <p style="font-size:13px; color:var(--text-main); font-weight:700; margin-bottom:6px;">
           정말 초기화를 하시겠습니까?
         </p>
         <p style="font-size:11px; color:var(--text-muted); line-height:1.4; margin-bottom:16px;">
-          러닝 기록, 21일 챌린지, 100 퀘스트, 다마고치, 코인이 모두 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+          러닝 기록, 21일 챌린지, 퀘스트, 펫, 코인이 모두 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
         </p>
 
         <!-- Do Not Ask Again Checkbox -->
@@ -749,9 +1015,8 @@
         </div>
       </div>
     </div>
-    </div> <!-- /#main-app-container -->
 
-    <!-- Immediate Dopamine Celebration Modal (NotebookLM Research) -->
+    <!-- Immediate Dopamine Celebration Modal -->
     <div id="celebration-modal" class="modal-overlay" style="display:none;">
       <div class="modal-card glow-volt" style="text-align:center; position:relative; overflow:hidden;">
         <div class="confetti-badge" style="font-size:48px; margin-bottom:10px; animation: bounce 0.6s infinite alternate;">🎉</div>
@@ -762,7 +1027,7 @@
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; background:var(--surface-carbon); border-radius:12px; padding:12px; margin-bottom:15px;">
           <div>
             <div style="font-size:11px; color:var(--text-muted);">TOTAL DISTANCE</div>
-            <div style="font-size:18px; font-weight:900; color:#fff;" id="modal-dist">2.45 km</div>
+            <div style="font-size:18px; font-weight:900; color:var(--text-main);" id="modal-dist">2.45 km</div>
           </div>
           <div>
             <div style="font-size:11px; color:var(--text-muted);">AVG PACE</div>
@@ -775,8 +1040,8 @@
           <div style="font-size:12px; font-weight:800; color:var(--primary-volt); margin-bottom:8px;">즉각 도파민 보상 (Immediate Rewards)</div>
           <div style="display:flex; justify-content:space-around; align-items:center;">
             <div>
-              <div style="font-size:20px; font-weight:900; color:#fff;" id="modal-xp">+320 XP</div>
-              <div style="font-size:10px; color:var(--text-muted);">다마고치 성장치</div>
+              <div style="font-size:20px; font-weight:900; color:var(--text-main);" id="modal-xp">+320 XP</div>
+              <div style="font-size:10px; color:var(--text-muted);">펫 성장치</div>
             </div>
             <div style="font-size:20px; color:var(--primary-volt);">+</div>
             <div>
@@ -790,6 +1055,96 @@
         <button class="btn-primary-volt" id="btn-close-modal" style="width:100%; padding:14px; font-size:15px;">
           <span>멋지게 보상 수령하기</span>
         </button>
+      </div>
+    </div>
+
+    <!-- AI Motion Fitness Dopamine Celebration Modal -->
+    <div id="motion-celebration-modal" class="modal-overlay" style="display:none;">
+      <div class="modal-card glow-volt" style="text-align:center; position:relative; overflow:hidden; max-width:380px;">
+        <div class="confetti-badge" style="font-size:44px; margin-bottom:8px; animation: bounce 0.6s infinite alternate;">🏆</div>
+        <div style="display:inline-block; background:rgba(0,240,255,0.15); color:var(--cyber-cyan); font-size:11px; font-weight:800; padding:3px 10px; border-radius:12px; margin-bottom:6px;">
+          MEDIAPIPE AI VISION CLEAR
+        </div>
+        <h2 style="font-size:22px; font-weight:900; color:var(--primary-volt); margin-bottom:2px;" id="motion-modal-title">AI 스쿼트 완벽 완수!</h2>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;" id="motion-modal-subtitle">인공지능 비전이 관절 각도를 정밀 판정했습니다.</p>
+
+        <!-- Workout Summary Metrics Grid -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; background:var(--surface-carbon); border-radius:12px; padding:12px 8px; margin-bottom:14px;">
+          <div>
+            <div style="font-size:10px; color:var(--text-muted);">COMPLETED</div>
+            <div style="font-size:17px; font-weight:900; color:var(--primary-volt);" id="motion-modal-reps">20 REPS</div>
+          </div>
+          <div>
+            <div style="font-size:10px; color:var(--text-muted);">TIME</div>
+            <div style="font-size:17px; font-weight:900; color:var(--text-main);" id="motion-modal-time">01:45</div>
+          </div>
+          <div>
+            <div style="font-size:10px; color:var(--text-muted);">CALORIES</div>
+            <div style="font-size:17px; font-weight:900; color:var(--cyber-cyan);" id="motion-modal-cal">18.4 kcal</div>
+          </div>
+        </div>
+
+        <!-- Dopamine Reward Box -->
+        <div style="background:rgba(204,255,0,0.08); border:1px solid var(--primary-volt); border-radius:12px; padding:12px; margin-bottom:16px;">
+          <div style="font-size:11px; font-weight:800; color:var(--primary-volt); margin-bottom:6px;">즉각 도파민 보상 & 펫 성장</div>
+          <div style="display:flex; justify-content:space-around; align-items:center;">
+            <div>
+              <div style="font-size:18px; font-weight:900; color:var(--text-main);" id="motion-modal-xp">+160 XP</div>
+              <div style="font-size:9px; color:var(--text-muted);">펫 경험치</div>
+            </div>
+            <div style="font-size:18px; color:var(--primary-volt);">+</div>
+            <div>
+              <div style="font-size:18px; font-weight:900; color:var(--primary-volt);" id="motion-modal-vc">+40 VC</div>
+              <div style="font-size:9px; color:var(--text-muted);">볼트 코인 획득</div>
+            </div>
+          </div>
+          <div style="margin-top:8px; font-size:11px; font-weight:700; color:#00F0FF; background:rgba(0,240,255,0.08); padding:4px 8px; border-radius:6px;" id="motion-modal-stat-breakdown">
+            🦵 지구력(MIGHT) +10 성장!
+          </div>
+        </div>
+
+        <button type="button" class="btn-primary-volt" id="btn-close-motion-modal" style="width:100%; padding:13px; font-size:14px;">
+          <span>보상 수령하고 파트너 펫 보러가기 ➔</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Phone Connection & QR Code Modal -->
+    <div id="mobile-connect-modal" class="modal-overlay" style="display:none;">
+      <div class="modal-card" style="max-width:380px; text-align:center; background:#12161F; border:1px solid var(--cyber-cyan); border-radius:20px; padding:22px 18px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px;">📱</span>
+            <strong style="font-size:15px; color:var(--cyber-cyan);">스마트폰으로 RUNNOW 열기</strong>
+          </div>
+          <button type="button" id="btn-close-mobile-modal" style="background:none; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;">✕</button>
+        </div>
+
+        <p style="font-size:12px; color:var(--text-muted); line-height:1.45; margin-bottom:16px;">
+          스마트폰 기본 카메라로 아래 QR 코드를 스캔하면<br>
+          <strong style="color:var(--primary-volt);">모바일 카메라 AI 모션 트레이닝</strong>을 바로 시작할 수 있습니다!
+        </p>
+
+        <!-- Live QR Code Card -->
+        <div style="background:#ffffff; border-radius:14px; padding:12px; display:inline-block; margin-bottom:14px; box-shadow:0 4px 20px rgba(0,240,255,0.25);">
+          <img id="mobile-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://runnow-37af9.web.app" alt="RUNNOW Mobile QR" style="width:170px; height:170px; display:block;">
+        </div>
+
+        <!-- Direct URL Copy Box -->
+        <div style="background:var(--surface-carbon); border:1px solid var(--border-glass); border-radius:10px; padding:8px 10px; display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:14px;">
+          <span style="font-size:11px; color:var(--cyber-cyan); font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" id="mobile-connect-url-text">https://runnow-37af9.web.app</span>
+          <button type="button" id="btn-copy-mobile-url" style="padding:4px 10px; font-size:11px; font-weight:800; border-radius:6px; background:var(--primary-accent); color:var(--primary-accent-text); border:none; cursor:pointer; flex-shrink:0;">
+            링크 복사
+          </button>
+        </div>
+
+        <!-- Mobile Install & Setup Guide -->
+        <div style="background:var(--surface-elevated); border-radius:10px; padding:10px; text-align:left; font-size:11px; color:var(--text-muted); line-height:1.5;">
+          <div style="color:var(--text-main); font-weight:800; margin-bottom:4px;">💡 폰에서 네이티브 앱처럼 쓰기 (PWA):</div>
+          <div>🍎 <strong>아이폰(Safari)</strong>: 하단 공유(⎋) ➔ <strong>'홈 화면에 추가'</strong></div>
+          <div>🤖 <strong>갤럭시(Chrome)</strong>: 우측 상단 더보기(⋮) ➔ <strong>'앱 설치'</strong></div>
+          <div style="margin-top:4px; color:var(--primary-volt);">🔒 브라우저 카메라 권한을 허용하시면 AI가 작동합니다.</div>
+        </div>
       </div>
     </div>
 
@@ -818,7 +1173,7 @@
       </div>
     </div>
 
-    <!-- Runner Login & Account Modal (Clean Profile/Switch/Logout) -->
+    <!-- Runner Login & Account Modal -->
     <div id="login-modal" class="modal-overlay" style="display:none;">
       <div class="modal-card" style="max-width:380px; text-align:center;">
         <div style="font-size:36px; margin-bottom:8px;">👤⚡</div>
@@ -848,7 +1203,7 @@
   </div>
 
   <!-- App Entry Script & PWA Service Worker Registration -->
-  <script type="module" src="app.js?v=2.9"></script>
+  <script type="module" src="app.js?v=4.0"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

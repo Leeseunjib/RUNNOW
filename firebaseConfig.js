@@ -2,7 +2,7 @@
 // 대표님의 무료 샌드박스 테스트용 파이어베이스 설정 정본입니다.
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyAYIWgeOSsoqzawg_vkJ9bkLuXDDPuy24",
+  apiKey: "AIzaSyAYIWgeOSSoqzawg_vkJ9bKluLXDDPuy24",
   authDomain: "runnow-37af9.firebaseapp.com",
   projectId: "runnow-37af9",
   storageBucket: "runnow-37af9.firebasestorage.app",

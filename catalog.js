@@ -58,10 +58,10 @@ export const SHOP_ITEMS = [
     name: "Volt Hydration 500ml",
     priceKRW: 1400,
     voltCoins: 99,
-    bonus: "다마고치 수분도 & 에너지 즉시 100% 충전",
+    bonus: "펫 수분도 & 에너지 즉시 100% 충전",
     icon: "💧",
     rarity: "Common",
-    desc: "전해질이 풍부한 볼트 음료로 지친 다마고치를 즉시 활기차게 부활시킵니다."
+    desc: "전해질이 풍부한 볼트 음료로 지친 펫을 즉시 활기차게 부활시킵니다."
   },
   {
     id: "item_06",
@@ -82,10 +82,10 @@ export const SHOP_ITEMS = [
     name: "Beast Protein Shake",
     priceKRW: 4200,
     voltCoins: 290,
-    bonus: "다마고치 캐릭터 성장치 +200 XP 즉시 획득",
+    bonus: "펫 성장치 +200 XP 즉시 획득",
     icon: "🥛",
     rarity: "Rare",
-    desc: "고순도 WPI 프로틴. 다마고치의 근육과 레벨업을 가속화합니다."
+    desc: "고순도 WPI 프로틴. 펫의 근육과 레벨업을 가속화합니다."
   },
   {
     id: "item_08",
@@ -170,7 +170,7 @@ export const SHOP_ITEMS = [
     name: "Aero Speed Sunglasses",
     priceKRW: 3500,
     voltCoins: 250,
-    bonus: "주간 러닝 시 다마고치 행복도 획득량 2배",
+    bonus: "주간 러닝 시 펫 행복도 획득량 2배",
     icon: "🕶️",
     rarity: "Common",
     desc: "눈부신 태양빛을 차단하고 쾌적한 런을 선사하는 스포츠 선글라스."

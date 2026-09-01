@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+    <defs>
+      <linearGradient id="bgGradD4" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#E8F5E9"/>
+        <stop offset="100%" stop-color="#C8E6C9"/>
+      </linearGradient>
+    </defs>
+    <circle cx="250" cy="250" r="235" fill="url(#bgGradD4)" stroke="#00C73C" stroke-width="4"/>
+
+    <!-- Confetti in air -->
+    <rect x="90" y="90" width="12" height="6" rx="2" fill="#FF5252" transform="rotate(30 90 90)"/>
+    <rect x="390" y="100" width="12" height="6" rx="2" fill="#FFD700" transform="rotate(-25 390 100)"/>
+    <rect x="130" y="150" width="10" height="5" rx="2" fill="#2196F3" transform="rotate(45 130 150)"/>
+    <rect x="360" y="160" width="10" height="5" rx="2" fill="#00C73C" transform="rotate(15 360 160)"/>
+
+    <!-- Golden Retriever Floppy Ears -->
+    <path d="M 145 140 Q 95 180 110 260 Q 135 280 165 240 Q 170 190 160 140 Z" fill="#E6A15C" stroke="#333333" stroke-width="7"/>
+    <path d="M 355 140 Q 405 180 390 260 Q 365 280 335 240 Q 330 190 340 140 Z" fill="#E6A15C" stroke="#333333" stroke-width="7"/>
+
+    <!-- Dog Body & Head -->
+    <ellipse cx="250" cy="340" rx="140" ry="110" fill="#F5C082" stroke="#333333" stroke-width="8"/>
+    <circle cx="250" cy="190" r="115" fill="#F5C082" stroke="#333333" stroke-width="8"/>
+
+    <!-- Cheerful Big Dog Eyes -->
+    <ellipse cx="195" cy="175" rx="20" ry="24" fill="#3E2723"/>
+    <circle cx="188" cy="167" r="8" fill="#FFFFFF"/>
+    <circle cx="204" cy="184" r="4" fill="#FFFFFF"/>
+
+    <ellipse cx="305" cy="175" rx="20" ry="24" fill="#3E2723"/>
+    <circle cx="298" cy="167" r="8" fill="#FFFFFF"/>
+    <circle cx="314" cy="184" r="4" fill="#FFFFFF"/>
+
+    <!-- Big Smiling Snout & Tongue -->
+    <ellipse cx="250" cy="215" rx="45" ry="32" fill="#FFF3E0" stroke="#333333" stroke-width="5"/>
+    <ellipse cx="250" cy="200" rx="16" ry="12" fill="#2E1C0C"/>
+    <path d="M 235 222 Q 250 230 265 222" fill="none" stroke="#333333" stroke-width="5" stroke-linecap="round"/>
+    <path d="M 240 228 Q 250 255 260 228 Z" fill="#FF5252" stroke="#333" stroke-width="3"/>
+
+    <!-- Marathon Finisher Medal -->
+    <path d="M 180 270 L 250 320 L 320 270" fill="none" stroke="#00C73C" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="250" cy="335" r="28" fill="#FFD700" stroke="#B8860B" stroke-width="4"/>
+    <text x="250" y="344" font-family="sans-serif" font-weight="900" font-size="24" fill="#B8860B" text-anchor="middle">🏅</text>
+  </svg>

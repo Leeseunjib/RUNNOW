@@ -1,4 +1,183 @@
-// 100대 정규 퀘스트 & 경험치 밸런스 데이터 (RUNNOW 100 Quests Master Engine)
+// 100대 정규 퀘스트 & 일일/주간/보상형 다차원 퀘스트 마스터 엔진 (RUNNOW Quest Master Engine)
+
+export const QUEST_MAIN_TABS = [
+  { id: "daily", name: "☀️ 일일 퀘스트", icon: "☀️" },
+  { id: "weekly", name: "📅 주간 퀘스트", icon: "📅" },
+  { id: "bounty", name: "🎁 특별 보상", icon: "🎁" },
+  { id: "milestone", name: "💎 100 업적", icon: "💎" }
+];
+
+// ==========================================
+// [1. ☀️ 일일 반복 퀘스트 (매일 00:00 자정 리셋)]
+// ==========================================
+export const DAILY_QUESTS = [
+  {
+    id: "dq_01",
+    title: "오늘의 활력 출석 & 스트레칭",
+    desc: "앱에 접속하여 오늘의 컨디션을 확인하세요.",
+    targetType: "daily_login",
+    targetValue: 1,
+    xpReward: 40,
+    coinReward: 10,
+    icon: "🌅"
+  },
+  {
+    id: "dq_02",
+    title: "오늘 1km 가볍게 달리기",
+    desc: "오늘 단일 또는 누적으로 1.0km 이상 러닝을 완주하세요.",
+    targetType: "daily_run_km",
+    targetValue: 1.0,
+    xpReward: 100,
+    coinReward: 25,
+    icon: "🏃"
+  },
+  {
+    id: "dq_03",
+    title: "반려펫 전해질 식사 챙기기",
+    desc: "펫 탭에서 [사료 주기]를 1회 실행하세요.",
+    targetType: "action_feed",
+    targetValue: 1,
+    xpReward: 40,
+    coinReward: 10,
+    icon: "🍖"
+  },
+  {
+    id: "dq_04",
+    title: "반려펫과 신나게 놀아주기",
+    desc: "펫 탭에서 [놀아주기]를 1회 실행하세요.",
+    targetType: "action_play",
+    targetValue: 1,
+    xpReward: 40,
+    coinReward: 10,
+    icon: "🎾"
+  },
+  {
+    id: "dq_05",
+    title: "100 kcal 칼로리 버닝",
+    desc: "오늘 하루 러닝을 통해 100 kcal 이상을 소모하세요.",
+    targetType: "daily_calories",
+    targetValue: 100,
+    xpReward: 80,
+    coinReward: 20,
+    icon: "🔥"
+  },
+  {
+    id: "dq_06",
+    title: "오늘의 데일리 올클리어 보너스",
+    desc: "위 일일 퀘스트 5개를 모두 완료하여 올클리어 보너스를 받으세요.",
+    targetType: "daily_all_clear",
+    targetValue: 5,
+    xpReward: 200,
+    coinReward: 60,
+    icon: "👑"
+  }
+];
+
+// ==========================================
+// [2. 📅 주간 퀘스트 (매주 월요일 00:00 리셋)]
+// ==========================================
+export const WEEKLY_QUESTS = [
+  {
+    id: "wq_01",
+    title: "주간 10km 마일리지 돌파",
+    desc: "이번 주 누적 러닝 거리 10.0km를 달성하세요.",
+    targetType: "weekly_run_km",
+    targetValue: 10.0,
+    xpReward: 400,
+    coinReward: 100,
+    icon: "🚩"
+  },
+  {
+    id: "wq_02",
+    title: "주간 3일 러닝 스트릭 유지",
+    desc: "이번 주 최소 3일 이상 러닝을 기록하세요.",
+    targetType: "weekly_active_days",
+    targetValue: 3,
+    xpReward: 350,
+    coinReward: 80,
+    icon: "🔥"
+  },
+  {
+    id: "wq_03",
+    title: "주간 600 kcal 하이 버닝",
+    desc: "이번 주 총 600 kcal 이상을 운동으로 소모하세요.",
+    targetType: "weekly_calories",
+    targetValue: 600,
+    xpReward: 350,
+    coinReward: 80,
+    icon: "⚡"
+  },
+  {
+    id: "wq_04",
+    title: "21일 챌린지 미션 3회 달성",
+    desc: "이번 주 21일 챌린지 일차 미션을 3개 클리어하세요.",
+    targetType: "weekly_challenge_clears",
+    targetValue: 3,
+    xpReward: 450,
+    coinReward: 120,
+    icon: "🏆"
+  },
+  {
+    id: "wq_05",
+    title: "펫 레벨 1단계 성장",
+    desc: "이번 주 펫을 최소 1레벨 이상 성장시키세요.",
+    targetType: "weekly_level_up",
+    targetValue: 1,
+    xpReward: 500,
+    coinReward: 150,
+    icon: "🆙"
+  }
+];
+
+// ==========================================
+// [3. 🎁 특별 보상형 퀘스트 (이벤트/바운티)]
+// ==========================================
+export const BOUNTY_QUESTS = [
+  {
+    id: "bq_01",
+    title: "🔥 불타는 주말 5km 질주 챌린지",
+    desc: "주말(토/일) 동안 5.0km를 완주하고 특별 골든 박스를 수령하세요.",
+    targetType: "weekend_5k",
+    targetValue: 5.0,
+    xpReward: 600,
+    coinReward: 200,
+    icon: "✨",
+    tag: "주말 한정"
+  },
+  {
+    id: "bq_02",
+    title: "🌃 나이트 시티 러너 바운티",
+    desc: "밤 9시(21:00) 이후 2km 이상 달리고 한정판 네온 배지를 획득하세요.",
+    targetType: "night_owl_run",
+    targetValue: 2.0,
+    xpReward: 300,
+    coinReward: 80,
+    icon: "🌙",
+    tag: "스페셜"
+  },
+  {
+    id: "bq_03",
+    title: "⚡ 서브 5'30\" 스피드 부스터",
+    desc: "평균 페이스 5'30\" 이하로 3km를 질주하세요.",
+    targetType: "speed_booster",
+    targetValue: 330,
+    xpReward: 500,
+    coinReward: 150,
+    icon: "🚀",
+    tag: "챌린저"
+  },
+  {
+    id: "bq_04",
+    title: "🐾 최고의 집사! 펫 완벽 케어",
+    desc: "펫의 배고픔/행복도/에너지를 모두 95% 이상으로 채우세요.",
+    targetType: "pet_perfect_care",
+    targetValue: 95,
+    xpReward: 250,
+    coinReward: 70,
+    icon: "💖",
+    tag: "육성"
+  }
+];
 
 export const QUEST_CATEGORIES = [
   { id: "all", name: "전체 (100)", icon: "📜" },
@@ -61,7 +240,7 @@ export const QUESTS_DATA = [
     id: "q_005",
     category: "starter",
     title: "볼트몽 첫 식사 챙기기",
-    desc: "다마고치 탭에서 [사료 주기]를 1회 실행하세요.",
+    desc: "펫 탭에서 [사료 주기]를 1회 실행하세요.",
     targetType: "action_feed",
     targetValue: 1,
     xpReward: 50,
@@ -72,7 +251,7 @@ export const QUESTS_DATA = [
     id: "q_006",
     category: "starter",
     title: "놀아주며 친밀도 쌓기",
-    desc: "다마고치 탭에서 [놀아주기]를 1회 실행하세요.",
+    desc: "펫 탭에서 [놀아주기]를 1회 실행하세요.",
     targetType: "action_play",
     targetValue: 1,
     xpReward: 50,
@@ -83,7 +262,7 @@ export const QUESTS_DATA = [
     id: "q_007",
     category: "starter",
     title: "편안한 휴식과 회복",
-    desc: "다마고치 탭에서 [휴식하기]를 1회 실행하세요.",
+    desc: "펫 탭에서 [휴식하기]를 1회 실행하세요.",
     targetType: "action_rest",
     targetValue: 1,
     xpReward: 50,
@@ -160,7 +339,7 @@ export const QUESTS_DATA = [
     id: "q_014",
     category: "starter",
     title: "볼트몽 레벨 2 진입",
-    desc: "다마고치 캐릭터를 레벨 2로 성장시키세요.",
+    desc: "펫 캐릭터를 레벨 2로 성장시키세요.",
     targetType: "tamagotchi_level",
     targetValue: 2,
     xpReward: 150,
@@ -979,7 +1158,7 @@ export const QUESTS_DATA = [
     id: "q_087",
     category: "growth",
     title: "볼트몽 레벨 3 달성",
-    desc: "다마고치 캐릭터를 레벨 3으로 성장시키세요.",
+    desc: "펫 캐릭터를 레벨 3으로 성장시키세요.",
     targetType: "tamagotchi_level",
     targetValue: 3,
     xpReward: 200,
@@ -990,7 +1169,7 @@ export const QUESTS_DATA = [
     id: "q_088",
     category: "growth",
     title: "볼트몽 레벨 5 달성",
-    desc: "다마고치 캐릭터를 레벨 5로 성장시키세요.",
+    desc: "펫 캐릭터를 레벨 5로 성장시키세요.",
     targetType: "tamagotchi_level",
     targetValue: 5,
     xpReward: 350,
@@ -1012,7 +1191,7 @@ export const QUESTS_DATA = [
     id: "q_090",
     category: "growth",
     title: "지구력 50 마스터",
-    desc: "다마고치 지구력 스탯을 50 이상으로 육성하세요.",
+    desc: "펫 지구력 스탯을 50 이상으로 육성하세요.",
     targetType: "stat_might",
     targetValue: 50,
     xpReward: 400,
@@ -1023,7 +1202,7 @@ export const QUESTS_DATA = [
     id: "q_091",
     category: "growth",
     title: "민첩성 50 마스터",
-    desc: "다마고치 민첩성 스탯을 50 이상으로 육성하세요.",
+    desc: "펫 민첩성 스탯을 50 이상으로 육성하세요.",
     targetType: "stat_agility",
     targetValue: 50,
     xpReward: 400,
@@ -1034,7 +1213,7 @@ export const QUESTS_DATA = [
     id: "q_092",
     category: "growth",
     title: "정신력 50 마스터",
-    desc: "다마고치 정신력 스탯을 50 이상으로 육성하세요.",
+    desc: "펫 정신력 스탯을 50 이상으로 육성하세요.",
     targetType: "stat_spirit",
     targetValue: 50,
     xpReward: 400,
@@ -1045,7 +1224,7 @@ export const QUESTS_DATA = [
     id: "q_093",
     category: "growth",
     title: "볼트몽 레벨 8 달성",
-    desc: "다마고치 캐릭터를 레벨 8로 성장시키세요.",
+    desc: "펫 캐릭터를 레벨 8로 성장시키세요.",
     targetType: "tamagotchi_level",
     targetValue: 8,
     xpReward: 600,
@@ -1067,7 +1246,7 @@ export const QUESTS_DATA = [
     id: "q_095",
     category: "growth",
     title: "볼트몽 레벨 10 달성",
-    desc: "다마고치 캐릭터를 레벨 10으로 성장시키세요.",
+    desc: "펫 캐릭터를 레벨 10으로 성장시키세요.",
     targetType: "tamagotchi_level",
     targetValue: 10,
     xpReward: 1000,
