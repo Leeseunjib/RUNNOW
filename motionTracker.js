@@ -137,6 +137,7 @@ export class MotionTracker {
     this.poseLandmarker = null;
     this.engineType = null;
     this.isDetecting = false;
+    this.lastLoadError = null;
 
     // BlazePose 33 Landmark Skeleton Connections
     this.POSE_CONNECTIONS = [
@@ -178,71 +179,136 @@ export class MotionTracker {
     this.startTime = Date.now();
   }
 
-  // Google MediaPipe Pose Landmarker 로더 (1순위: Classic MediaPipe Pose, 2순위: Tasks Vision)
+  isIosFamily() {
+    const ua = navigator.userAgent || "";
+    return /iPhone|iPad|iPod/i.test(ua)
+      || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  }
+
+  async waitForClassicPose(timeoutMs = 5000) {
+    if (window.Pose) return true;
+    const started = Date.now();
+    while (Date.now() - started < timeoutMs) {
+      if (window.Pose) return true;
+      await new Promise((resolve) => setTimeout(resolve, 120));
+    }
+    return Boolean(window.Pose);
+  }
+
+  async fetchModelBuffer() {
+    const paths = [
+      "./assets/mediapipe/pose_landmarker_lite.task",
+      "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task"
+    ];
+    let lastErr = null;
+    for (const path of paths) {
+      try {
+        const res = await fetch(path, { cache: "no-store", mode: "cors" });
+        if (!res.ok) throw new Error(`model HTTP ${res.status}`);
+        return await res.arrayBuffer();
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    throw lastErr || new Error("모델 파일을 받지 못했습니다");
+  }
+
+  async loadVisionBundle() {
+    const urls = [
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/vision_bundle.js",
+      "https://unpkg.com/@mediapipe/tasks-vision@0.10.18/vision_bundle.js"
+    ];
+    let lastErr = null;
+    for (const url of urls) {
+      try {
+        return await import(url);
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    throw lastErr || new Error("vision bundle import failed");
+  }
+
+  // 1순위 Classic Pose(폰 호환), 2순위 Tasks Vision CPU 버퍼 로드
   async initMediaPipe() {
     if (this.poseDetector || this.poseLandmarker) return true;
+    this.lastLoadError = null;
 
-    // Engine 1: Classic MediaPipe Pose (글로벌 스크립트 기반 - 모바일 100% 호환)
-    if (window.Pose) {
+    if (await this.waitForClassicPose()) {
       try {
         const pose = new window.Pose({
           locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`
         });
-
         pose.setOptions({
-          modelComplexity: 0, // 0 = Lite (모바일 최적화 및 60FPS 고속 연산)
+          modelComplexity: 0,
           smoothLandmarks: true,
           enableSegmentation: false,
           minDetectionConfidence: 0.3,
           minTrackingConfidence: 0.3
         });
-
-        pose.onResults((results) => {
-          this.handlePoseResults(results);
-        });
-
+        pose.onResults((results) => this.handlePoseResults(results));
         await pose.initialize();
         this.poseDetector = pose;
         this.engineType = "classic_pose";
         console.log("⚡ MediaPipe Classic Pose Engine Ready!");
         return true;
       } catch (err) {
-        console.warn("Classic Pose 초기화 에러, Tasks Vision 폴백 시도:", err);
+        console.warn("Classic Pose 초기화 실패, Tasks Vision 시도:", err);
+        this.lastLoadError = err;
       }
     }
 
-    // Engine 2: MediaPipe Tasks Vision 폴백
-    const modelPath = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
-    const wasmPath = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
+    const wasmPaths = [
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm",
+      "https://unpkg.com/@mediapipe/tasks-vision@0.10.18/wasm"
+    ];
+    const preferCpu = this.isIosFamily() || /Android/i.test(navigator.userAgent);
+    const delegates = preferCpu ? ["CPU", "GPU"] : ["GPU", "CPU"];
 
     try {
-      const visionModule = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.js");
+      const modelBuffer = await this.fetchModelBuffer();
+      const visionModule = await this.loadVisionBundle();
       const { PoseLandmarker, FilesetResolver } = visionModule;
-      const vision = await FilesetResolver.forVisionTasks(wasmPath);
 
-      const options = (delegate) => ({
-        baseOptions: { modelAssetPath: modelPath, delegate },
-        runningMode: "VIDEO",
-        numPoses: 1,
-        minPoseDetectionConfidence: 0.3,
-        minPosePresenceConfidence: 0.3,
-        minTrackingConfidence: 0.3
-      });
-
-      try {
-        this.poseLandmarker = await PoseLandmarker.createFromOptions(vision, options("GPU"));
-      } catch (gpuErr) {
-        console.warn("MediaPipe GPU 실패, CPU로 전환:", gpuErr);
-        this.poseLandmarker = await PoseLandmarker.createFromOptions(vision, options("CPU"));
+      for (const wasmPath of wasmPaths) {
+        for (const delegate of delegates) {
+          try {
+            const vision = await FilesetResolver.forVisionTasks(wasmPath);
+            const options = {
+              baseOptions: {
+                modelAssetBuffer: new Uint8Array(modelBuffer.slice(0)),
+                delegate
+              },
+              runningMode: "VIDEO",
+              numPoses: 1,
+              minPoseDetectionConfidence: 0.3,
+              minPosePresenceConfidence: 0.3,
+              minTrackingConfidence: 0.3
+            };
+            if (preferCpu) {
+              options.canvas = document.createElement("canvas");
+            }
+            this.poseLandmarker = await PoseLandmarker.createFromOptions(vision, options);
+            this.engineType = "tasks_vision";
+            this.lastLoadError = null;
+            console.log("⚡ MediaPipe Tasks Vision Engine Ready:", delegate);
+            return true;
+          } catch (err) {
+            this.lastLoadError = err;
+            try { this.poseLandmarker?.close?.(); } catch (_) {}
+            this.poseLandmarker = null;
+          }
+        }
       }
-      this.engineType = "tasks_vision";
-      console.log("⚡ MediaPipe Tasks Vision Engine Ready!");
-      return true;
     } catch (err) {
       console.error("MediaPipe 모든 엔진 로드 실패:", err);
+      this.lastLoadError = err;
       this.poseLandmarker = null;
       return false;
     }
+
+    console.error("MediaPipe 모든 엔진 로드 실패:", this.lastLoadError);
+    return false;
   }
 
   // 웹캠 스트림 시작 (Camera-First Flow: 카메라 즉시 실행 후 AI 모델 비동기 로드)
@@ -329,19 +395,21 @@ export class MotionTracker {
       this.videoEl.onerror = (err) => reject(err);
     });
 
-    // 백그라운드에서 MediaPipe AI 관절 모델 로드 (카메라 화면은 이미 켜져 있음)
-    this.initMediaPipe().then((ready) => {
-      if (ready) {
-        console.log("⚡ MediaPipe Pose Landmarker Ready!");
-        if (this.onFeedback) {
-          this.onFeedback({ text: "AI 관절 인식이 활성화되었습니다. 전신이 보이게 서주세요!", isGood: true });
-        }
-      } else {
-        console.warn("⚠️ MediaPipe Pose Landmarker could not load, running in fallback mode");
+    // 백그라운드가 아니라 여기서 모델을 끝까지 올립니다. 실패하면 카메라를 끄고 알립니다.
+    const ready = await this.initMediaPipe();
+    if (ready) {
+      if (this.onFeedback) {
+        this.onFeedback({ text: "AI 관절 인식이 활성화되었습니다. 전신이 보이게 서주세요!", isGood: true });
       }
-    });
+      return true;
+    }
 
-    return true;
+    this.stopCamera();
+    const detail = this.lastLoadError?.message || String(this.lastLoadError || "");
+    throw new Error(
+      "관절 인식 모델을 불러오지 못했습니다. 와이파이에 연결한 뒤 페이지를 새로고침하고 다시 시작해 주세요."
+      + (detail ? `\n(${detail})` : "")
+    );
   }
 
   // 화면 꺼짐 방지 (Wake Lock API)
@@ -474,9 +542,7 @@ export class MotionTracker {
             this.isDetecting = false;
           }
         }
-      } 
-      // Engine 2: Tasks Vision 처리
-      else if (this.engineType === "tasks_vision" && this.poseLandmarker) {
+      } else if (this.engineType === "tasks_vision" && this.poseLandmarker) {
         const nowInMs = performance.now();
         if (nowInMs - this.lastDetectMs >= 33) {
           this.lastDetectMs = nowInMs;
@@ -485,11 +551,14 @@ export class MotionTracker {
           this.lastLandmarks = poses[0] || null;
           if (this.lastLandmarks) {
             this.processExerciseLogic(this.lastLandmarks);
-            this.drawSkeleton(this.lastLandmarks);
-          } else {
-            this.drawSeekingHint(width, height);
           }
         }
+      }
+
+      if (this.lastLandmarks) {
+        this.drawSkeleton(this.lastLandmarks);
+      } else if (this.engineType) {
+        this.drawSeekingHint(width, height);
       }
     }
 
@@ -499,16 +568,9 @@ export class MotionTracker {
   // Classic MediaPipe Pose 결과 처리 핸들러
   handlePoseResults(results) {
     if (!this.isRunning) return;
-    const landmarks = results.poseLandmarks || null;
-    this.lastLandmarks = landmarks;
-    const width = this.canvasEl?.width || 640;
-    const height = this.canvasEl?.height || 480;
-
-    if (landmarks && landmarks.length > 0) {
-      this.processExerciseLogic(landmarks);
-      this.drawSkeleton(landmarks);
-    } else {
-      this.drawSeekingHint(width, height);
+    this.lastLandmarks = results.poseLandmarks || null;
+    if (this.lastLandmarks && this.lastLandmarks.length > 0) {
+      this.processExerciseLogic(this.lastLandmarks);
     }
   }
 
