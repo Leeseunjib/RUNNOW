@@ -8,7 +8,7 @@ import { QUEST_MAIN_TABS, DAILY_QUESTS, WEEKLY_QUESTS, BOUNTY_QUESTS, QUEST_CATE
 import { PayPalBridge } from './paypalBridge.js';
 import { FirebaseSandbox } from './firebaseSandbox.js';
 import { firebaseCloud } from './firebaseClient.js';
-import { MotionTracker, EXERCISE_TYPES } from './motionTracker.js';
+import { MotionTracker, EXERCISE_TYPES, DIFFICULTY_LEVELS, DEFAULT_DIFFICULTY } from './motionTracker.js';
 import { MotionSound } from './motionSound.js';
 
 class AppController {
@@ -76,11 +76,15 @@ class AppController {
     this.runPlaceMode = "gps";
     this.treadmillSpeedKmh = 8;
     this.targetMotionReps = 10;
+    const savedLevel = localStorage.getItem("RUNNOW_MOTION_LEVEL");
+    this.motionLevelId = DIFFICULTY_LEVELS[savedLevel] ? savedLevel : DEFAULT_DIFFICULTY;
     this.motionTracker = new MotionTracker({
       weightKg: this.userProfile.weightKg,
+      difficulty: this.motionLevelId,
       onRepCount: (data) => this.handleMotionRepCount(data),
       onFeedback: (data) => this.handleMotionFeedback(data),
-      onStateUpdate: (data) => this.handleMotionStateUpdate(data)
+      onStateUpdate: (data) => this.handleMotionStateUpdate(data),
+      onPhaseChange: (data) => this.handleMotionPhaseChange(data)
     });
 
     this.paypalBridge = new PayPalBridge();
@@ -784,7 +788,7 @@ class AppController {
     };
 
     setText("motion-standby-title", `${curEx.name} 트레이닝`);
-    setText("motion-standby-desc", "전신이 나오게 선 뒤 시작하면, 카메라 화면 위에 관절 점이 같이 그려집니다.");
+    setText("motion-standby-desc", "전신이 나오게 시작 자세를 잡으면 AI가 준비 상태를 확인한 뒤, 3초 카운트다운이 끝나야 횟수를 셉니다.");
     setText("motion-page-title", title);
     setText("motion-hud-icon", curEx.icon);
     setText("motion-rep-unit", curEx.shortName || title.toUpperCase());
@@ -945,6 +949,15 @@ class AppController {
       });
     });
 
+    // 1-2. 난이도(초보자 / 중급자 / 단련자) 선택 칩
+    const levelChips = document.querySelectorAll("#motion-level-chips .target-chip");
+    levelChips.forEach((chip) => {
+      chip.addEventListener("click", () => {
+        this.applyMotionLevel(chip.dataset.level);
+      });
+    });
+    this.applyMotionLevel(this.motionLevelId, { silent: true });
+
     // 2. 목표 횟수 퀵 선택 칩 클릭 이벤트
     const targetChips = document.querySelectorAll("#motion-target-chips .target-chip");
     targetChips.forEach(chip => {
@@ -973,7 +986,10 @@ class AppController {
           if (standbyOverlay) standbyOverlay.style.display = "none";
           if (activeControls) activeControls.style.display = "flex";
 
-          this.motionSound.speakCoaching(`${this.motionTracker.currentExercise.name} 트레이닝을 시작합니다. 화면에 전신이 나오도록 준비해 주세요.`);
+          this.motionSound.speakCoaching(
+            `${this.motionTracker.currentExercise.name} ${this.motionTracker.getDifficulty().name} 난이도입니다.`
+            + " 전신이 나오게 시작 자세를 잡으면 3초 카운트다운 후 횟수를 셉니다."
+          );
         } catch (err) {
           console.error("Camera/MediaPipe Error:", err);
           alert(`카메라 연결 오류: ${err.message || err}\n브라우저의 카메라 권한을 허용해 주세요.`);
@@ -1023,12 +1039,11 @@ class AppController {
     if (btnPauseMotion) {
       btnPauseMotion.addEventListener("click", () => {
         if (this.motionTracker.isRunning) {
-          this.motionTracker.isRunning = false;
+          this.motionTracker.pause();
           btnPauseMotion.textContent = "이어하기";
           this.motionSound.speakCoaching("운동을 일시정지했습니다.");
         } else {
-          this.motionTracker.isRunning = true;
-          this.motionTracker.predictWebcamLoop();
+          this.motionTracker.resume();
           btnPauseMotion.textContent = "일시정지";
           this.motionSound.speakCoaching("운동을 계속합니다.");
         }
@@ -1182,9 +1197,10 @@ class AppController {
     if (calEl) calEl.textContent = "0.0";
     if (statGainEl) statGainEl.textContent = "+0";
     if (coachingPill) {
-      coachingPill.textContent = "자세를 준비해 주세요";
+      coachingPill.textContent = "시작 자세를 잡으면 카운트다운 후 세기 시작합니다";
       coachingPill.classList.remove("is-good");
     }
+    this.lastCoachSpeakAt = 0;
     if (angleEl) angleEl.textContent = "180°";
 
     this.motionTracker.resetExerciseStats();
@@ -1233,6 +1249,62 @@ class AppController {
     }
   }
 
+  // 난이도 적용 + 칩 UI / 설명 문구 동기화
+  applyMotionLevel(levelId, options = {}) {
+    const level = DIFFICULTY_LEVELS[levelId] ? DIFFICULTY_LEVELS[levelId] : DIFFICULTY_LEVELS[DEFAULT_DIFFICULTY];
+    this.motionLevelId = level.id;
+    localStorage.setItem("RUNNOW_MOTION_LEVEL", level.id);
+    this.motionTracker.setDifficulty(level.id);
+
+    document.querySelectorAll("#motion-level-chips .target-chip").forEach((chip) => {
+      chip.classList.toggle("active", chip.dataset.level === level.id);
+    });
+
+    const descEl = document.getElementById("motion-level-desc");
+    if (descEl) descEl.textContent = `${level.icon} ${level.name} · ${level.detail}`;
+
+    if (!options.silent && this.motionTracker.isRunning) {
+      this.motionSound.speakCoaching(`${level.name} 난이도로 변경했습니다. 준비 자세를 다시 잡아 주세요.`);
+    }
+  }
+
+  // 준비 → 카운트다운 → 카운팅 페이즈 전환 콜백
+  handleMotionPhaseChange(data) {
+    const pill = document.getElementById("motion-coaching-pill");
+
+    if (data.phase === "calibrating") {
+      if (pill && data.blockedReason) {
+        pill.textContent = data.blockedReason;
+        pill.classList.remove("is-good");
+      }
+      return;
+    }
+
+    if (data.phase === "countdown") {
+      if (pill) {
+        pill.textContent = data.secondsLeft > 0
+          ? `${data.secondsLeft}초 후 카운트를 시작합니다`
+          : "시작합니다!";
+        pill.classList.add("is-good");
+      }
+      if (data.secondsLeft > 0) {
+        this.motionSound.playDepthClick();
+      } else {
+        this.motionSound.playRepBeep(1);
+        this.motionSound.speakCoaching("시작합니다");
+      }
+      return;
+    }
+
+    if (data.phase === "counting") {
+      if (pill) {
+        pill.textContent = "카운트를 시작합니다. 천천히 정확하게!";
+        pill.classList.add("is-good");
+      }
+      this.renderMotionProgress(this.motionTracker.repCount || 0);
+    }
+  }
+
   // 실시간 AI 자세 코칭 피드백 콜백
   handleMotionFeedback(data) {
     const pill = document.getElementById("motion-coaching-pill");
@@ -1241,8 +1313,14 @@ class AppController {
     pill.textContent = data.text;
     pill.classList.toggle("is-good", !!data.isGood);
 
+    // 경고 문구가 서로 다르면 speakCoaching의 자체 중복 필터를 빠져나가 TTS가 밀립니다.
+    // 종류와 무관하게 3초에 한 번만 말하도록 앱 단에서 한 번 더 막습니다.
     if (!data.isGood) {
-      this.motionSound.speakCoaching(data.text);
+      const now = Date.now();
+      if (now - (this.lastCoachSpeakAt || 0) >= 3000) {
+        this.lastCoachSpeakAt = now;
+        this.motionSound.speakCoaching(data.text);
+      }
     }
   }
 

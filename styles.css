@@ -1934,3 +1934,12 @@ body {
   position: relative;
 }
 
+
+/* AI 모션 난이도 선택 설명 문구 */
+.pose-level-desc {
+  margin: -2px 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: -0.2px;
+}
