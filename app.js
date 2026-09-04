@@ -971,17 +971,31 @@ class AppController {
       });
     });
 
+    // 백그라운드 AI 모델 사전 로드 (사용자가 버튼을 누르기 전에 미리 모델을 메모리에 올려 즉각 연결)
+    setTimeout(() => {
+      this.motionTracker.initMediaPipe().catch((e) => {
+        console.warn("MediaPipe background pre-warm:", e);
+      });
+    }, 800);
+
     // 3. 카메라 및 AI 트래커 시작 버튼
     if (btnStartCamera) {
       btnStartCamera.addEventListener("click", async () => {
         btnStartCamera.disabled = true;
-        btnStartCamera.innerHTML = `<span>⏳ AI 모델 준비 및 카메라 연결 중...</span>`;
+        btnStartCamera.innerHTML = `<span>⏳ 카메라 연결 중...</span>`;
 
         try {
           this.motionSound.ensureAudioUnlocked();
           this.motionTracker.setWeight(this.userProfile.weightKg);
 
-          await this.motionTracker.startCamera(videoEl, canvasEl);
+          await this.motionTracker.startCamera(videoEl, canvasEl, {
+            onStreamReady: () => {
+              // 카메라 피드가 활성화되면 즉시 대기 화면을 걷어내어 비디오를 보여줌
+              if (standbyOverlay) standbyOverlay.style.display = "none";
+              if (activeControls) activeControls.style.display = "flex";
+              btnStartCamera.innerHTML = `<span>⏳ AI 관절 인식 준비 중...</span>`;
+            }
+          });
 
           if (standbyOverlay) standbyOverlay.style.display = "none";
           if (activeControls) activeControls.style.display = "flex";
@@ -992,7 +1006,7 @@ class AppController {
           );
         } catch (err) {
           console.error("Camera/MediaPipe Error:", err);
-          alert(`카메라 연결 오류: ${err.message || err}\n브라우저의 카메라 권한을 허용해 주세요.`);
+          alert(`카메라 연결 오류: ${err.message || err}\n브라우저의 카메라 권한을 확인해 주세요.`);
           if (standbyOverlay) standbyOverlay.style.display = "flex";
           if (activeControls) activeControls.style.display = "none";
         } finally {

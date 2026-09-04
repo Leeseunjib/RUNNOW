@@ -341,12 +341,24 @@ export class MotionTracker {
       || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   }
 
-  async waitForClassicPose(timeoutMs = 5000) {
+  async promiseWithTimeout(promise, ms, message) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), ms);
+    });
+    try {
+      return await Promise.race([promise, timeout]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async waitForClassicPose(timeoutMs = 1500) {
     if (window.Pose) return true;
     const started = Date.now();
     while (Date.now() - started < timeoutMs) {
       if (window.Pose) return true;
-      await new Promise((resolve) => setTimeout(resolve, 120));
+      await new Promise((resolve) => setTimeout(resolve, 60));
     }
     return Boolean(window.Pose);
   }
@@ -403,7 +415,8 @@ export class MotionTracker {
           minTrackingConfidence: 0.3
         });
         pose.onResults((results) => this.handlePoseResults(results));
-        await pose.initialize();
+        // 타임아웃을 두어 CDN 지연으로 인한 무한 멈춤 차단
+        await this.promiseWithTimeout(pose.initialize(), 7000, "Classic Pose 초기화 시간 초과");
         this.poseDetector = pose;
         this.engineType = "classic_pose";
         console.log("⚡ MediaPipe Classic Pose Engine Ready!");
@@ -422,7 +435,7 @@ export class MotionTracker {
     const delegates = preferCpu ? ["CPU", "GPU"] : ["GPU", "CPU"];
 
     try {
-      const modelBuffer = await this.fetchModelBuffer();
+      const modelBuffer = await this.promiseWithTimeout(this.fetchModelBuffer(), 8000, "모델 다운로드 시간 초과");
       const visionModule = await this.loadVisionBundle();
       const { PoseLandmarker, FilesetResolver } = visionModule;
 
@@ -468,7 +481,7 @@ export class MotionTracker {
   }
 
   // 웹캠 스트림 시작 (Camera-First Flow: 카메라 즉시 실행 후 AI 모델 비동기 로드)
-  async startCamera(videoElement, canvasElement) {
+  async startCamera(videoElement, canvasElement, options = {}) {
     // 카메라 전환(toggleCamera)으로 재진입한 경우에는 기록을 유지해야 합니다.
     const isFreshStart = this.phase === "idle";
     if (videoElement) this.videoEl = videoElement;
@@ -533,25 +546,51 @@ export class MotionTracker {
     this.videoEl.muted = true;
     
     // 카메라 비디오 준비 완료 후 즉시 화면에 렌더링
-    await new Promise((resolve, reject) => {
-      this.videoEl.onloadedmetadata = async () => {
-        try {
-          await this.videoEl.play();
-          this.isRunning = true;
-          this.requestWakeLock();
-          this.predictWebcamLoop();
-          resolve(true);
-        } catch (playErr) {
-          console.error("Video play error:", playErr);
-          this.isRunning = true;
-          this.predictWebcamLoop();
-          resolve(true);
-        }
-      };
-      this.videoEl.onerror = (err) => reject(err);
-    });
+    const playVideo = async () => {
+      try {
+        await this.videoEl.play();
+      } catch (playErr) {
+        console.warn("Video play error:", playErr);
+      }
+      this.isRunning = true;
+      this.requestWakeLock();
+      this.predictWebcamLoop();
+    };
 
-    // 백그라운드가 아니라 여기서 모델을 끝까지 올립니다. 실패하면 카메라를 끄고 알립니다.
+    if (this.videoEl.readyState >= 1) {
+      await playVideo();
+    } else {
+      await new Promise((resolve) => {
+        let done = false;
+        const onReady = async () => {
+          if (done) return;
+          done = true;
+          cleanup();
+          await playVideo();
+          resolve(true);
+        };
+        const cleanup = () => {
+          this.videoEl.removeEventListener("loadedmetadata", onReady);
+          this.videoEl.removeEventListener("loadeddata", onReady);
+          this.videoEl.removeEventListener("canplay", onReady);
+        };
+        this.videoEl.addEventListener("loadedmetadata", onReady, { once: true });
+        this.videoEl.addEventListener("loadeddata", onReady, { once: true });
+        this.videoEl.addEventListener("canplay", onReady, { once: true });
+        setTimeout(onReady, 1200); // 1.2초 타임아웃 폴백으로 절대 무한 대기하지 않음
+      });
+    }
+
+    // 카메라 화면이 재생되면 즉시 콜백 실행 (대기 오버레이 걷어냄)
+    if (typeof options.onStreamReady === "function") {
+      try {
+        options.onStreamReady();
+      } catch (cbErr) {
+        console.warn("onStreamReady error:", cbErr);
+      }
+    }
+
+    // AI 모델 비동기 로드
     const ready = await this.initMediaPipe();
     if (ready) {
       // 모델이 준비되면 곧바로 카운트하지 않고 준비(Calibration) 페이즈로 들어갑니다.
