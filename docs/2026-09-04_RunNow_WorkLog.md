@@ -51,4 +51,9 @@
 
 ## 🎯 3. 결과 및 향후 계획
 - **검증 완료**: 로컬 및 HQ 폴더 모두에 정상 파일 크기(MD 15KB, DOCX 44KB)로 유실 없이 100% 저장 완료.
+- **Firebase 배포 완료**:
+  - 프로젝트: `runnow-37af9`
+  - 배포 항목: Firestore (규칙 `firestore.rules`, 인덱스 `firestore.indexes.json`), Hosting (정적 자산 225개 파일)
+  - 라이브 URL: `https://runnow-37af9.web.app` (HTTP 200 OK 검증 완료)
 - **향후 과제**: 온디바이스 비전 트레이닝 엔진의 제스처 컨트롤(MediaPipe Hands) 추가 고도화 및 네이티브 앱 패키징 준비.
+
