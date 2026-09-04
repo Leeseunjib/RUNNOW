@@ -42,7 +42,7 @@ class FirebaseCloudClient {
       displayName: user.displayName || user.email?.split("@")[0] || "러너",
       email: user.email || "",
       photoURL: user.photoURL || "",
-      expiresAt: Date.now() + (12 * 60 * 60 * 1000)
+      expiresAt: Date.now() + (365 * 24 * 60 * 60 * 1000) // 1년 영구 지속
     };
     this.currentUser = user;
     localStorage.setItem("RUNNOW_AUTH_SESSION", JSON.stringify(sessionData));
@@ -73,16 +73,17 @@ class FirebaseCloudClient {
     return this.sessionFromUser(result.user);
   }
 
-  async signUpWithEmail(email, password) {
+  async signUpWithEmail(email, password, displayName = "러너") {
     if (!this.auth) throw new Error("Firebase Auth가 초기화되지 않았습니다.");
-    const result = await createUserWithEmailAndPassword(this.auth, email, password);
-    return this.sessionFromUser(result.user);
+    const cred = await createUserWithEmailAndPassword(this.auth, email, password);
+    cred.user.displayName = displayName;
+    return this.sessionFromUser(cred.user);
   }
 
   async signInWithEmail(email, password) {
     if (!this.auth) throw new Error("Firebase Auth가 초기화되지 않았습니다.");
-    const result = await signInWithEmailAndPassword(this.auth, email, password);
-    return this.sessionFromUser(result.user);
+    const cred = await signInWithEmailAndPassword(this.auth, email, password);
+    return this.sessionFromUser(cred.user);
   }
 
   async logOut() {
@@ -99,9 +100,10 @@ class FirebaseCloudClient {
       const raw = localStorage.getItem("RUNNOW_AUTH_SESSION");
       if (!raw) return null;
       const session = JSON.parse(raw);
-      if (Date.now() > session.expiresAt) {
-        this.logOut();
-        return null;
+      // 만료기한이 지났어도 사용자가 명시적으로 로그아웃한 게 아니면 자동 갱신
+      if (!session.expiresAt || Date.now() > session.expiresAt) {
+        session.expiresAt = Date.now() + (365 * 24 * 60 * 60 * 1000);
+        localStorage.setItem("RUNNOW_AUTH_SESSION", JSON.stringify(session));
       }
       return session;
     } catch {

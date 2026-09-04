@@ -16,29 +16,30 @@ class AppController {
     this.firebaseSandbox = new FirebaseSandbox();
     const db = this.firebaseSandbox.getDB();
     
-    // 12시간 유효 세션 검사
+    // 장기 지속 세션 검사 (1년 유효)
     const activeSession = firebaseCloud.getCurrentSession();
     this.currentUserId = activeSession ? activeSession.uid : localStorage.getItem("RUNNOW_CURRENT_USER_ID");
     
     if (!this.currentUserId) {
-      this.currentUserId = "guest_runner";
+      this.currentUserId = localStorage.getItem("RUNNOW_DEVICE_GUEST_UID") || "guest_runner";
     }
 
     const userDoc = db.users?.[this.currentUserId] || {};
+    const globalProfile = this.getGlobalProfile();
 
     this.userProfile = {
-      name: userDoc.displayName || activeSession?.displayName || (this.currentUserId === "user_geonu_ceo" ? "이건우 대표님" : "러너"),
-      heightCm: userDoc.heightCm ?? 175,
-      weightKg: userDoc.weightKg ?? 70,
-      age: userDoc.age ?? 30,
-      gender: userDoc.gender || "M",
-      targetWeightKg: userDoc.targetWeightKg ?? 65,
-      frequency: userDoc.frequency ?? 3,
-      goalType: userDoc.goalType || "DIET",
-      coins: userDoc.coins || 0
+      name: userDoc.displayName || globalProfile.displayName || globalProfile.name || activeSession?.displayName || (this.currentUserId === "user_geonu_ceo" ? "이건우 대표님" : "러너"),
+      heightCm: userDoc.heightCm ?? globalProfile.heightCm ?? 175,
+      weightKg: userDoc.weightKg ?? globalProfile.weightKg ?? 70,
+      age: userDoc.age ?? globalProfile.age ?? 30,
+      gender: userDoc.gender || globalProfile.gender || "M",
+      targetWeightKg: userDoc.targetWeightKg ?? globalProfile.targetWeightKg ?? 65,
+      frequency: userDoc.frequency ?? globalProfile.frequency ?? 3,
+      goalType: userDoc.goalType || globalProfile.goalType || "DIET",
+      coins: userDoc.coins || globalProfile.coins || 0
     };
 
-    const petDoc = db.tamagotchi?.[this.currentUserId] || {
+    let fallbackPet = {
       petType: "dog",
       petChosen: false,
       name: "댕댕이",
@@ -52,6 +53,15 @@ class AppController {
       agility: 10,
       spirit: 10
     };
+
+    try {
+      const savedGlobalPet = localStorage.getItem("RUNNOW_GLOBAL_PET");
+      if (savedGlobalPet) {
+        fallbackPet = { ...fallbackPet, ...JSON.parse(savedGlobalPet), petChosen: true };
+      }
+    } catch (_) {}
+
+    const petDoc = db.tamagotchi?.[this.currentUserId] || fallbackPet;
 
     const chalDoc = db.challenges_progress?.[this.currentUserId] || {
       completedDays: [],
@@ -93,6 +103,35 @@ class AppController {
     this.currentQuestCategory = "all";
   }
 
+  getGlobalProfile() {
+    try {
+      const raw = localStorage.getItem("RUNNOW_GLOBAL_PROFILE");
+      if (raw) return JSON.parse(raw);
+    } catch (_) {}
+    return {
+      name: "러너",
+      age: 30,
+      gender: "M",
+      heightCm: 175,
+      weightKg: 70,
+      targetWeightKg: 65,
+      frequency: 3,
+      goalType: "DIET",
+      coins: 0,
+      onboarded: true
+    };
+  }
+
+  saveGlobalProfile(profile) {
+    try {
+      localStorage.setItem("RUNNOW_GLOBAL_PROFILE", JSON.stringify({
+        ...profile,
+        onboarded: true,
+        savedAt: new Date().toISOString()
+      }));
+    } catch (_) {}
+  }
+
   calcBmi(heightCm, weightKg) {
     const h = Number(heightCm) || 175;
     const w = Number(weightKg) || 70;
@@ -131,6 +170,7 @@ class AppController {
     };
     this.firebaseSandbox.setDoc("users", this.currentUserId, payload);
     firebaseCloud.syncUser(this.currentUserId, payload);
+    this.saveGlobalProfile(payload);
   }
 
   getUserWorkouts() {
@@ -274,10 +314,42 @@ class AppController {
       return;
     }
 
-    if (!userDoc || !userDoc.onboarded) {
+    const globalProfile = this.getGlobalProfile();
+    const hasProfile = (userDoc && (userDoc.onboarded || userDoc.age)) || (globalProfile && globalProfile.onboarded);
+
+    // 저장된 프로필이 전혀 없는 최초 1회 방문자만 온보딩 화면 노출
+    if (!hasProfile) {
       this.setViewDisplay(viewOnboarding, true);
       this.initOnboardingForm(activeSession);
       return;
+    }
+
+    // 기존 프로필이 있으면 세션 사용자 문서에 즉시 자동 연결하여 온보딩 생략
+    if (!userDoc || !userDoc.onboarded) {
+      if (!db.users) db.users = {};
+      db.users[activeSession.uid] = {
+        ...(globalProfile || {}),
+        uid: activeSession.uid,
+        displayName: activeSession.displayName || globalProfile?.displayName || globalProfile?.name || "러너",
+        onboarded: true
+      };
+      this.firebaseSandbox.saveDB(db);
+      this.userProfile = { ...this.userProfile, ...db.users[activeSession.uid] };
+      firebaseCloud.syncUser(activeSession.uid, db.users[activeSession.uid]);
+    }
+
+    if (!this.hasChosenPet()) {
+      try {
+        const savedGlobalPet = localStorage.getItem("RUNNOW_GLOBAL_PET");
+        if (savedGlobalPet) {
+          const parsedPet = JSON.parse(savedGlobalPet);
+          if (!db.tamagotchi) db.tamagotchi = {};
+          db.tamagotchi[activeSession.uid] = { ...parsedPet, petChosen: true };
+          this.firebaseSandbox.saveDB(db);
+          this.tamagotchi = new TamagotchiEngine(db.tamagotchi[activeSession.uid]);
+          firebaseCloud.syncTamagotchi(activeSession.uid, db.tamagotchi[activeSession.uid]);
+        }
+      } catch (_) {}
     }
 
     if (!this.hasChosenPet()) {
@@ -341,7 +413,8 @@ class AppController {
   // 온보딩 폼 실시간 계산 및 초기화
   initOnboardingForm(session) {
     const db = this.firebaseSandbox.getDB();
-    const saved = db.users?.[session?.uid] || {};
+    const globalProfile = this.getGlobalProfile() || {};
+    const saved = db.users?.[session?.uid] || globalProfile;
 
     const nameInput = document.getElementById("ob-name");
     const ageInput = document.getElementById("ob-age");
@@ -351,13 +424,13 @@ class AppController {
     const freqInput = document.getElementById("ob-frequency");
     const cueInput = document.getElementById("ob-habit-cue");
 
-    if (nameInput) nameInput.value = saved.displayName || session?.displayName || "";
-    if (ageInput) ageInput.value = saved.age ?? "";
+    if (nameInput) nameInput.value = saved.displayName || saved.name || session?.displayName || (this.currentUserId === "user_geonu_ceo" ? "이건우 대표님" : "러너");
+    if (ageInput) ageInput.value = saved.age ?? 30;
     if (heightInput) heightInput.value = saved.heightCm ?? 175;
     if (weightInput) weightInput.value = saved.weightKg ?? 70;
     if (targetInput) targetInput.value = saved.targetWeightKg ?? 65;
     if (freqInput) freqInput.value = String(saved.frequency ?? 3);
-    if (cueInput) cueInput.value = db.challenges_progress?.[session?.uid]?.habitCue || saved.habitCue || cueInput.value;
+    if (cueInput) cueInput.value = db.challenges_progress?.[session?.uid]?.habitCue || saved.habitCue || "퇴근 후 현관에서 러닝화 신고 바로 출발";
 
     const savedGender = saved.gender || "M";
     document.querySelectorAll(".ob-gender-btn").forEach((btn) => {
@@ -470,6 +543,9 @@ class AppController {
 
     this.firebaseSandbox.setDoc("tamagotchi", this.currentUserId, this.tamagotchi.toJSON());
     firebaseCloud.syncTamagotchi(this.currentUserId, this.tamagotchi.toJSON());
+    try {
+      localStorage.setItem("RUNNOW_GLOBAL_PET", JSON.stringify(this.tamagotchi.toJSON()));
+    } catch (_) {}
     this.renderTamagotchiView();
     this.updateHeaderStats();
     this.routeAppViews();
@@ -515,35 +591,58 @@ class AppController {
       };
     }
 
-    // 공통 인증 완료 처리 함수
-    const completeAuthLogin = (session) => {
+    // 공통 인증 완료 처리 함수 (기존 프로필 즉시 복원하여 온보딩 강제 노출 방지)
+    const completeAuthLogin = async (session) => {
       localStorage.setItem("RUNNOW_AUTH_SESSION", JSON.stringify(session));
       localStorage.setItem("RUNNOW_CURRENT_USER_ID", session.uid);
+      this.currentUserId = session.uid;
+
+      // 1. 클라우드 동기화 시도
+      await this.hydrateFromCloud();
 
       const db = this.firebaseSandbox.getDB();
       if (!db.users) db.users = {};
-      const userDoc = db.users[session.uid];
+      const globalProfile = this.getGlobalProfile();
+      let userDoc = db.users[session.uid];
 
-      if (userDoc && userDoc.onboarded) {
-        location.reload();
-      } else {
-        this.routeAppViews();
+      // 2. 이미 온보딩된 프로필이 있거나 기기에 저장된 프로필이 있다면 자동 승계 (온보딩 재작성 방지)
+      if (!userDoc || !userDoc.onboarded) {
+        userDoc = {
+          ...(globalProfile || {}),
+          uid: session.uid,
+          displayName: session.displayName || globalProfile.displayName || globalProfile.name || "러너",
+          onboarded: true,
+          updatedAt: new Date().toISOString()
+        };
+        db.users[session.uid] = userDoc;
+        this.firebaseSandbox.saveDB(db);
+        this.userProfile = { ...this.userProfile, ...userDoc };
+        firebaseCloud.syncUser(session.uid, userDoc);
       }
+
+      location.reload();
     };
 
-    // 게스트 로그인 바인딩
+    // 게스트 로그인 바인딩 (랜덤 ID 대신 기기 고정 ID를 유지하여 재로그인 시에도 데이터 100% 보존)
     const btnQuickGuestLogin = document.getElementById("btn-quick-guest-login");
     if (btnQuickGuestLogin) {
-      btnQuickGuestLogin.onclick = () => {
+      btnQuickGuestLogin.onclick = async () => {
+        let guestUid = localStorage.getItem("RUNNOW_DEVICE_GUEST_UID");
+        if (!guestUid) {
+          guestUid = "guest_" + Math.random().toString(36).substring(2, 9);
+          localStorage.setItem("RUNNOW_DEVICE_GUEST_UID", guestUid);
+        }
+
+        const globalProfile = this.getGlobalProfile();
         const guestSession = {
-          uid: "guest_" + Math.random().toString(36).substring(2, 9),
-          displayName: "게스트 러너",
+          uid: guestUid,
+          displayName: globalProfile.displayName || globalProfile.name || "게스트 러너",
           email: "",
           photoURL: "",
-          expiresAt: Date.now() + (12 * 60 * 60 * 1000)
+          expiresAt: Date.now() + (365 * 24 * 60 * 60 * 1000) // 1년 영구 지속
         };
         this.currentUserId = guestSession.uid;
-        completeAuthLogin(guestSession);
+        await completeAuthLogin(guestSession);
       };
     }
 
@@ -555,7 +654,7 @@ class AppController {
       try {
         const session = await firebaseCloud.signInWithGoogle();
         this.currentUserId = session.uid;
-        completeAuthLogin(session);
+        await completeAuthLogin(session);
       } catch (err) {
         console.error("Google Login Error:", err);
         const msg = firebaseCloud.authErrorMessage(err);
@@ -592,10 +691,7 @@ class AppController {
           const session = await firebaseCloud.signUpWithEmail(email, pw);
           this.currentUserId = session.uid;
           if (signupModal) signupModal.style.display = "none";
-          if (viewAuth) viewAuth.style.display = "none";
-          if (viewOnboarding) viewOnboarding.style.display = "flex";
-          if (mainAppContainer) mainAppContainer.style.display = "none";
-          this.initOnboardingForm(session);
+          await completeAuthLogin(session);
         } catch (err) {
           alert(firebaseCloud.authErrorMessage(err));
         }
@@ -628,7 +724,7 @@ class AppController {
           const session = await firebaseCloud.signInWithEmail(email, pw);
           this.currentUserId = session.uid;
           if (loginModalDirect) loginModalDirect.style.display = "none";
-          completeAuthLogin(session);
+          await completeAuthLogin(session);
         } catch (err) {
           alert(firebaseCloud.authErrorMessage(err));
         }
@@ -642,7 +738,7 @@ class AppController {
         const activeSession = firebaseCloud.getCurrentSession() || { uid: this.currentUserId, displayName: this.userProfile.name };
         const uid = activeSession.uid || this.currentUserId;
         const name = document.getElementById("ob-name")?.value.trim() || activeSession.displayName || "러너";
-        const age = parseInt(document.getElementById("ob-age")?.value, 10);
+        const age = parseInt(document.getElementById("ob-age")?.value, 10) || 30;
         const gender = document.querySelector(".ob-gender-btn.active")?.dataset.gender || "M";
         const heightCm = parseFloat(document.getElementById("ob-height")?.value) || 175;
         const weightKg = parseFloat(document.getElementById("ob-weight")?.value) || 70;
@@ -650,11 +746,6 @@ class AppController {
         const frequency = parseInt(document.getElementById("ob-frequency")?.value, 10) || 3;
         const selectedGoal = document.querySelector(".ob-goal-card.active")?.dataset.goal || "DIET";
         const habitCue = document.getElementById("ob-habit-cue")?.value.trim() || "퇴근 후 현관에서 러닝화 신고 바로 출발";
-
-        if (!age || age < 10 || age > 100) {
-          alert("나이를 올바르게 입력해 주세요.");
-          return;
-        }
 
         const bmi = this.calcBmi(heightCm, weightKg);
         this.currentUserId = uid;
@@ -691,6 +782,7 @@ class AppController {
         };
 
         this.firebaseSandbox.saveDB(db);
+        this.saveGlobalProfile(db.users[uid]);
         firebaseCloud.syncUser(uid, db.users[uid]);
         firebaseCloud.syncChallenge(uid, db.challenges_progress[uid]);
         localStorage.setItem("RUNNOW_CURRENT_USER_ID", uid);
@@ -699,13 +791,50 @@ class AppController {
           ...sessionKeep,
           uid,
           displayName: name,
-          expiresAt: sessionKeep.expiresAt || (Date.now() + (12 * 60 * 60 * 1000))
+          expiresAt: Date.now() + (365 * 24 * 60 * 60 * 1000)
         }));
 
-        alert(`🎉 ${name} 러너님의 신체 분석 및 다이어트 러닝 플랜이 완성되었습니다!\n\n이제 함께 달릴 파트너를 선택합니다.`);
+        alert(`🎉 ${name} 러너님의 신체 프로필이 저장되었습니다!\n(언제든 설정 탭에서 변경할 수 있습니다)`);
         location.reload();
       };
     }
+
+    // 온보딩 건너뛰기 버튼 (기본 정보로 즉시 시작)
+    const btnSkipOnboarding = document.getElementById("btn-skip-onboarding");
+    if (btnSkipOnboarding) {
+      btnSkipOnboarding.onclick = () => {
+        const activeSession = firebaseCloud.getCurrentSession() || { uid: this.currentUserId, displayName: "러너" };
+        const uid = activeSession.uid || this.currentUserId;
+        const globalProfile = this.getGlobalProfile();
+
+        const profileData = {
+          uid,
+          displayName: globalProfile.displayName || globalProfile.name || activeSession.displayName || "러너",
+          age: globalProfile.age || 30,
+          gender: globalProfile.gender || "M",
+          heightCm: globalProfile.heightCm || 175,
+          weightKg: globalProfile.weightKg || 70,
+          targetWeightKg: globalProfile.targetWeightKg || 65,
+          frequency: globalProfile.frequency || 3,
+          goalType: globalProfile.goalType || "DIET",
+          bmi: this.calcBmi(globalProfile.heightCm || 175, globalProfile.weightKg || 70),
+          coins: 0,
+          onboarded: true,
+          updatedAt: new Date().toISOString()
+        };
+
+        const db = this.firebaseSandbox.getDB();
+        if (!db.users) db.users = {};
+        db.users[uid] = profileData;
+        this.firebaseSandbox.saveDB(db);
+        this.saveGlobalProfile(profileData);
+        firebaseCloud.syncUser(uid, profileData);
+        localStorage.setItem("RUNNOW_CURRENT_USER_ID", uid);
+
+        location.reload();
+      };
+    }
+
 
     // 헤더 프로필 팝업 / 탭 로그아웃 공통 핸들러
     const btnOpenLogin = document.getElementById("btn-open-login");

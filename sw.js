@@ -1,5 +1,5 @@
 // RUNNOW Service Worker (Network-First with Auto-Cache-Busting)
-const CACHE_NAME = 'runnow-v3.5';
+const CACHE_NAME = 'runnow-v3.6';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
