@@ -975,7 +975,14 @@ export class MotionTracker {
       if (this.lastLandmarks) {
         this.drawSkeleton(this.lastLandmarks);
       } else if (this.engineType) {
-        this.drawSeekingHint(width, height);
+        if (this.phase === "calibrating") {
+          // 사람이 아예 안 잡히면 processExerciseLogic이 돌지 않아 안내가 갱신되지 않습니다.
+          // READY 링이 문구를 대신 보여주므로 별도 힌트는 그리지 않습니다.
+          this.readyStableMs = 0;
+          this.blockedReason = "사람이 인식되지 않습니다. 전신이 나오게 서 주세요";
+        } else {
+          this.drawSeekingHint(width, height);
+        }
       }
 
       // 준비/카운트다운 중에는 "지금 카운트되지 않는다"는 사실을 화면에 명시합니다.
@@ -998,13 +1005,33 @@ export class MotionTracker {
     }
   }
 
+  // 전면 카메라일 때 CSS가 캔버스를 좌우 반전(셀피 미러)시킵니다.
+  isMirrored() {
+    return this.facingMode === "user";
+  }
+
+  // 캔버스 위 글자는 CSS 미러 때문에 그대로 그리면 거울 글씨가 됩니다.
+  // 기준점을 축으로 한 번 더 뒤집어 화면에서 똑바로 읽히게 합니다.
+  drawTextUnmirrored(text, x, y) {
+    if (!this.ctx) return;
+    if (!this.isMirrored()) {
+      this.ctx.fillText(text, x, y);
+      return;
+    }
+    this.ctx.save();
+    this.ctx.translate(x, y);
+    this.ctx.scale(-1, 1);
+    this.ctx.fillText(text, 0, 0);
+    this.ctx.restore();
+  }
+
   drawSeekingHint(width, height) {
     if (!this.ctx) return;
     this.ctx.save();
     this.ctx.fillStyle = "rgba(255, 214, 10, 0.92)";
     this.ctx.font = `700 ${Math.max(16, Math.round(width / 28))}px sans-serif`;
     this.ctx.textAlign = "center";
-    this.ctx.fillText("관절을 찾는 중 · 전신이 나오게 서 주세요", width / 2, height * 0.12);
+    this.drawTextUnmirrored("관절을 찾는 중 · 전신이 나오게 서 주세요", width / 2, height * 0.12);
     this.ctx.restore();
   }
 
@@ -1038,16 +1065,16 @@ export class MotionTracker {
     this.ctx.textAlign = "center";
     this.ctx.fillStyle = "#CCFF00";
     this.ctx.font = `800 ${Math.max(15, Math.round(width / 30))}px sans-serif`;
-    this.ctx.fillText("READY", cx, cy + 6);
+    this.drawTextUnmirrored("READY", cx, cy + 6);
 
     this.ctx.fillStyle = "#FFFFFF";
     this.ctx.font = `700 ${Math.max(13, Math.round(width / 40))}px sans-serif`;
-    this.ctx.fillText("아직 카운트하지 않습니다", cx, cy - radius - 18);
+    this.drawTextUnmirrored("아직 카운트하지 않습니다", cx, cy - radius - 18);
 
     const hint = this.blockedReason || "그대로 유지해 주세요";
     this.ctx.fillStyle = this.blockedReason ? "#FF9F0A" : "#CCFF00";
     this.ctx.font = `600 ${Math.max(12, Math.round(width / 44))}px sans-serif`;
-    this.ctx.fillText(hint, cx, cy + radius + 30);
+    this.drawTextUnmirrored(hint, cx, cy + radius + 30);
     this.ctx.restore();
   }
 
@@ -1061,10 +1088,10 @@ export class MotionTracker {
     this.ctx.textAlign = "center";
     this.ctx.fillStyle = "#CCFF00";
     this.ctx.font = `900 ${Math.round(Math.min(width, height) * 0.34)}px sans-serif`;
-    this.ctx.fillText(sec > 0 ? String(sec) : "GO!", width / 2, height * 0.6);
+    this.drawTextUnmirrored(sec > 0 ? String(sec) : "GO!", width / 2, height * 0.6);
     this.ctx.font = `700 ${Math.max(13, Math.round(width / 38))}px sans-serif`;
     this.ctx.fillStyle = "#FFFFFF";
-    this.ctx.fillText("잠시 후 카운트를 시작합니다", width / 2, height * 0.18);
+    this.drawTextUnmirrored("잠시 후 카운트를 시작합니다", width / 2, height * 0.18);
     this.ctx.restore();
   }
 
@@ -1470,7 +1497,9 @@ export class MotionTracker {
     this.ctx.setLineDash([]);
     this.ctx.font = "bold 11px Inter, sans-serif";
     this.ctx.fillStyle = isDown ? "#CCFF00" : "#00F0FF";
-    this.ctx.fillText(`⚡ ${label}`, width * 0.08, y - 6);
+    // 좌우 반전 화면에서도 잘리지 않도록 가운데 정렬로 그립니다.
+    this.ctx.textAlign = "center";
+    this.drawTextUnmirrored(`⚡ ${label}`, width / 2, y - 6);
     this.ctx.restore();
   }
 
@@ -1504,9 +1533,10 @@ export class MotionTracker {
     this.ctx.fill();
     this.ctx.stroke();
 
-    // Badge Text
+    // Badge Text (배지 박스 중앙을 기준으로 뒤집어야 글자가 박스 안에 남습니다)
     this.ctx.fillStyle = isGood ? "#CCFF00" : "#FF7043";
-    this.ctx.fillText(text, x, y + 1);
+    this.ctx.textAlign = "center";
+    this.drawTextUnmirrored(text, x + textWidth / 2, y + 1);
     this.ctx.restore();
   }
 
