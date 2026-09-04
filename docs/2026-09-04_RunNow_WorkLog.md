@@ -55,5 +55,10 @@
   - 프로젝트: `runnow-37af9`
   - 배포 항목: Firestore (규칙 `firestore.rules`, 인덱스 `firestore.indexes.json`), Hosting (정적 자산 225개 파일)
   - 라이브 URL: `https://runnow-37af9.web.app` (HTTP 200 OK 검증 완료)
+- **카메라 연결 멈춤(Freezing) 긴급 조치**:
+  - 원인: `onloadedmetadata` 이벤트 누락 및 비동기 모델 로딩 대기 동안 대기 커버가 화면을 덮고 있던 병목
+  - 해결: (1) `readyState >= 1` 즉시 체크 + 1.2초 폴백, (2) `onStreamReady` 콜백으로 카메라 즉각 노출, (3) `promiseWithTimeout` 안전 타임아웃, (4) 백그라운드 AI 사전 로드(Pre-warm)
+  - 배포: Git 커밋 (`c92c48d`) 및 Hosting 2차 배포 완료 (PWA 캐시 버전 `runnow-v3.5`)
 - **향후 과제**: 온디바이스 비전 트레이닝 엔진의 제스처 컨트롤(MediaPipe Hands) 추가 고도화 및 네이티브 앱 패키징 준비.
+
 
