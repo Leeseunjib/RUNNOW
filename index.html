@@ -1203,6 +1203,17 @@
           </div>
         </div>
 
+        <!-- AI 폼 분석 리포트 (3회 이상 판정된 세트에서만 표시) -->
+        <div class="form-report" id="motion-form-report" hidden>
+          <div class="form-report-head">
+            <span>🤖</span>
+            <strong>AI 폼 분석</strong>
+            <span class="form-report-count" id="form-report-count"></span>
+          </div>
+          <ul class="form-report-list" id="form-report-list"></ul>
+          <div class="form-report-suggest" id="form-report-suggest" hidden></div>
+        </div>
+
         <button type="button" class="btn-primary-volt" id="btn-close-motion-modal" style="width:100%; padding:13px; font-size:14px;">
           <span>보상 수령하고 파트너 펫 보러가기 ➔</span>
         </button>

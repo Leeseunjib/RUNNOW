@@ -365,5 +365,89 @@ function trackThroughMotion(label, tracker, frames) {
   check("세션 초기화 시 운동자 잠금 해제", t.subjectLock, null);
 }
 
+// --- 17. 폼 리포트: 회차 기록이 실제로 쌓이고 집계된다 -------------------
+{
+  const t = makeTracker("SQUAT", "intermediate");
+  t.enterPhase("calibrating"); t.enterPhase("counting");
+
+  // 깊이를 일부러 다르게 3회 수행 (85 / 70 / 78도)
+  // 실제 사람처럼 중간 각도를 거쳐 내려갔다 올라와야 템포가 측정됩니다.
+  const depths = [85, 70, 78];
+  for (const d of depths) {
+    feedFor(t, squatLandmarks(170), 60);
+    for (const a of [150, 125, 105, d]) feedFor(t, squatLandmarks(a), 80); // 하강
+    feedFor(t, squatLandmarks(d), 260);                                     // 하단 유지
+    for (const a of [105, 125, 150]) feedFor(t, squatLandmarks(a), 80);     // 상승
+    feedFor(t, squatLandmarks(170), 900);                                   // 복귀 + rep 간격 확보
+  }
+  check("3회 모두 카운트", t.repCount, 3);
+  check("회차 기록 3건 누적", t.repLog.length, 3);
+
+  const r = t.buildFormReport();
+  check("리포트 생성됨", r !== null, true);
+  check("분석 회차 수", r.repsAnalyzed, 3);
+  check("목표 깊이는 현재 난이도 기준", r.targetDepth, 95);
+  check("가장 얕았던 회차 = 1회차(85도)", r.shallowest.rep, 1);
+  check("가장 깊었던 회차 = 2회차(70도)", r.deepest.rep, 2);
+  check("평균 깊이 집계", r.avgDepth, Math.round((85 + 70 + 78) / 3));
+  check("하강/상승 시간 측정됨", r.avgDescentMs > 0 && r.avgAscentMs > 0, true);
+}
+
+// --- 18. 회차가 부족하면 리포트를 만들지 않는다 -------------------------
+{
+  const t = makeTracker("SQUAT", "intermediate");
+  t.enterPhase("calibrating"); t.enterPhase("counting");
+  feed(t, squatLandmarks(170));
+  feedFor(t, squatLandmarks(80), 260);
+  feed(t, squatLandmarks(170));
+  check("1회만 했을 때 리포트 없음", t.buildFormReport(), null);
+  check("요약에도 formReport가 null", t.getWorkoutSummary().formReport, null);
+}
+
+// --- 19. 난이도 상향 제안은 여유 있게 깊었을 때만 -----------------------
+{
+  // 전 회차가 기준(95°)보다 12° 이상 깊은 경우 → 제안
+  const deep = makeTracker("SQUAT", "beginner");
+  deep.enterPhase("calibrating"); deep.enterPhase("counting");
+  deep.repLog = [{ deepest: 70, descentMs: 900, ascentMs: 700, sideDelta: 1 },
+                 { deepest: 72, descentMs: 900, ascentMs: 700, sideDelta: 2 },
+                 { deepest: 68, descentMs: 900, ascentMs: 700, sideDelta: 0 }];
+  check("초보자 · 전 회차 깊음 → 중급자 제안", deep.buildFormReport().levelUpSuggestion, "중급자");
+
+  // 기준을 겨우 통과한 경우 → 제안 없음
+  const shallow = makeTracker("SQUAT", "intermediate");
+  shallow.enterPhase("calibrating"); shallow.enterPhase("counting");
+  shallow.repLog = [{ deepest: 94, descentMs: 900, ascentMs: 700, sideDelta: 1 },
+                    { deepest: 90, descentMs: 900, ascentMs: 700, sideDelta: 2 },
+                    { deepest: 92, descentMs: 900, ascentMs: 700, sideDelta: 0 }];
+  check("겨우 통과 → 제안 없음", shallow.buildFormReport().levelUpSuggestion, null);
+
+  // 단련자는 더 올릴 곳이 없음
+  const adv = makeTracker("SQUAT", "advanced");
+  adv.enterPhase("calibrating"); adv.enterPhase("counting");
+  adv.repLog = [{ deepest: 60, descentMs: 900, ascentMs: 700, sideDelta: 0 },
+                { deepest: 62, descentMs: 900, ascentMs: 700, sideDelta: 0 },
+                { deepest: 58, descentMs: 900, ascentMs: 700, sideDelta: 0 }];
+  check("단련자는 상향 제안 없음", adv.buildFormReport().levelUpSuggestion, null);
+}
+
+// --- 20. 좌우 불균형은 의미 있는 차이일 때만 보고한다 -------------------
+{
+  const t = makeTracker("SQUAT", "intermediate");
+  const base = { descentMs: 900, ascentMs: 700 };
+
+  t.repLog = [{ deepest: 85, ...base, sideDelta: 12 },
+              { deepest: 84, ...base, sideDelta: 10 },
+              { deepest: 86, ...base, sideDelta: 14 }];
+  const biased = t.buildFormReport();
+  check("왼쪽이 덜 굽혀진 경우 감지", biased.sideBias?.side, "왼쪽");
+  check("평균 편차 각도", biased.sideBias?.avgDelta, 12);
+
+  t.repLog = [{ deepest: 85, ...base, sideDelta: 2 },
+              { deepest: 84, ...base, sideDelta: -1 },
+              { deepest: 86, ...base, sideDelta: 3 }];
+  check("미세한 차이는 보고하지 않음", t.buildFormReport().sideBias, null);
+}
+
 console.log(failed === 0 ? "\n✅ ALL PASS" : `\n❌ ${failed} FAILED`);
 process.exit(failed === 0 ? 0 : 1);

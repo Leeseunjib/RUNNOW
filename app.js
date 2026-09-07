@@ -1316,6 +1316,65 @@ class AppController {
     this.showMotionCelebrationModal(summary);
   }
 
+  // 세트 종료 후 AI 폼 분석 렌더링. 판정 회차가 부족하면 섹션을 통째로 숨깁니다.
+  renderFormReport(report) {
+    const box = document.getElementById("motion-form-report");
+    const listEl = document.getElementById("form-report-list");
+    const countEl = document.getElementById("form-report-count");
+    const suggestEl = document.getElementById("form-report-suggest");
+    if (!box || !listEl) return;
+
+    if (!report) {
+      box.hidden = true;
+      return;
+    }
+
+    const lines = [];
+    const depthGap = report.avgDepth - report.targetDepth;
+    lines.push(
+      depthGap <= 0
+        ? `📐 평균 깊이 <b>${report.avgDepth}°</b> — 목표 ${report.targetDepth}°를 모두 통과했습니다.`
+        : `📐 평균 깊이 <b>${report.avgDepth}°</b> — 목표 ${report.targetDepth}°보다 ${depthGap}° 얕습니다.`
+    );
+
+    if (report.shallowest.rep !== report.deepest.rep) {
+      lines.push(
+        `📉 가장 얕았던 회차는 <b>${report.shallowest.rep}회차(${report.shallowest.angle}°)</b>, `
+        + `가장 깊었던 회차는 <b>${report.deepest.rep}회차(${report.deepest.angle}°)</b>입니다.`
+      );
+    }
+
+    if (report.avgDescentMs && report.avgAscentMs) {
+      lines.push(
+        `⏱️ 템포 — 내리기 <b>${(report.avgDescentMs / 1000).toFixed(1)}초</b> / `
+        + `올리기 <b>${(report.avgAscentMs / 1000).toFixed(1)}초</b>. ${report.tempoNote}`
+      );
+    }
+
+    if (report.sideBias) {
+      lines.push(
+        `⚖️ <b>${report.sideBias.side}</b>이 평균 <b>${report.sideBias.avgDelta}°</b> 덜 굽혀졌습니다. `
+        + `좌우 균형을 의식해 보세요.`
+      );
+    } else {
+      lines.push("⚖️ 좌우 균형이 고르게 유지됐습니다.");
+    }
+
+    listEl.innerHTML = lines.map((t) => `<li><span>${t}</span></li>`).join("");
+    if (countEl) countEl.textContent = `${report.repsAnalyzed}회 분석`;
+
+    if (suggestEl) {
+      if (report.levelUpSuggestion) {
+        suggestEl.textContent = `🔥 모든 회차가 기준보다 깊었습니다. 다음엔 '${report.levelUpSuggestion}' 난이도에 도전해 보세요!`;
+        suggestEl.hidden = false;
+      } else {
+        suggestEl.hidden = true;
+      }
+    }
+
+    box.hidden = false;
+  }
+
   showMotionCelebrationModal(summary) {
     const modal = document.getElementById("motion-celebration-modal");
     if (!modal) return;
@@ -1334,7 +1393,10 @@ class AppController {
     const timeStr = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
     if (titleEl) titleEl.textContent = `${summary.exerciseName} 완벽 완수!`;
-    if (subTitleEl) subTitleEl.textContent = `Google MediaPipe AI 비전이 관절 각도를 정밀 판정했습니다.`;
+    if (subTitleEl) {
+      subTitleEl.textContent = `${summary.difficultyName} 난이도로 관절 각도를 정밀 판정했습니다.`;
+    }
+    this.renderFormReport(summary.formReport);
     if (repsEl) repsEl.textContent = `${summary.reps} REPS`;
     if (timeEl) timeEl.textContent = timeStr;
     if (calEl) calEl.textContent = `${summary.calories} kcal`;

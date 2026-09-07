@@ -2879,3 +2879,65 @@ body {
   letter-spacing: -0.2px;
   pointer-events: none;
 }
+
+/* 세트 종료 후 AI 폼 분석 리포트 (완료 모달 내부) */
+.form-report {
+  text-align: left;
+  background: var(--surface-carbon);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.form-report-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.form-report-count {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.form-report-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-report-list li {
+  display: flex;
+  gap: 7px;
+  align-items: flex-start;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.form-report-list li b {
+  color: var(--text-main);
+  font-weight: 800;
+}
+
+.form-report-suggest {
+  margin-top: 10px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: rgba(204, 255, 0, 0.1);
+  border: 1px solid rgba(204, 255, 0, 0.45);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary-volt);
+  line-height: 1.4;
+}

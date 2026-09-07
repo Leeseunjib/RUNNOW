@@ -244,6 +244,11 @@ export class MotionTracker {
     this.subjectMissingSince = 0;
     this.visiblePersonCount = 0;
 
+    // 세트 종료 후 폼 리포트를 만들기 위한 회차별 기록
+    this.repLog = [];           // { deepest, descentMs, ascentMs, sideDelta }
+    this.descentStartedAt = 0;
+    this.cycleSideDelta = null;
+
     // rep 사이클 상태 (신전 구간을 한 번 관측해야만 시작됩니다)
     this.repPhase = null; // null | 'extended' | 'contracted'
     this.contractedEnteredAt = 0;
@@ -339,6 +344,8 @@ export class MotionTracker {
 
   resetRepCycle() {
     this.repPhase = null;
+    this.descentStartedAt = 0;
+    this.cycleSideDelta = null;
     this.contractedEnteredAt = 0;
     this.cycleDeepestAngle = null;
     this.cycleFormOk = true;
@@ -349,6 +356,7 @@ export class MotionTracker {
 
   resetExerciseStats() {
     this.clearSubjectLock();
+    this.repLog = [];
     this.relaxedTracking = false;
     this.relaxOffered = false;
     this.calibrationBlockedMs = 0;
@@ -807,10 +815,14 @@ export class MotionTracker {
     if (!l) return r.vis >= minVis ? r : null;
     if (!r) return l.vis >= minVis ? l : null;
     if (l.vis >= minVis && r.vis >= minVis && Math.abs(l.angle - r.angle) <= 25) {
-      return { angle: Math.round((l.angle + r.angle) / 2), vis: Math.min(l.vis, r.vis) };
+      return {
+        angle: Math.round((l.angle + r.angle) / 2),
+        vis: Math.min(l.vis, r.vis),
+        sideDelta: l.angle - r.angle   // 양수면 왼쪽이 덜 굽혀진 상태
+      };
     }
     const best = l.vis >= r.vis ? l : r;
-    return best.vis >= minVis ? best : null;
+    return best.vis >= minVis ? { ...best, sideDelta: null } : null;
   }
 
   // 프레임 지터 제거용 EMA. 임계값 근처 떨림에 의한 중복 카운트를 막습니다.
@@ -1108,7 +1120,7 @@ export class MotionTracker {
 
   // 신전 → 수축 → 신전 사이클 공통 판정기.
   // repPhase가 null인 동안에는 어떤 경우에도 카운트되지 않습니다.
-  runRepCycle(angle, th, formOk, msgs) {
+  runRepCycle(angle, th, formOk, msgs, sideDelta = null) {
     const now = Date.now();
 
     if (this.repPhase === null) {
@@ -1116,13 +1128,21 @@ export class MotionTracker {
         this.repPhase = "extended";
         this.motionState = "up";
         this.cycleDeepestAngle = angle;
+        this.cycleSideDelta = sideDelta;
         this.cycleFormOk = true;
+        this.descentStartedAt = 0;
       }
       return;
     }
 
     if (this.repPhase === "extended") {
-      if (angle < this.cycleDeepestAngle) this.cycleDeepestAngle = angle;
+      if (angle < this.cycleDeepestAngle) {
+        this.cycleDeepestAngle = angle;
+        this.cycleSideDelta = sideDelta;
+      }
+      // 신전 구간을 벗어나는 순간이 하강 시작입니다 (상단에서 머문 시간은 제외).
+      if (angle < th.extended && !this.descentStartedAt) this.descentStartedAt = now;
+
       if (angle <= th.contracted) {
         this.repPhase = "contracted";
         this.motionState = "down";
@@ -1142,14 +1162,25 @@ export class MotionTracker {
 
     // contracted 구간
     if (!formOk) this.cycleFormOk = false;
-    if (angle < this.cycleDeepestAngle) this.cycleDeepestAngle = angle;
+    if (angle < this.cycleDeepestAngle) {
+      this.cycleDeepestAngle = angle;
+      this.cycleSideDelta = sideDelta;
+    }
 
     if (angle >= th.extended) {
       const heldMs = now - this.contractedEnteredAt;
       const sinceLastRep = now - (this.lastRepTimestamp || 0);
+      const cycle = {
+        deepest: this.cycleDeepestAngle,
+        descentMs: this.descentStartedAt ? this.contractedEnteredAt - this.descentStartedAt : null,
+        ascentMs: now - this.contractedEnteredAt,
+        sideDelta: this.cycleSideDelta
+      };
+
       this.repPhase = "extended";
       this.motionState = "up";
       this.cycleDeepestAngle = angle;
+      this.descentStartedAt = 0;
 
       if (heldMs < th.minHoldMs) {
         this.emitFeedback(msgs.tooFast, false);
@@ -1164,6 +1195,7 @@ export class MotionTracker {
         this.cycleFormOk = true;
         return;
       }
+      this.repLog.push(cycle);
       this.registerRep(msgs.success);
       this.cycleFormOk = true;
     }
@@ -1434,7 +1466,7 @@ export class MotionTracker {
     if (this.currentExercise.id === "plank") {
       this.runPlankHold(measure, th);
     } else {
-      this.runRepCycle(measure.angle, th, measure.formOk, measure.messages);
+      this.runRepCycle(measure.angle, th, measure.formOk, measure.messages, measure.sideDelta ?? null);
     }
 
     this.emitLiveStateThrottled();
@@ -1452,11 +1484,13 @@ export class MotionTracker {
     if (exId === "squat" || exId === "lunge") {
       const isSquat = exId === "squat";
       let raw = null;
+      let sideDelta = null;
 
       if (isSquat) {
         const knee = this.bestSideAngle(landmarks, [23, 25, 27], [24, 26, 28], minVis);
         if (!knee) return null;
         raw = knee.angle;
+        sideDelta = knee.sideDelta ?? null;
       } else {
         // 런지는 좌우 평균이 아니라 더 깊게 굽힌 앞무릎 각도를 봅니다.
         const l = this.jointAngleWithVisibility(landmarks, 23, 25, 27);
@@ -1464,6 +1498,7 @@ export class MotionTracker {
         const usable = [l, r].filter((c) => c && c.vis >= minVis);
         if (usable.length === 0) return null;
         raw = Math.min(...usable.map((c) => c.angle));
+        if (l && r && l.vis >= minVis && r.vis >= minVis) sideDelta = l.angle - r.angle;
       }
 
       const angle = this.smoothAngle(raw);
@@ -1475,6 +1510,7 @@ export class MotionTracker {
         progress: rangeProgress(angle),
         isContracted: angle <= th.contracted,
         inStartPose: angle >= th.extended,
+        sideDelta,
         startPoseHint: isSquat
           ? "무릎을 펴고 바르게 선 자세에서 시작합니다"
           : "두 발을 모으고 바르게 선 자세에서 시작합니다",
@@ -1510,6 +1546,7 @@ export class MotionTracker {
       const elbow = this.bestSideAngle(landmarks, [11, 13, 15], [12, 14, 16], minVis);
       if (!elbow) return null;
       const angle = this.smoothAngle(elbow.angle);
+      const sideDelta = elbow.sideDelta ?? null;
       const torso = this.bestSideAngle(landmarks, [11, 23, 27], [12, 24, 28], minVis);
       const formOk = !torso || torso.angle > 140;
 
@@ -1519,6 +1556,7 @@ export class MotionTracker {
         progress: rangeProgress(angle),
         isContracted: angle <= th.contracted,
         inStartPose: angle >= th.extended,
+        sideDelta,
         startPoseHint: "팔을 곧게 편 플랭크 자세를 잡아 주세요",
         formOk,
         jointPoint: landmarks[13] || landmarks[14],
@@ -1541,6 +1579,7 @@ export class MotionTracker {
       const hip = this.bestSideAngle(landmarks, [11, 23, 25], [12, 24, 26], minVis);
       if (!hip) return null;
       const angle = this.smoothAngle(hip.angle);
+      const sideDelta = hip.sideDelta ?? null;
 
       return {
         angle,
@@ -1548,6 +1587,7 @@ export class MotionTracker {
         progress: rangeProgress(angle),
         isContracted: angle <= th.contracted,
         inStartPose: angle >= th.extended,
+        sideDelta,
         startPoseHint: "무릎을 세우고 등을 바닥에 댄 채 누워 주세요",
         formOk: true,
         jointPoint: landmarks[23] || landmarks[24],
@@ -1827,6 +1867,74 @@ export class MotionTracker {
     this.ctx.restore();
   }
 
+  // 세트 종료 후 폼 리포트. 회차별로 쌓아둔 기록을 사람이 읽을 수 있는 코칭으로 바꿉니다.
+  // 기록이 부족하면(플랭크·점핑잭 등) null을 반환해 UI에서 섹션을 숨깁니다.
+  buildFormReport() {
+    const logs = this.repLog.filter((r) => Number.isFinite(r.deepest));
+    if (logs.length < 3) return null;
+
+    const th = this.getThresholds();
+    const depths = logs.map((r) => r.deepest);
+    const avgDepth = Math.round(depths.reduce((a, b) => a + b, 0) / depths.length);
+
+    let shallowestIdx = 0;
+    let deepestIdx = 0;
+    depths.forEach((d, i) => {
+      if (d > depths[shallowestIdx]) shallowestIdx = i;
+      if (d < depths[deepestIdx]) deepestIdx = i;
+    });
+
+    // 템포: 내려가는 시간 대 올라오는 시간
+    const descents = logs.map((r) => r.descentMs).filter((v) => Number.isFinite(v) && v > 0);
+    const ascents = logs.map((r) => r.ascentMs).filter((v) => Number.isFinite(v) && v > 0);
+    const avgDescentMs = descents.length ? Math.round(descents.reduce((a, b) => a + b, 0) / descents.length) : null;
+    const avgAscentMs = ascents.length ? Math.round(ascents.reduce((a, b) => a + b, 0) / ascents.length) : null;
+
+    let tempoNote = "";
+    if (avgDescentMs && avgAscentMs) {
+      if (avgDescentMs < 500) {
+        tempoNote = "내려가는 속도가 빠릅니다. 천천히 내리면 근육 자극이 커집니다.";
+      } else if (avgDescentMs > avgAscentMs * 2.2) {
+        tempoNote = "내리기와 올리기의 균형이 좋습니다. 이 템포를 유지하세요.";
+      } else {
+        tempoNote = "안정적인 템포입니다.";
+      }
+    }
+
+    // 좌우 균형: 양쪽 관절이 모두 선명하게 잡힌 회차만 사용
+    const deltas = logs.map((r) => r.sideDelta).filter((v) => Number.isFinite(v));
+    let sideBias = null;
+    if (deltas.length >= 3) {
+      const avgDelta = deltas.reduce((a, b) => a + b, 0) / deltas.length;
+      if (Math.abs(avgDelta) >= 6) {
+        sideBias = {
+          avgDelta: Math.round(Math.abs(avgDelta)),
+          side: avgDelta > 0 ? "왼쪽" : "오른쪽"
+        };
+      }
+    }
+
+    // 난이도 상향 제안: 모든 회차가 현재 기준보다 여유 있게 깊었을 때만
+    const allDeep = depths.every((d) => d <= th.contracted - 12);
+    const canLevelUp = this.difficulty.id !== "advanced" && allDeep;
+    const nextLevelName = this.difficulty.id === "beginner"
+      ? DIFFICULTY_LEVELS.intermediate.name
+      : DIFFICULTY_LEVELS.advanced.name;
+
+    return {
+      repsAnalyzed: logs.length,
+      avgDepth,
+      targetDepth: th.contracted,
+      shallowest: { rep: shallowestIdx + 1, angle: depths[shallowestIdx] },
+      deepest: { rep: deepestIdx + 1, angle: depths[deepestIdx] },
+      avgDescentMs,
+      avgAscentMs,
+      tempoNote,
+      sideBias,
+      levelUpSuggestion: canLevelUp ? nextLevelName : null
+    };
+  }
+
   // 운동 종료 리포트 데이터 반환
   getWorkoutSummary() {
     const durationSec = Math.max(1, this.elapsedSeconds);
@@ -1849,6 +1957,7 @@ export class MotionTracker {
       difficultyId: this.difficulty.id,
       difficultyName: this.difficulty.name,
       rewardMultiplier: rewardMul,
+      formReport: this.buildFormReport(),
       reps: this.repCount,
       durationSec,
       calories: totalCalories,
