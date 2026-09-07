@@ -28,8 +28,10 @@ function squatLandmarks(kneeAngleDeg, vis = 0.95) {
   const { hip, knee, ankle } = legPoints(kneeAngleDeg, vis);
   const lm = [];
   for (let i = 0; i <= 32; i++) lm[i] = { x: 0.5, y: 0.5, visibility: vis };
-  lm[11] = { x: 0.45, y: 0.3, visibility: vis };
-  lm[12] = { x: 0.55, y: 0.3, visibility: vis };
+  // 어깨는 골반 위에 일정한 몸통 길이로 붙어 함께 움직입니다.
+  // (어깨를 고정해두면 몸통 길이가 0에 수렴하는 불가능한 몸이 만들어집니다)
+  lm[11] = { x: hip.x - 0.05, y: hip.y - 0.25, visibility: vis };
+  lm[12] = { x: hip.x + 0.05, y: hip.y - 0.25, visibility: vis };
   lm[23] = { ...hip, x: hip.x - 0.02 };
   lm[24] = { ...hip, x: hip.x + 0.02 };
   lm[25] = { ...knee, x: knee.x - 0.02 };
@@ -207,6 +209,109 @@ function feedFor(tracker, landmarks, ms) {
   const s = t.getWorkoutSummary();
   check("단련자 XP 배율 1.15 적용", s.xpGained, Math.round(10 * EXERCISE_TYPES.SQUAT.xpPerRep * 1.15));
   check("요약에 난이도 포함", s.difficultyName, DIFFICULTY_LEVELS.advanced.name);
+}
+
+// --- 10. 운동자 잠금: 여러 명 중 잠긴 사람만 따라간다 --------------------
+// 랜드마크 전체를 좌우로 옮기고 크기를 바꿔 "다른 사람"을 만듭니다.
+function movePerson(lm, dx, scale = 1) {
+  return lm.map((p) => (p ? { ...p, x: 0.5 + (p.x - 0.5) * scale + dx, y: 0.5 + (p.y - 0.5) * scale } : p));
+}
+
+{
+  const t = makeTracker("SQUAT", "intermediate");
+  const me = squatLandmarks(170);
+  const other = movePerson(squatLandmarks(90), 0.3, 0.75); // 옆에서 스쿼트 중인 다른 사람
+
+  // 잠금 전에는 가운데에 크게 잡힌 사람을 고릅니다.
+  const picked = t.selectSubjectPose([other, me]);
+  check("잠금 전 · 화면 중앙의 큰 사람 선택", picked === me, true);
+
+  t.lockSubject(me);
+  check("잠금 후 · 두 명 중 잠긴 사람 선택", t.selectSubjectPose([other, me]) === me, true);
+  check("잠금 후 · 순서를 바꿔도 동일인 선택", t.selectSubjectPose([me, other]) === me, true);
+  check("잠긴 사람이 없으면 null 반환", t.selectSubjectPose([other]), null);
+  check("검출된 인원수 집계", t.visiblePersonCount, 1);
+}
+
+// --- 11. 다른 사람의 동작은 카운트되지 않는다 ---------------------------
+{
+  const t = makeTracker("SQUAT", "intermediate");
+  t.enterPhase("calibrating"); t.enterPhase("counting");
+  const me = squatLandmarks(170);
+  t.lockSubject(me);
+  feed(t, me); // 신전 관측
+
+  // 옆 사람이 아무리 스쿼트를 해도 selectSubjectPose가 걸러냅니다.
+  const otherDown = movePerson(squatLandmarks(80), 0.3, 0.75);
+  const otherUp = movePerson(squatLandmarks(170), 0.3, 0.75);
+  for (let i = 0; i < 5; i++) {
+    check(`옆 사람 프레임 거부 #${i + 1}`, t.selectSubjectPose([otherDown]), null);
+    check(`옆 사람 프레임 거부(신전) #${i + 1}`, t.selectSubjectPose([otherUp]), null);
+  }
+  check("옆 사람 동작 → 내 카운트 변화 없음", t.repCount, 0);
+}
+
+// --- 12. 운동자를 놓치면 준비 페이즈로 되돌아가되 기록은 유지한다 --------
+{
+  const t = makeTracker("SQUAT", "intermediate");
+  t.enterPhase("calibrating"); t.enterPhase("counting");
+  t.lockSubject(squatLandmarks(170));
+  t.repCount = 7;
+
+  t.noteSubjectMissing();
+  check("놓친 직후에는 아직 카운팅 유지", t.phase, "counting");
+
+  // 1.2초 넘게 놓친 상황을 만듭니다.
+  t.subjectMissingSince = Date.now() - 1500;
+  t.noteSubjectMissing();
+  check("1.2초 이상 놓침 → 준비 페이즈 복귀", t.phase, "calibrating");
+  check("복귀해도 기존 횟수는 보존", t.repCount, 7);
+  check("잠금은 아직 유지(같은 사람 재인식용)", t.subjectLock !== null, true);
+
+  // 10초 넘게 사라지면 잠금 해제
+  t.subjectMissingSince = Date.now() - 11000;
+  t.noteSubjectMissing();
+  check("10초 이상 부재 → 잠금 해제", t.subjectLock, null);
+}
+
+// --- 13. 잠금이 너무 빡빡해 본인을 놓치지 않는지 (오탐 방지) --------------
+// 이 테스트가 깨지면 실사용에서 "운동 중인데 자꾸 준비로 돌아가는" 문제가 납니다.
+function trackThroughMotion(label, tracker, frames) {
+  let dropped = 0;
+  for (const lm of frames) {
+    const picked = tracker.selectSubjectPose([lm]);
+    if (!picked) dropped++;
+    else tracker.noteSubjectSeen(picked);
+  }
+  check(`${label} · 동작 중 본인을 놓친 프레임 수`, dropped, 0);
+}
+
+{
+  const t = makeTracker("SQUAT", "intermediate");
+  t.lockSubject(squatLandmarks(175));
+  // 서기 → 완전히 앉기 → 다시 서기를 3회 반복
+  const cycle = [175, 160, 140, 120, 100, 85, 75, 85, 100, 120, 140, 160, 175];
+  const frames = [];
+  for (let r = 0; r < 3; r++) for (const a of cycle) frames.push(squatLandmarks(a));
+  trackThroughMotion("스쿼트 3회", t, frames);
+}
+
+{
+  const t = makeTracker("SITUP", "intermediate");
+  t.lockSubject(situpLandmarks(140));
+  // 윗몸일으키기는 상체가 크게 회전해 몸통 중심이 많이 움직입니다.
+  const cycle = [140, 125, 110, 95, 80, 65, 80, 95, 110, 125, 140];
+  const frames = [];
+  for (let r = 0; r < 3; r++) for (const a of cycle) frames.push(situpLandmarks(a));
+  trackThroughMotion("윗몸일으키기 3회", t, frames);
+}
+
+{
+  // 카메라 쪽으로 한 걸음 다가가는 정도(크기 15% 증가)는 동일인으로 봐야 합니다.
+  const t = makeTracker("SQUAT", "intermediate");
+  t.lockSubject(squatLandmarks(175));
+  const frames = [1.03, 1.06, 1.09, 1.12, 1.15].map((s) => movePerson(squatLandmarks(175), 0.02, s));
+  trackThroughMotion("한 걸음 이동", t, frames);
 }
 
 console.log(failed === 0 ? "\n✅ ALL PASS" : `\n❌ ${failed} FAILED`);

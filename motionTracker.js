@@ -175,6 +175,13 @@ export const DIFFICULTY_LEVELS = {
 
 export const DEFAULT_DIFFICULTY = "intermediate";
 
+// 운동자 잠금(Subject Lock) 튜닝값
+// MediaPipe는 프레임마다 사람을 새로 고르므로, 신체 서명이 맞는 사람만 추적합니다.
+const SUBJECT_MATCH_TOLERANCE = 1.6;  // 이 값을 넘으면 "다른 사람"으로 간주
+const SUBJECT_LOST_MS = 1200;         // 이 시간 넘게 놓치면 준비 페이즈로 되돌림
+const SUBJECT_RELEASE_MS = 10000;     // 완전히 사라지면 잠금 해제(다른 사람이 새로 시작 가능)
+const SUBJECT_LOCK_ALPHA = 0.3;       // 잠금 서명을 현재 자세로 따라가게 하는 EMA 계수
+
 // 준비 게이트 안내 문구에 쓰는 랜드마크 한글 이름
 const LANDMARK_LABELS = {
   11: "왼쪽 어깨", 12: "오른쪽 어깨",
@@ -221,6 +228,11 @@ export class MotionTracker {
     this.lastCountdownSecond = null;
     this.blockedReason = "";
     this.lastBlockedReason = null;
+
+    // 운동자 잠금 상태. 준비 자세를 잡은 사람의 신체 서명을 기억해 그 사람만 추적합니다.
+    this.subjectLock = null;      // { center:{x,y}, scale, ratio }
+    this.subjectMissingSince = 0;
+    this.visiblePersonCount = 0;
 
     // rep 사이클 상태 (신전 구간을 한 번 관측해야만 시작됩니다)
     this.repPhase = null; // null | 'extended' | 'contracted'
@@ -325,6 +337,7 @@ export class MotionTracker {
   }
 
   resetExerciseStats() {
+    this.clearSubjectLock();
     this.repCount = 0;
     this.currentAngle = 0;
     this.depthProgress = 0;
@@ -449,7 +462,8 @@ export class MotionTracker {
                 delegate
               },
               runningMode: "VIDEO",
-              numPoses: 1,
+              // 여러 명이 잡혀야 그중에서 "운동 중인 본인"을 골라낼 수 있습니다.
+              numPoses: 3,
               minPoseDetectionConfidence: 0.3,
               minPosePresenceConfidence: 0.3,
               minTrackingConfidence: 0.3
@@ -709,6 +723,7 @@ export class MotionTracker {
 
   stopCamera() {
     this.isRunning = false;
+    this.clearSubjectLock();
     this.phase = "idle";
     this.readyStableMs = 0;
     this.lastReadyTickMs = 0;
@@ -785,6 +800,127 @@ export class MotionTracker {
       ? rawAngle
       : this.smoothedAngle + ALPHA * (rawAngle - this.smoothedAngle);
     return Math.round(this.smoothedAngle);
+  }
+
+  // ---------- 운동자 잠금(Subject Lock) ----------
+  // 얼굴 인식 대신 어깨·골반으로 만든 "신체 서명"으로 동일인을 판별합니다.
+  // 위치(어디에 있는가) + 크기(카메라와의 거리) + 비율(체형)의 조합입니다.
+  poseSignature(landmarks) {
+    const ls = landmarks?.[11];
+    const rs = landmarks?.[12];
+    const lh = landmarks?.[23];
+    const rh = landmarks?.[24];
+    if (!ls || !rs || !lh || !rh) return null;
+
+    const shoulderMid = { x: (ls.x + rs.x) / 2, y: (ls.y + rs.y) / 2 };
+    const hipMid = { x: (lh.x + rh.x) / 2, y: (lh.y + rh.y) / 2 };
+    const shoulderWidth = Math.hypot(ls.x - rs.x, ls.y - rs.y);
+    const torsoLength = Math.hypot(shoulderMid.x - hipMid.x, shoulderMid.y - hipMid.y);
+
+    return {
+      center: { x: (shoulderMid.x + hipMid.x) / 2, y: (shoulderMid.y + hipMid.y) / 2 },
+      scale: Math.max(0.02, (shoulderWidth + torsoLength) / 2),
+      ratio: shoulderWidth / Math.max(0.02, torsoLength)
+    };
+  }
+
+  // 0에 가까울수록 동일인. 위치 차이는 몸 크기로 정규화해 거리와 무관하게 만듭니다.
+  signatureDistance(sig, lock) {
+    const ref = Math.max(0.04, (sig.scale + lock.scale) / 2);
+    const posDiff = Math.hypot(sig.center.x - lock.center.x, sig.center.y - lock.center.y) / ref;
+    const scaleDiff = Math.abs(sig.scale - lock.scale) / lock.scale;
+    const ratioDiff = Math.abs(sig.ratio - lock.ratio) / Math.max(0.3, lock.ratio);
+    return posDiff + scaleDiff * 1.5 + ratioDiff * 0.8;
+  }
+
+  // 아직 잠기지 않았을 때의 후보 점수. 폰을 세워두고 운동하는 사람은
+  // 보통 화면 가운데에 가장 크게 잡힙니다.
+  setupScore(sig) {
+    return sig.scale - Math.abs(sig.center.x - 0.5) * 0.6;
+  }
+
+  lockSubject(landmarks) {
+    const sig = this.poseSignature(landmarks);
+    if (!sig) return false;
+    this.subjectLock = { center: { ...sig.center }, scale: sig.scale, ratio: sig.ratio };
+    return true;
+  }
+
+  // 사람이 움직이면 잠금 서명도 따라가야 합니다. 그렇지 않으면 곧 놓칩니다.
+  updateSubjectLock(landmarks) {
+    const sig = this.poseSignature(landmarks);
+    if (!sig) return;
+    if (!this.subjectLock) {
+      this.lockSubject(landmarks);
+      return;
+    }
+    const a = SUBJECT_LOCK_ALPHA;
+    const lock = this.subjectLock;
+    lock.center.x += a * (sig.center.x - lock.center.x);
+    lock.center.y += a * (sig.center.y - lock.center.y);
+    lock.scale += a * (sig.scale - lock.scale);
+    lock.ratio += a * (sig.ratio - lock.ratio);
+  }
+
+  clearSubjectLock() {
+    this.subjectLock = null;
+    this.subjectMissingSince = 0;
+    this.visiblePersonCount = 0;
+  }
+
+  // 검출된 여러 사람 중 "잠긴 운동자"만 골라냅니다. 없으면 null(=판정 중단).
+  selectSubjectPose(poses) {
+    const scored = [];
+    for (const lm of poses || []) {
+      if (!lm || lm.length < 25) continue;
+      const sig = this.poseSignature(lm);
+      if (sig) scored.push({ lm, sig });
+    }
+    this.visiblePersonCount = scored.length;
+    if (scored.length === 0) return null;
+
+    if (!this.subjectLock) {
+      // 잠금 전에는 화면 가운데에 가장 크게 잡힌 사람을 후보로 봅니다.
+      let best = scored[0];
+      for (const c of scored) {
+        if (this.setupScore(c.sig) > this.setupScore(best.sig)) best = c;
+      }
+      return best.lm;
+    }
+
+    let best = null;
+    let bestDistance = Infinity;
+    for (const c of scored) {
+      const d = this.signatureDistance(c.sig, this.subjectLock);
+      if (d < bestDistance) {
+        bestDistance = d;
+        best = c;
+      }
+    }
+    return bestDistance <= SUBJECT_MATCH_TOLERANCE ? best.lm : null;
+  }
+
+  // 운동자를 찾은 프레임
+  noteSubjectSeen(landmarks) {
+    this.subjectMissingSince = 0;
+    if (this.subjectLock) this.updateSubjectLock(landmarks);
+  }
+
+  // 운동자를 놓친 프레임. 카운팅 중이었다면 준비 페이즈로 되돌립니다.
+  noteSubjectMissing() {
+    const now = Date.now();
+    if (!this.subjectMissingSince) this.subjectMissingSince = now;
+    const goneMs = now - this.subjectMissingSince;
+
+    if (this.phase === "counting" && goneMs >= SUBJECT_LOST_MS) {
+      this.emitFeedback("운동자를 놓쳤습니다. 다시 시작 자세를 잡아 주세요", false);
+      this.enterPhase("calibrating");
+    }
+
+    // 완전히 자리를 뜬 경우에만 잠금을 풀어 다른 사람이 새로 시작할 수 있게 합니다.
+    if (goneMs >= SUBJECT_RELEASE_MS && this.subjectLock) {
+      this.subjectLock = null;
+    }
   }
 
   // ---------- 페이즈 머신: idle → calibrating → countdown → counting ----------
@@ -869,9 +1005,17 @@ export class MotionTracker {
       this.blockedReason = blocker;
       this.emitFeedback(blocker, false);
     } else {
+      // 시작 자세를 잡은 이 사람을 운동자로 잠급니다. 이후에는 이 사람만 추적합니다.
+      if (!this.subjectLock) this.lockSubject(this.lastLandmarks);
+
       this.readyStableMs += delta;
       this.blockedReason = "";
-      this.emitFeedback("시작 자세 확인 중입니다. 그대로 유지해 주세요", true);
+      this.emitFeedback(
+        this.visiblePersonCount > 1
+          ? "운동하실 분으로 인식했습니다. 그대로 유지해 주세요 (다른 분은 카운트되지 않습니다)"
+          : "시작 자세 확인 중입니다. 그대로 유지해 주세요",
+        true
+      );
       if (this.readyStableMs >= thresholds.readyHoldMs) {
         this.enterPhase("countdown");
       }
@@ -1004,9 +1148,12 @@ export class MotionTracker {
           this.lastDetectMs = nowInMs;
           const results = this.poseLandmarker.detectForVideo(this.videoEl, nowInMs);
           const poses = results.landmarks || results.poseLandmarks || [];
-          this.lastLandmarks = poses[0] || null;
+          this.lastLandmarks = this.selectSubjectPose(poses);
           if (this.lastLandmarks) {
+            this.noteSubjectSeen(this.lastLandmarks);
             this.processExerciseLogic(this.lastLandmarks);
+          } else {
+            this.noteSubjectMissing();
           }
         }
       }
@@ -1015,10 +1162,12 @@ export class MotionTracker {
         this.drawSkeleton(this.lastLandmarks);
       } else if (this.engineType) {
         if (this.phase === "calibrating") {
-          // 사람이 아예 안 잡히면 processExerciseLogic이 돌지 않아 안내가 갱신되지 않습니다.
+          // 운동자를 못 찾으면 processExerciseLogic이 돌지 않아 안내가 갱신되지 않습니다.
           // READY 링이 문구를 대신 보여주므로 별도 힌트는 그리지 않습니다.
           this.readyStableMs = 0;
-          this.blockedReason = "사람이 인식되지 않습니다. 전신이 나오게 서 주세요";
+          this.blockedReason = this.subjectLock
+            ? "운동하시던 분을 찾는 중입니다. 카메라 앞에서 시작 자세를 잡아 주세요"
+            : "사람이 인식되지 않습니다. 전신이 나오게 서 주세요";
         } else {
           this.drawSeekingHint(width, height);
         }
@@ -1029,6 +1178,8 @@ export class MotionTracker {
         this.drawReadyGauge(width, height);
       } else if (this.phase === "countdown") {
         this.drawCountdown(width, height);
+      } else if (this.phase === "counting" && this.visiblePersonCount > 1) {
+        this.drawSubjectLockBadge(width, height);
       }
     }
 
@@ -1036,11 +1187,17 @@ export class MotionTracker {
   }
 
   // Classic MediaPipe Pose 결과 처리 핸들러
+  // Classic 엔진은 1명만 반환하므로 후보를 고를 수는 없지만,
+  // 반환된 사람이 잠긴 운동자가 맞는지는 똑같이 검증합니다.
   handlePoseResults(results) {
     if (!this.isRunning) return;
-    this.lastLandmarks = results.poseLandmarks || null;
-    if (this.lastLandmarks && this.lastLandmarks.length > 0) {
+    const raw = results.poseLandmarks;
+    this.lastLandmarks = raw && raw.length > 0 ? this.selectSubjectPose([raw]) : null;
+    if (this.lastLandmarks) {
+      this.noteSubjectSeen(this.lastLandmarks);
       this.processExerciseLogic(this.lastLandmarks);
+    } else {
+      this.noteSubjectMissing();
     }
   }
 
@@ -1114,6 +1271,34 @@ export class MotionTracker {
     this.ctx.fillStyle = this.blockedReason ? "#FF9F0A" : "#CCFF00";
     this.ctx.font = `600 ${Math.max(12, Math.round(width / 44))}px sans-serif`;
     this.drawTextUnmirrored(hint, cx, cy + radius + 30);
+    this.ctx.restore();
+  }
+
+  // 화면에 여러 명이 있을 때 "당신만 세고 있다"는 것을 알려주는 배지
+  drawSubjectLockBadge(width, height) {
+    if (!this.ctx) return;
+    const text = `🔒 ${this.visiblePersonCount}명 중 운동자만 카운트 중`;
+    this.ctx.save();
+    this.ctx.font = `700 ${Math.max(11, Math.round(width / 48))}px sans-serif`;
+    this.ctx.textAlign = "center";
+    const w = this.ctx.measureText(text).width + 22;
+    const x = width / 2;
+    const y = height * 0.055;
+
+    this.ctx.fillStyle = "rgba(8, 9, 12, 0.72)";
+    this.ctx.strokeStyle = "#CCFF00";
+    this.ctx.lineWidth = 1.4;
+    this.ctx.beginPath();
+    if (typeof this.ctx.roundRect === "function") {
+      this.ctx.roundRect(x - w / 2, y - 14, w, 24, 12);
+    } else {
+      this.ctx.rect(x - w / 2, y - 14, w, 24);
+    }
+    this.ctx.fill();
+    this.ctx.stroke();
+
+    this.ctx.fillStyle = "#CCFF00";
+    this.drawTextUnmirrored(text, x, y + 3);
     this.ctx.restore();
   }
 
