@@ -10,6 +10,7 @@ import { FirebaseSandbox } from './firebaseSandbox.js';
 import { firebaseCloud } from './firebaseClient.js';
 import { MotionTracker, EXERCISE_TYPES, DIFFICULTY_LEVELS, DEFAULT_DIFFICULTY } from './motionTracker.js';
 import { MotionSound } from './motionSound.js';
+import { SubscriptionManager, SUBSCRIPTION_PLANS } from './subscriptionManager.js';
 
 class AppController {
   constructor() {
@@ -98,6 +99,11 @@ class AppController {
     });
 
     this.paypalBridge = new PayPalBridge();
+    this.subscriptionManager = new SubscriptionManager();
+    this.selectedSubPlan = "pro_annual";
+    this.subscriptionManager.onChange((state, isPro) => {
+      this.updateSubscriptionUi(isPro);
+    });
     this.selectedChallengeDay = this.challengeManager.currentDay;
     this.currentQuestMainTab = "daily";
     this.currentQuestCategory = "all";
@@ -234,6 +240,7 @@ class AppController {
     this.bindAuthAndOnboarding();
     this.bindPetSelect();
     this.bindMobileConnectModal();
+    this.bindSubscriptionEvents();
     await this.hydrateFromCloud();
     this.renderTamagotchiView();
     this.renderDailyQuests();
@@ -243,6 +250,7 @@ class AppController {
     this.renderQuestView("all");
     this.renderShopView("all");
     this.updateHeaderStats();
+    this.updateSubscriptionUi(this.subscriptionManager.isSubscribed());
     this.routeAppViews();
 
     console.log("⚡ RUNNOW Multi-Step Onboarding App & AI Motion Fitness Initialized!");
@@ -384,6 +392,13 @@ class AppController {
     navButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
         const targetTabId = btn.dataset.tab;
+
+        // PRO 구독 잠금 게이트웨이: 달리기(tab-run)와 프로필(tab-profile)은 기본 무료
+        if ((targetTabId === "tab-tamagotchi" || targetTabId === "tab-challenge" || targetTabId === "tab-shop") && !this.subscriptionManager.isSubscribed()) {
+          this.openSubscriptionModal(targetTabId);
+          return;
+        }
+
         navButtons.forEach((b) => b.classList.remove("active"));
         tabPanes.forEach((pane) => pane.classList.remove("active"));
 
@@ -994,6 +1009,11 @@ class AppController {
           return;
         }
         if (workout === "motion") {
+          // PRO 구독 여부 게이트웨이 검사
+          if (!this.subscriptionManager.isSubscribed()) {
+            this.openSubscriptionModal("motion", card.dataset.exercise);
+            return;
+          }
           if (this.gpsRunner.isTracking) {
             alert("러닝이 진행 중입니다. 먼저 완주하거나 취소하세요.");
             return;
@@ -1848,6 +1868,146 @@ class AppController {
         }
       });
     }
+  }
+
+  // =========================================================================
+  // RUNNOW PRO 구독 멤버십 & 페이월(Paywall) 게이트웨이 로직
+  // =========================================================================
+  openSubscriptionModal(sourceReason = "general", extra = "") {
+    const modal = document.getElementById("subscription-paywall-modal");
+    if (!modal) return;
+
+    const descEl = modal.querySelector(".sub-hero-desc");
+    if (descEl) {
+      if (sourceReason === "motion") {
+        descEl.innerHTML = `처음 달리기(야외 GPS/트레드밀)는 100% 무료! <strong>AI 카메라 모션 피트니스 6종(스쿼트/푸시업/윗몸 등)</strong>은 PRO 멤버십 전용 기능입니다.`;
+      } else if (sourceReason === "tab-tamagotchi") {
+        descEl.innerHTML = `처음 달리기(야외 GPS/트레드밀)는 100% 무료! <strong>다마고치 5단계 진화, 스탯 육성, 펫 동반 러닝</strong>은 PRO 멤버십 전용 기능입니다.`;
+      } else if (sourceReason === "tab-challenge") {
+        descEl.innerHTML = `처음 달리기(야외 GPS/트레드밀)는 100% 무료! <strong>21일 러닝 부트캠프 챌린지 및 데일리 퀘스트 보상</strong>은 PRO 멤버십 전용 기능입니다.`;
+      } else if (sourceReason === "tab-shop") {
+        descEl.innerHTML = `처음 달리기(야외 GPS/트레드밀)는 100% 무료! <strong>볼트 상점 20종 장비 착용 및 VIP 상시 혜택</strong>은 PRO 멤버십 전용 기능입니다.`;
+      } else {
+        descEl.textContent = "처음 달리기(야외 GPS/트레드밀)는 100% 무료! AI 홈트 6종, 사이버 펫 진화, 21일 챌린지는 PRO 구독으로 시작하세요.";
+      }
+    }
+
+    this.updateSubModalCtaText();
+    modal.style.display = "flex";
+  }
+
+  closeSubscriptionModal() {
+    const modal = document.getElementById("subscription-paywall-modal");
+    if (modal) modal.style.display = "none";
+  }
+
+  updateSubModalCtaText() {
+    const btnCta = document.getElementById("btn-confirm-paypal-sub");
+    if (!btnCta) return;
+    const plan = this.selectedSubPlan === "pro_annual" ? SUBSCRIPTION_PLANS.ANNUAL : SUBSCRIPTION_PLANS.MONTHLY;
+    btnCta.innerHTML = `<span>⚡ PayPal로 ${plan.name} 시작하기 (₩${plan.priceKRW.toLocaleString()}${plan.periodName})</span>`;
+  }
+
+  updateSubscriptionUi(isPro) {
+    const btnSub = document.getElementById("btn-open-subscription");
+    const textSub = document.getElementById("header-sub-text");
+
+    if (isPro) {
+      document.body.classList.add("is-pro-user");
+      if (btnSub) {
+        btnSub.classList.remove("basic");
+        btnSub.classList.add("pro");
+        btnSub.title = "RUNNOW PRO 회원 (구독 관리)";
+      }
+      if (textSub) textSub.textContent = "⭐ PRO";
+    } else {
+      document.body.classList.remove("is-pro-user");
+      if (btnSub) {
+        btnSub.classList.remove("pro");
+        btnSub.classList.add("basic");
+        btnSub.title = "RUNNOW 멤버십 상태 및 구독 관리";
+      }
+      if (textSub) textSub.textContent = "⚡ BASIC";
+    }
+  }
+
+  bindSubscriptionEvents() {
+    // 1. 헤더 구독 버튼 클릭 시 모달 열기
+    const btnOpenSub = document.getElementById("btn-open-subscription");
+    if (btnOpenSub) {
+      btnOpenSub.addEventListener("click", () => {
+        this.openSubscriptionModal("general");
+      });
+    }
+
+    // 2. 모달 닫기
+    const btnCloseSub = document.getElementById("btn-close-sub-modal");
+    const modal = document.getElementById("subscription-paywall-modal");
+    if (btnCloseSub) {
+      btnCloseSub.addEventListener("click", () => this.closeSubscriptionModal());
+    }
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) this.closeSubscriptionModal();
+      });
+    }
+
+    // 3. 플랜 카드 선택 인터랙션
+    const cardAnnual = document.getElementById("plan-card-annual");
+    const cardMonthly = document.getElementById("plan-card-monthly");
+    const radioAnnual = document.getElementById("radio-plan-annual");
+    const radioMonthly = document.getElementById("radio-plan-monthly");
+
+    const selectPlan = (planId) => {
+      this.selectedSubPlan = planId;
+      if (planId === "pro_annual") {
+        if (cardAnnual) cardAnnual.classList.add("active");
+        if (cardMonthly) cardMonthly.classList.remove("active");
+        if (radioAnnual) radioAnnual.checked = true;
+      } else {
+        if (cardMonthly) cardMonthly.classList.add("active");
+        if (cardAnnual) cardAnnual.classList.remove("active");
+        if (radioMonthly) radioMonthly.checked = true;
+      }
+      this.updateSubModalCtaText();
+    };
+
+    if (cardAnnual) cardAnnual.addEventListener("click", () => selectPlan("pro_annual"));
+    if (cardMonthly) cardMonthly.addEventListener("click", () => selectPlan("pro_monthly"));
+    if (radioAnnual) radioAnnual.addEventListener("change", () => selectPlan("pro_annual"));
+    if (radioMonthly) radioMonthly.addEventListener("change", () => selectPlan("pro_monthly"));
+
+    // 4. PayPal 구독 결제 CTA 버튼
+    const btnPaypalSub = document.getElementById("btn-confirm-paypal-sub");
+    if (btnPaypalSub) {
+      btnPaypalSub.addEventListener("click", async () => {
+        const plan = this.selectedSubPlan === "pro_annual" ? SUBSCRIPTION_PLANS.ANNUAL : SUBSCRIPTION_PLANS.MONTHLY;
+        await this.paypalBridge.processSubscription(plan, (paidPlan) => {
+          this.subscriptionManager.activate(paidPlan.id);
+          this.closeSubscriptionModal();
+          this.updateSubscriptionUi(true);
+          alert(`🎉 축하합니다! [${paidPlan.name}] 구독이 성공적으로 완료되었습니다!\n\n✨ 해금된 PRO 전용 혜택:\n✓ AI 카메라 모션 피트니스 6종 무제한\n✓ 5단계 다마고치 사이버 펫 진화 & 스탯 육성\n✓ 21일 러닝 습관 형성 챌린지 & 퀘스트 보상\n✓ 볼트 상점 20종 장비 착용 및 VIP 상시 혜택\n\n모든 제한이 해제되었습니다. 멋진 러닝을 즐겨보세요! 🔥`);
+        });
+      });
+    }
+
+    // 5. 대표님 즉시 VIP 테스트 패스 버튼
+    const btnCeoPass = document.getElementById("btn-toggle-ceo-pass");
+    if (btnCeoPass) {
+      btnCeoPass.addEventListener("click", () => {
+        this.subscriptionManager.toggleCeoPass();
+        const isNowPro = this.subscriptionManager.isSubscribed();
+        this.closeSubscriptionModal();
+        this.updateSubscriptionUi(isNowPro);
+        if (isNowPro) {
+          alert(`👑 [이건우 대표님 VIP 마스터 패스 활성화]\n\n모든 PRO 기능이 1초 만에 즉시 언락되었습니다!\n- AI 운동 6종 전종목 해금\n- 다마고치 펫 진화 룸 풀액세스\n- 21일 챌린지 및 볼트 상점 자유 이용 가능`);
+        } else {
+          alert(`⚡ [BASIC 무료 모드로 전환 완료]\n\n기본 달리기(야외 GPS/트레드밀)만 무료 이용 가능하며, 나머지 항목은 PRO 구독 잠금 상태로 복귀되었습니다.`);
+        }
+      });
+    }
+
+    this.updateSubscriptionUi(this.subscriptionManager.isSubscribed());
   }
 
   // 다마고치 뷰 렌더링 (강아지 vs 고양이 멀티 펫 렌더링)

@@ -82,4 +82,87 @@ export class PayPalBridge {
       };
     });
   }
+
+  // PayPal 정기 구독 결제 모달 시뮬레이터 및 승인 플로우
+  processSubscription(plan, onSuccessCallback) {
+    return new Promise((resolve) => {
+      const modalOverlay = document.createElement("div");
+      modalOverlay.className = "paypal-modal-overlay";
+      modalOverlay.innerHTML = `
+        <div class="paypal-modal paypal-sub-modal">
+          <div class="pp-header">
+            <div class="pp-logo"><i>P</i><i>P</i> PayPal <span class="pp-sub-tag">SUBSCRIBE</span></div>
+            <button class="pp-close-btn">&times;</button>
+          </div>
+          <div class="pp-body">
+            <div class="pp-summary-box pp-sub-summary">
+              <div class="pp-item-badge">⭐ RUNNOW PRO MEMBERSHIP</div>
+              <div class="pp-item-name">${plan.name}</div>
+              <div class="pp-item-desc">${plan.desc}</div>
+              <div class="pp-item-price">₩${plan.priceKRW ? plan.priceKRW.toLocaleString() : "9,900"} KRW <span class="pp-period">${plan.periodName || "/ 월"}</span></div>
+            </div>
+            
+            <div class="pp-sub-perks">
+              <div class="pp-perk-item">✓ AI 카메라 모션 피트니스 6종 무제한</div>
+              <div class="pp-perk-item">✓ 다마고치 5단계 진화 & 스탯 육성 풀언락</div>
+              <div class="pp-perk-item">✓ 21일 챌린지 & 데일리 퀘스트 보상 해금</div>
+              <div class="pp-perk-item">✓ 볼트 샵 20종 장비 착용 & VIP 상시 혜택</div>
+            </div>
+
+            <div class="pp-account-info">
+              <div class="pp-avatar">⭐</div>
+              <div>
+                <strong>이건우 대표님 (BSC CEO)</strong>
+                <p>dnswlq456@gmail.com</p>
+              </div>
+            </div>
+
+            <div class="pp-payment-method">
+              <span class="pp-badge">RECURRING BILLING</span>
+              <span>PayPal Pre-approved / VISA •••• 4242</span>
+            </div>
+
+            <div class="pp-actions">
+              <button class="pp-btn-pay pp-btn-sub" id="pp-confirm-sub">구독 시작 (₩${plan.priceKRW ? plan.priceKRW.toLocaleString() : "9,900"}${plan.periodName || "/월"})</button>
+              <button class="pp-btn-cancel" id="pp-cancel-sub">취소</button>
+            </div>
+            
+            <div class="pp-secure-tag">🔒 End-to-End Encrypted 256-bit SSL Recurring Security</div>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modalOverlay);
+
+      const closeBtn = modalOverlay.querySelector(".pp-close-btn");
+      const cancelBtn = modalOverlay.querySelector("#pp-cancel-sub");
+      const confirmBtn = modalOverlay.querySelector("#pp-confirm-sub");
+
+      const cleanup = () => {
+        if (modalOverlay.parentNode) {
+          modalOverlay.parentNode.removeChild(modalOverlay);
+        }
+      };
+
+      closeBtn.onclick = () => { cleanup(); resolve({ success: false, reason: "closed" }); };
+      cancelBtn.onclick = () => { cleanup(); resolve({ success: false, reason: "cancelled" }); };
+
+      confirmBtn.onclick = () => {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = `<span class="spinner"></span> Activating Subscription with PayPal...`;
+
+        setTimeout(() => {
+          cleanup();
+          if (onSuccessCallback) onSuccessCallback(plan);
+          resolve({
+            success: true,
+            subscriptionID: "I-SUB-" + Math.random().toString(36).substring(2, 9).toUpperCase(),
+            plan: plan,
+            paidAmount: plan.priceUSD,
+            timestamp: new Date().toISOString()
+          });
+        }, 1400);
+      };
+    });
+  }
 }

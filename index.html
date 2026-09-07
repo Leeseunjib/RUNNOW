@@ -30,7 +30,7 @@
   <link rel="apple-touch-icon" href="assets/hero_mascot.jpg">
   <link rel="icon" type="image/jpeg" href="assets/hero_mascot.jpg">
 
-  <link rel="stylesheet" href="styles.css?v=4.6">
+  <link rel="stylesheet" href="styles.css?v=5.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
@@ -333,6 +333,11 @@
           <span class="brand-title">RUN<span>NOW</span></span>
         </div>
         <div class="user-status-pill">
+          <!-- Subscription Status Pill / Modal Button -->
+          <button id="btn-open-subscription" class="header-sub-btn basic" title="RUNNOW 멤버십 상태 및 구독 관리">
+            <span class="sub-status-dot"></span>
+            <span id="header-sub-text">⚡ BASIC</span>
+          </button>
           <!-- Mobile Phone Connection Modal Button -->
           <button id="btn-open-login" style="background:var(--surface-elevated); border:1px solid var(--border-card); color:var(--text-main); font-size:11px; font-weight:700; padding:4px 8px; border-radius:14px; display:flex; align-items:center; gap:4px; cursor:pointer;">
             <span id="header-user-icon">👤</span>
@@ -361,7 +366,7 @@
             <div class="nrc-card">
               <div class="card-label">EXERCISE</div>
               <h2 class="ex-list-title">어떤 운동을 할까요?</h2>
-              <p class="ex-list-lead">종목을 누르면 전용 화면으로 들어갑니다. 근력 운동은 카메라 위에 관절 점을 같이 띄웁니다.</p>
+              <p class="ex-list-lead">종목을 누르면 전용 화면으로 들어갑니다. 기본 달리기는 100% 무료, AI 운동 6종은 PRO 구독 전용입니다.</p>
               <div class="exercise-catalog" id="exercise-catalog">
                 <button type="button" class="ex-pick-card" data-workout="run">
                   <img class="ex-pick-photo" src="./assets/exercises/run.jpg" alt="러닝">
@@ -369,7 +374,7 @@
                     <strong>러닝</strong>
                     <span>야외는 GPS, 헬스장은 트레드밀 속도로 거리를 잽니다</span>
                   </span>
-                  <span class="ex-pick-badge">GPS</span>
+                  <span class="ex-pick-badge free">FREE</span>
                 </button>
                 <button type="button" class="ex-pick-card" data-workout="motion" data-exercise="pushup">
                   <img class="ex-pick-photo" src="./assets/exercises/pushup.jpg" alt="팔굽혀펴기">
@@ -377,7 +382,7 @@
                     <strong>팔굽혀펴기</strong>
                     <span>카메라 + 팔꿈치 랜드마크로 횟수 측정</span>
                   </span>
-                  <span class="ex-pick-badge">AI</span>
+                  <span class="ex-pick-badge pro">🔒 PRO</span>
                 </button>
                 <button type="button" class="ex-pick-card" data-workout="motion" data-exercise="situp">
                   <img class="ex-pick-photo" src="./assets/exercises/situp.jpg" alt="윗몸일으키기">
@@ -385,7 +390,7 @@
                     <strong>윗몸일으키기</strong>
                     <span>카메라 + 골반 랜드마크로 코어 측정</span>
                   </span>
-                  <span class="ex-pick-badge">AI</span>
+                  <span class="ex-pick-badge pro">🔒 PRO</span>
                 </button>
                 <button type="button" class="ex-pick-card" data-workout="motion" data-exercise="squat">
                   <img class="ex-pick-photo" src="./assets/exercises/squat.jpg" alt="스쿼트">
@@ -393,7 +398,7 @@
                     <strong>스쿼트</strong>
                     <span>카메라 + 무릎 각도로 깊이 측정</span>
                   </span>
-                  <span class="ex-pick-badge">AI</span>
+                  <span class="ex-pick-badge pro">🔒 PRO</span>
                 </button>
                 <button type="button" class="ex-pick-card" data-workout="motion" data-exercise="plank">
                   <img class="ex-pick-photo" src="./assets/exercises/plank.jpg" alt="플랭크">
@@ -401,7 +406,7 @@
                     <strong>플랭크</strong>
                     <span>어깨-골반-발목을 일직선으로 유지</span>
                   </span>
-                  <span class="ex-pick-badge">AI</span>
+                  <span class="ex-pick-badge pro">🔒 PRO</span>
                 </button>
                 <button type="button" class="ex-pick-card" data-workout="motion" data-exercise="lunge">
                   <img class="ex-pick-photo" src="./assets/exercises/lunge.jpg" alt="런지">
@@ -409,7 +414,7 @@
                     <strong>런지</strong>
                     <span>앞무릎 90도 랜드마크로 밸런스 측정</span>
                   </span>
-                  <span class="ex-pick-badge">AI</span>
+                  <span class="ex-pick-badge pro">🔒 PRO</span>
                 </button>
                 <button type="button" class="ex-pick-card" data-workout="motion" data-exercise="jumpingjack">
                   <img class="ex-pick-photo" src="./assets/exercises/jumpingjack.jpg" alt="점핑잭">
@@ -417,7 +422,7 @@
                     <strong>점핑잭</strong>
                     <span>팔·다리 벌림을 관절 점으로 카운트</span>
                   </span>
-                  <span class="ex-pick-badge">AI</span>
+                  <span class="ex-pick-badge pro">🔒 PRO</span>
                 </button>
               </div>
             </div>
@@ -1009,17 +1014,20 @@
           <span class="nav-icon">🏋️</span>
           <span>운동</span>
         </button>
-        <button class="nav-item" data-tab="tab-tamagotchi">
+        <button class="nav-item has-lock" data-tab="tab-tamagotchi" data-sub-locked="true">
           <span class="nav-icon">🐣</span>
           <span>펫</span>
+          <span class="nav-lock-badge" title="PRO 구독 전용">🔒</span>
         </button>
-        <button class="nav-item" data-tab="tab-challenge">
+        <button class="nav-item has-lock" data-tab="tab-challenge" data-sub-locked="true">
           <span class="nav-icon">📜</span>
           <span>퀘스트</span>
+          <span class="nav-lock-badge" title="PRO 구독 전용">🔒</span>
         </button>
-        <button class="nav-item" data-tab="tab-shop">
+        <button class="nav-item has-lock" data-tab="tab-shop" data-sub-locked="true">
           <span class="nav-icon">🛍️</span>
           <span>상점(20)</span>
+          <span class="nav-lock-badge" title="PRO 구독 전용">🔒</span>
         </button>
         <button class="nav-item" data-tab="tab-profile">
           <span class="nav-icon">⚙️</span>
@@ -1248,9 +1256,101 @@
       </div>
     </div>
 
+    <!-- RUNNOW PRO Subscription Paywall Modal -->
+    <div id="subscription-paywall-modal" class="modal-overlay sub-modal-overlay" style="display:none;">
+      <div class="sub-modal-card">
+        <button type="button" class="sub-modal-close" id="btn-close-sub-modal" aria-label="닫기">✕</button>
+
+        <div class="sub-hero-badge">⭐ RUNNOW PRO MEMBERSHIP</div>
+        <h3 class="sub-hero-title">러닝을 넘어, <span class="highlight">도파민 성장의 세계로</span></h3>
+        <p class="sub-hero-desc">처음 달리기(야외 GPS/트레드밀)는 100% 무료! AI 홈트 6종, 사이버 펫 진화, 21일 챌린지는 PRO 구독으로 시작하세요.</p>
+
+        <!-- Core Perks Grid -->
+        <div class="sub-perks-grid">
+          <div class="sub-perk-card">
+            <div class="sub-perk-icon">🤖</div>
+            <div class="sub-perk-info">
+              <strong>AI 비전 피트니스 6종</strong>
+              <span>스쿼트, 푸시업, 윗몸 등 실시간 관절 카운팅 & 자세 피드백</span>
+            </div>
+          </div>
+          <div class="sub-perk-card">
+            <div class="sub-perk-icon">🐣</div>
+            <div class="sub-perk-info">
+              <strong>다마고치 5단계 진화 & 스탯</strong>
+              <span>달릴수록 성장하는 파트너 펫 & 근력/민첩/멘탈 스탯 버프</span>
+            </div>
+          </div>
+          <div class="sub-perk-card">
+            <div class="sub-perk-icon">🏆</div>
+            <div class="sub-perk-info">
+              <strong>21-Day 챌린지 & 데일리 퀘스트</strong>
+              <span>3주 습관 형성 부트캠프 & 스트릭 실드 해금</span>
+            </div>
+          </div>
+          <div class="sub-perk-card">
+            <div class="sub-perk-icon">🛍️</div>
+            <div class="sub-perk-info">
+              <strong>볼트 샵 20종 장비 착용</strong>
+              <span>희귀 네온 스킨, 카본화 장착 & VIP 상시 혜택</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Plan Selectors (Monthly vs Annual) -->
+        <div class="sub-plans-container">
+          <div class="sub-plan-card active" data-plan="pro_annual" id="plan-card-annual">
+            <div class="sub-plan-badge">BEST VALUE -35%</div>
+            <div class="sub-plan-header">
+              <input type="radio" name="sub-plan-choice" id="radio-plan-annual" value="pro_annual" checked>
+              <div>
+                <strong>연간 멤버십</strong>
+                <span class="sub-plan-tag">7일 무료 체험</span>
+              </div>
+            </div>
+            <div class="sub-plan-price-row">
+              <div class="sub-plan-price">₩79,000<span>/년</span></div>
+              <div class="sub-plan-subprice">월 ₩6,580꼴 (연 ₩39,800 절약)</div>
+            </div>
+          </div>
+
+          <div class="sub-plan-card" data-plan="pro_monthly" id="plan-card-monthly">
+            <div class="sub-plan-header">
+              <input type="radio" name="sub-plan-choice" id="radio-plan-monthly" value="pro_monthly">
+              <div>
+                <strong>월간 멤버십</strong>
+                <span class="sub-plan-tag">언제든 해지 가능</span>
+              </div>
+            </div>
+            <div class="sub-plan-price-row">
+              <div class="sub-plan-price">₩9,900<span>/월</span></div>
+              <div class="sub-plan-subprice">매월 정기 갱신</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment CTA -->
+        <button type="button" class="btn-primary-volt btn-sub-cta" id="btn-confirm-paypal-sub">
+          <span>⚡ PayPal로 PRO 멤버십 시작하기</span>
+        </button>
+
+        <div class="sub-guarantee-note">
+          🔒 256비트 SSL 암호화 결제 • 언제든 위약금 없이 1클릭 해지 가능
+        </div>
+
+        <!-- CEO & Testing Instant Pass -->
+        <div class="sub-ceo-section">
+          <div class="sub-ceo-divider"><span>DEVELOPER &amp; CEO TESTING</span></div>
+          <button type="button" class="btn-ceo-pass" id="btn-toggle-ceo-pass">
+            👑 이건우 대표님 VIP 마스터 패스 (원클릭 On/Off)
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <script type="module" src="app.js?v=4.7"></script>
+  <script type="module" src="app.js?v=5.0"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
