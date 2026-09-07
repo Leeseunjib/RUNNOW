@@ -30,10 +30,13 @@
   <link rel="apple-touch-icon" href="assets/hero_mascot.jpg">
   <link rel="icon" type="image/jpeg" href="assets/hero_mascot.jpg">
 
-  <link rel="stylesheet" href="styles.css?v=5.0">
+  <link rel="stylesheet" href="styles.css?v=5.1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
+
+  <!-- Google AdSense Official Script (Ad-Client Slot) -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0000000000000000" crossorigin="anonymous"></script>
 
   <!-- Google MediaPipe Pose Official Web Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.4/camera_utils.js" crossorigin="anonymous"></script>
@@ -424,6 +427,41 @@
                   </span>
                   <span class="ex-pick-badge pro">🔒 PRO</span>
                 </button>
+              </div>
+
+              <!-- Rewarded Ad Card for Free Users -->
+              <div class="rewarded-ad-card-banner rewarded-ad-trigger" id="btn-watch-rewarded-ad">
+                <div class="rad-icon">📺</div>
+                <div class="rad-body">
+                  <div class="rad-title-row">
+                    <strong>스폰서 영상 보고 코인 받기</strong>
+                    <span class="rad-badge">+10 VC</span>
+                  </div>
+                  <span class="rad-desc">15초 스폰서 영상을 시청하고 무료 볼트코인을 즉시 획득하세요!</span>
+                </div>
+                <button type="button" class="rad-play-btn">시청</button>
+              </div>
+
+              <!-- Google AdSense Native Display Slot -->
+              <div class="adsense-slot-container">
+                <div class="ad-label-bar">
+                  <span>SPONSORED</span>
+                  <span class="ad-google-mark">Google AdSense</span>
+                </div>
+                <div class="ad-content-box">
+                  <ins class="adsbygoogle"
+                       style="display:block"
+                       data-ad-client="ca-pub-0000000000000000"
+                       data-ad-slot="1234567890"
+                       data-ad-format="auto"
+                       data-full-width-responsive="true"></ins>
+                  <!-- AdSense Interactive Sponsor Placeholder -->
+                  <div class="adsense-preview-box">
+                    <div class="ad-preview-brand">⚡ Nike Air Zoom Pegasus 41</div>
+                    <p class="ad-preview-desc">한계를 깨는 가장 편안한 데일리 러닝화. 지금 공식 스토어에서 확인하세요.</p>
+                    <span class="ad-preview-cta">공식 스토어 가기 ➔</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1348,9 +1386,43 @@
       </div>
     </div>
 
+    <!-- Google AdSense / Rewarded Ad Simulator Modal -->
+    <div id="rewarded-ad-modal" class="modal-overlay rewarded-ad-modal-overlay" style="display:none;">
+      <div class="rewarded-ad-modal-card">
+        <button type="button" class="rad-close-btn" id="btn-close-rewarded-ad" style="display:none;">✕</button>
+        
+        <div class="rad-modal-header">
+          <div class="rad-sponsor-tag">
+            <span class="rad-ad-badge">AD</span>
+            <span>SPONSORED BY <strong>NIKE RUNNING</strong></span>
+          </div>
+          <div class="rad-timer-badge" id="rad-timer-badge">⏱️ 15초 후 보상 지급</div>
+        </div>
+
+        <div class="rad-video-screen">
+          <div class="rad-video-badge">4K ULTRA HD SPONSOR</div>
+          <div class="rad-video-visual">
+            <div class="rad-video-icon">👟⚡</div>
+            <h3 class="rad-video-title">NIKE AIR ZOOM ALPHAFLY NEXT% 3</h3>
+            <p class="rad-video-desc">한계를 깨는 가장 빠른 마라톤 레이싱화. 지금 공식 스토어에서 만나보세요.</p>
+          </div>
+          <div class="rad-progress-bar-track">
+            <div class="rad-progress-bar-fill" id="rad-progress-fill"></div>
+          </div>
+        </div>
+
+        <div class="rad-modal-footer">
+          <div class="rad-reward-pill">🎁 영상 시청 완료 시 <strong>+10 VC</strong> 즉시 지급</div>
+          <button type="button" class="btn-primary-volt" id="btn-claim-ad-reward" disabled>
+            <span id="btn-claim-ad-label">광고 시청 중 (15s)...</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <script type="module" src="app.js?v=5.0"></script>
+  <script type="module" src="app.js?v=5.1"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

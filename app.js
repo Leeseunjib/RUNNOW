@@ -241,6 +241,7 @@ class AppController {
     this.bindPetSelect();
     this.bindMobileConnectModal();
     this.bindSubscriptionEvents();
+    this.bindRewardedAdEvents();
     await this.hydrateFromCloud();
     this.renderTamagotchiView();
     this.renderDailyQuests();
@@ -2008,6 +2009,111 @@ class AppController {
     }
 
     this.updateSubscriptionUi(this.subscriptionManager.isSubscribed());
+  }
+
+  // =========================================================================
+  // GOOGLE ADSENSE & 보상형 광고(REWARDED ADS) 로직
+  // =========================================================================
+  bindRewardedAdEvents() {
+    const btnWatchAd = document.getElementById("btn-watch-rewarded-ad");
+    const modal = document.getElementById("rewarded-ad-modal");
+    const btnClose = document.getElementById("btn-close-rewarded-ad");
+    const btnClaim = document.getElementById("btn-claim-ad-reward");
+    const labelClaim = document.getElementById("btn-claim-ad-label");
+    const timerBadge = document.getElementById("rad-timer-badge");
+    const progressFill = document.getElementById("rad-progress-fill");
+
+    let adCountdownTimer = null;
+
+    const startRewardedAd = () => {
+      // 1. PRO 회원은 광고 없이 즉시 무료 보너스 지급!
+      if (this.subscriptionManager.isSubscribed()) {
+        const bonusCoins = 10;
+        this.userProfile.coins = (this.userProfile.coins || 0) + bonusCoins;
+        this.tamagotchi.feed(15);
+        this.updateHeaderStats();
+        this.persistUserProfile();
+        alert(`⭐ [PRO 멤버십 전용 혜택]\n\n광고 시청 없이 즉시 데일리 스폰서 보너스가 지급되었습니다!\n+${bonusCoins} VC (볼트코인)\n파트너 펫 에너지 +15% 충전 완료!`);
+        return;
+      }
+
+      // 2. 무료 유저: 15초 스폰서 광고 시뮬레이터 가동
+      if (!modal) return;
+      modal.style.display = "flex";
+      if (btnClose) btnClose.style.display = "none";
+      if (btnClaim) {
+        btnClaim.disabled = true;
+        btnClaim.innerHTML = `<span id="btn-claim-ad-label">광고 시청 중 (15s)...</span>`;
+      }
+      if (progressFill) progressFill.style.width = "0%";
+
+      let remainingSec = 15;
+      const totalSec = 15;
+
+      const updateAdUi = () => {
+        if (timerBadge) timerBadge.textContent = `⏱️ ${remainingSec}초 후 보상 지급`;
+        const lbl = document.getElementById("btn-claim-ad-label");
+        if (lbl) lbl.textContent = `광고 시청 중 (${remainingSec}s)...`;
+        if (progressFill) {
+          const pct = Math.min(100, Math.round(((totalSec - remainingSec) / totalSec) * 100));
+          progressFill.style.width = `${pct}%`;
+        }
+      };
+
+      updateAdUi();
+
+      if (adCountdownTimer) clearInterval(adCountdownTimer);
+
+      adCountdownTimer = setInterval(() => {
+        remainingSec--;
+        updateAdUi();
+
+        // 5초 경과 시 닫기(중단) 버튼 표시
+        if (remainingSec <= 10 && btnClose) {
+          btnClose.style.display = "block";
+        }
+
+        // 시청 완료 (0초 도달)
+        if (remainingSec <= 0) {
+          clearInterval(adCountdownTimer);
+          adCountdownTimer = null;
+
+          if (timerBadge) timerBadge.textContent = "✅ 시청 완료!";
+          if (progressFill) progressFill.style.width = "100%";
+          if (btnClaim) {
+            btnClaim.disabled = false;
+            btnClaim.innerHTML = "<span>🎉 +10 VC 보상 수령하기</span>";
+          }
+        }
+      }, 1000);
+    };
+
+    if (btnWatchAd) {
+      btnWatchAd.addEventListener("click", startRewardedAd);
+    }
+
+    if (btnClose) {
+      btnClose.addEventListener("click", () => {
+        if (adCountdownTimer) {
+          clearInterval(adCountdownTimer);
+          adCountdownTimer = null;
+        }
+        modal.style.display = "none";
+      });
+    }
+
+    if (btnClaim) {
+      btnClaim.addEventListener("click", () => {
+        const rewardCoins = 10;
+        this.userProfile.coins = (this.userProfile.coins || 0) + rewardCoins;
+        this.tamagotchi.feed(15);
+        this.updateHeaderStats();
+        this.persistUserProfile();
+
+        modal.style.display = "none";
+        alert(`🎉 [스폰서 리워드 완료]\n\n성공적으로 광고를 시청하여 보상이 지급되었습니다!\n+${rewardCoins} VC (볼트 코인 획득)\n파트너 펫 에너지 +15% 즉시 충전!\n\n💡 PRO 멤버십에 가입하시면 광고 없이 모든 혜택을 누리실 수 있습니다.`);
+      });
+    }
   }
 
   // 다마고치 뷰 렌더링 (강아지 vs 고양이 멀티 펫 렌더링)
