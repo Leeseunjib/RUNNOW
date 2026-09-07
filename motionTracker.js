@@ -646,6 +646,9 @@ export class MotionTracker {
   // 카메라 전환 (전면 <-> 후면)
   async toggleCamera() {
     this.facingMode = this.facingMode === "user" ? "environment" : "user";
+    // 전/후면을 바꾸면 화면 속 위치와 크기가 완전히 달라져 기존 신체 서명이 맞지 않습니다.
+    // 잠금을 유지하면 "운동하시던 분을 찾는 중"에서 빠져나오지 못합니다.
+    this.clearSubjectLock();
     if (this.videoEl) {
       const transformVal = this.facingMode === "user" ? "scaleX(-1)" : "scaleX(1)";
       this.videoEl.style.transform = transformVal;
