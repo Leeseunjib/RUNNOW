@@ -314,5 +314,56 @@ function trackThroughMotion(label, tracker, frames) {
   trackThroughMotion("한 걸음 이동", t, frames);
 }
 
+// --- 14. 인식 완화 모드: 준비 게이트에 영원히 갇히지 않는다 --------------
+{
+  const t = makeTracker("SQUAT", "intermediate");
+  t.enterPhase("calibrating");
+  // 관절 신뢰도 0.35 — 중급자 기준(0.55) 미달이라 준비 게이트를 통과할 수 없습니다.
+  const dim = squatLandmarks(175, 0.35);
+
+  let offered = null;
+  t.onPhaseChange = (d) => { if (d.canRelax) offered = d; };
+
+  feed(t, dim, 3);
+  check("완화 모드 제안 전 · 준비 통과 불가", t.phase, "calibrating");
+  check("제안은 아직 안 뜸", offered, null);
+
+  // 12초 직전까지 막힌 상황을 만든 뒤 실제 시간을 흘려보냅니다.
+  // (막힘 누적은 벽시계 delta 기반이라 타이트 루프로는 늘어나지 않습니다)
+  t.calibrationBlockedMs = 11900;
+  feedFor(t, dim, 250);
+  check("12초 이상 막힘 → 완화 모드 제안", offered !== null, true);
+
+  t.startRelaxedMode();
+  check("완화 모드 활성", t.isRelaxed(), true);
+  check("완화 후 신뢰도 기준 하향", t.getThresholds().minVisibility, 0.25);
+
+  // 이제 같은 프레임으로 준비를 통과할 수 있어야 합니다.
+  const started = Date.now();
+  while (Date.now() - started < 2500 && t.phase === "calibrating") {
+    t.processExerciseLogic(dim);
+  }
+  check("완화 모드에서 준비 게이트 통과", t.phase, "countdown");
+}
+
+// --- 15. 완화 모드가 가동범위 기준까지 풀지는 않는다 ---------------------
+{
+  const t = makeTracker("SQUAT", "intermediate");
+  t.startRelaxedMode();
+  const th = t.getThresholds();
+  check("완화해도 수축 기준은 그대로", th.contracted, 95);
+  check("완화해도 신전 기준은 그대로", th.extended, 155);
+  check("완화해도 하단 정지 요구는 그대로", th.minHoldMs, 150);
+}
+
+// --- 16. 새 세션을 시작하면 완화 모드는 해제된다 -------------------------
+{
+  const t = makeTracker("SQUAT", "intermediate");
+  t.startRelaxedMode();
+  t.resetExerciseStats();
+  check("세션 초기화 시 완화 모드 해제", t.isRelaxed(), false);
+  check("세션 초기화 시 운동자 잠금 해제", t.subjectLock, null);
+}
+
 console.log(failed === 0 ? "\n✅ ALL PASS" : `\n❌ ${failed} FAILED`);
 process.exit(failed === 0 ? 0 : 1);

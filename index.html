@@ -597,6 +597,8 @@
                   <span id="motion-angle-label">KNEE</span>
                 </div>
 
+                <div class="pose-engine-tag" id="motion-engine-tag" hidden></div>
+
                 <div class="pose-hud-tools">
                   <button type="button" id="btn-toggle-skeleton" title="관절 점 켜기/끄기">👁️</button>
                   <button type="button" id="btn-toggle-sound">🔊</button>
@@ -613,6 +615,10 @@
               </div>
 
               <div id="motion-coaching-pill" class="pose-feedback">자세를 준비해 주세요</div>
+
+              <button type="button" class="btn-secondary pose-relax-btn" id="btn-relax-tracking" hidden>
+                <span>🔧 인식이 계속 안 되나요? 완화 모드로 시작 (판정 정확도 낮음)</span>
+              </button>
 
               <div class="pose-progress-card">
                 <div class="pose-progress-head">

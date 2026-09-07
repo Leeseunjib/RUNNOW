@@ -182,6 +182,11 @@ const SUBJECT_LOST_MS = 1200;         // 이 시간 넘게 놓치면 준비 페�
 const SUBJECT_RELEASE_MS = 10000;     // 완전히 사라지면 잠금 해제(다른 사람이 새로 시작 가능)
 const SUBJECT_LOCK_ALPHA = 0.3;       // 잠금 서명을 현재 자세로 따라가게 하는 EMA 계수
 
+// 준비 게이트를 오래 통과하지 못할 때의 탈출구
+// 좁은 방·어두운 조명·폰 각도 때문에 전신이 안 잡히면 영영 카운트를 시작할 수 없습니다.
+const RELAX_OFFER_MS = 12000;         // 이 시간 넘게 막히면 완화 모드를 제안
+const RELAXED_MIN_VISIBILITY = 0.25;  // 완화 모드의 관절 신뢰도 하한
+
 // 준비 게이트 안내 문구에 쓰는 랜드마크 한글 이름
 const LANDMARK_LABELS = {
   11: "왼쪽 어깨", 12: "오른쪽 어깨",
@@ -228,6 +233,11 @@ export class MotionTracker {
     this.lastCountdownSecond = null;
     this.blockedReason = "";
     this.lastBlockedReason = null;
+
+    // 준비 게이트가 계속 막힐 때 완화 모드를 제안하기 위한 누적 시간
+    this.calibrationBlockedMs = 0;
+    this.relaxOffered = false;
+    this.relaxedTracking = false;
 
     // 운동자 잠금 상태. 준비 자세를 잡은 사람의 신체 서명을 기억해 그 사람만 추적합니다.
     this.subjectLock = null;      // { center:{x,y}, scale, ratio }
@@ -316,7 +326,8 @@ export class MotionTracker {
       plankCenter: rom.center ?? 180,
       plankTolerance: Math.max(10, (rom.tolerance ?? 25) + lv.plankToleranceBonus),
       holdBlockSec: rom.holdBlockSec ?? 5,
-      minVisibility: lv.minVisibility,
+      // 완화 모드는 관절 신뢰도 기준만 낮춥니다. 가동범위 기준은 그대로 둡니다.
+      minVisibility: this.relaxedTracking ? Math.min(lv.minVisibility, RELAXED_MIN_VISIBILITY) : lv.minVisibility,
       minRepIntervalMs: lv.minRepIntervalMs,
       minHoldMs: lv.minHoldMs,
       readyHoldMs: lv.readyHoldMs,
@@ -338,6 +349,9 @@ export class MotionTracker {
 
   resetExerciseStats() {
     this.clearSubjectLock();
+    this.relaxedTracking = false;
+    this.relaxOffered = false;
+    this.calibrationBlockedMs = 0;
     this.repCount = 0;
     this.currentAngle = 0;
     this.depthProgress = 0;
@@ -684,6 +698,9 @@ export class MotionTracker {
       motionState: this.motionState,
       phase: this.phase,
       difficulty: this.difficulty,
+      engine: this.engineType,
+      relaxed: this.relaxedTracking,
+      personCount: this.visiblePersonCount,
       exercise: this.currentExercise
     });
   }
@@ -865,6 +882,28 @@ export class MotionTracker {
     lock.ratio += a * (sig.ratio - lock.ratio);
   }
 
+  // 인식 완화 모드. 관절 신뢰도 기준만 낮춰 준비 게이트를 통과할 수 있게 합니다.
+  // 가동범위 판정 기준은 그대로라 "덜 굽혀도 인정"되는 것은 아닙니다.
+  startRelaxedMode() {
+    if (this.relaxedTracking) return false;
+    this.relaxedTracking = true;
+    this.calibrationBlockedMs = 0;
+    this.readyStableMs = 0;
+    this.smoothedAngle = null;
+    this.emitFeedback("인식 완화 모드로 전환했습니다. 시작 자세를 잡아 주세요", true);
+    this.onPhaseChange({
+      phase: this.phase,
+      relaxed: true,
+      exercise: this.currentExercise,
+      difficulty: this.difficulty
+    });
+    return true;
+  }
+
+  isRelaxed() {
+    return this.relaxedTracking;
+  }
+
   clearSubjectLock() {
     this.subjectLock = null;
     this.subjectMissingSince = 0;
@@ -933,6 +972,8 @@ export class MotionTracker {
     this.phase = next;
     this.readyStableMs = 0;
     this.lastReadyTickMs = 0;
+    this.calibrationBlockedMs = 0;
+    this.relaxOffered = false;
     this.lastFeedbackText = "";
     this.blockedReason = "";
     this.lastBlockedReason = null;
@@ -1007,7 +1048,20 @@ export class MotionTracker {
       this.readyStableMs = 0;
       this.blockedReason = blocker;
       this.emitFeedback(blocker, false);
+      // 계속 막히면 탈출구를 제안합니다. 그대로 두면 영영 카운트를 시작할 수 없습니다.
+      this.calibrationBlockedMs += delta;
+      if (!this.relaxOffered && !this.relaxedTracking && this.calibrationBlockedMs >= RELAX_OFFER_MS) {
+        this.relaxOffered = true;
+        this.onPhaseChange({
+          phase: "calibrating",
+          canRelax: true,
+          blockedReason: this.blockedReason,
+          exercise: this.currentExercise,
+          difficulty: this.difficulty
+        });
+      }
     } else {
+      this.calibrationBlockedMs = 0;
       // 시작 자세를 잡은 이 사람을 운동자로 잠급니다. 이후에는 이 사람만 추적합니다.
       if (!this.subjectLock) this.lockSubject(this.lastLandmarks);
 
@@ -1274,6 +1328,12 @@ export class MotionTracker {
     this.ctx.fillStyle = this.blockedReason ? "#FF9F0A" : "#CCFF00";
     this.ctx.font = `600 ${Math.max(12, Math.round(width / 44))}px sans-serif`;
     this.drawTextUnmirrored(hint, cx, cy + radius + 30);
+
+    if (this.relaxedTracking) {
+      this.ctx.fillStyle = "#FF9F0A";
+      this.ctx.font = `700 ${Math.max(11, Math.round(width / 50))}px sans-serif`;
+      this.drawTextUnmirrored("인식 완화 모드 · 판정 정확도가 낮아집니다", cx, cy + radius + 52);
+    }
     this.ctx.restore();
   }
 

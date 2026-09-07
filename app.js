@@ -1166,6 +1166,16 @@ class AppController {
       });
     }
 
+    // 3-2. 인식 완화 모드 (준비 게이트를 오래 통과 못 할 때만 노출)
+    const btnRelaxTracking = document.getElementById("btn-relax-tracking");
+    if (btnRelaxTracking) {
+      btnRelaxTracking.addEventListener("click", () => {
+        this.motionTracker.startRelaxedMode();
+        btnRelaxTracking.hidden = true;
+        this.motionSound.speakCoaching("인식 완화 모드로 전환했습니다. 판정 정확도가 낮아질 수 있습니다.");
+      });
+    }
+
     // 4-1. 스켈레톤 AR 오버레이 On/Off 토글
     const btnToggleSkeleton = document.getElementById("btn-toggle-skeleton");
     if (btnToggleSkeleton) {
@@ -1367,6 +1377,11 @@ class AppController {
     this.lastCoachSpeakAt = 0;
     if (angleEl) angleEl.textContent = "180°";
 
+    const relaxBtn = document.getElementById("btn-relax-tracking");
+    if (relaxBtn) relaxBtn.hidden = true;
+    const engineTag = document.getElementById("motion-engine-tag");
+    if (engineTag) engineTag.hidden = true;
+
     this.motionTracker.resetExerciseStats();
     this.renderMotionProgress(0);
     this.updateMotionMascotPreview();
@@ -1413,6 +1428,27 @@ class AppController {
     }
   }
 
+  // 현재 구동 중인 AI 엔진 표시. 인식 문제를 신고받았을 때 원인 파악이 빨라집니다.
+  renderMotionEngineTag(data) {
+    const tagEl = document.getElementById("motion-engine-tag");
+    if (!tagEl) return;
+    if (!data.engine) {
+      tagEl.hidden = true;
+      return;
+    }
+
+    const engineName = data.engine === "tasks_vision"
+      ? "Tasks Vision · 다중 인원"
+      : "Pose Classic · 1인";
+    const parts = [engineName];
+    if (data.personCount > 1) parts.push(`${data.personCount}명 감지`);
+    if (data.relaxed) parts.push("완화");
+
+    const text = parts.join(" · ");
+    if (tagEl.textContent !== text) tagEl.textContent = text;
+    tagEl.hidden = false;
+  }
+
   // 난이도 적용 + 칩 UI / 설명 문구 동기화
   applyMotionLevel(levelId, options = {}) {
     const level = DIFFICULTY_LEVELS[levelId] ? DIFFICULTY_LEVELS[levelId] : DIFFICULTY_LEVELS[DEFAULT_DIFFICULTY];
@@ -1435,14 +1471,24 @@ class AppController {
   // 준비 → 카운트다운 → 카운팅 페이즈 전환 콜백
   handleMotionPhaseChange(data) {
     const pill = document.getElementById("motion-coaching-pill");
+    const relaxBtn = document.getElementById("btn-relax-tracking");
+
+    // 완화 모드로 전환됐으면 제안 버튼은 역할이 끝났습니다.
+    if (data.relaxed && relaxBtn) relaxBtn.hidden = true;
 
     if (data.phase === "calibrating") {
       if (pill && data.blockedReason) {
         pill.textContent = data.blockedReason;
         pill.classList.remove("is-good");
       }
+      // 12초 넘게 준비를 통과하지 못한 경우에만 탈출구를 보여줍니다.
+      if (data.canRelax && relaxBtn && !this.motionTracker.isRelaxed()) {
+        relaxBtn.hidden = false;
+      }
       return;
     }
+
+    if (relaxBtn) relaxBtn.hidden = true;
 
     if (data.phase === "countdown") {
       if (pill) {
@@ -1499,6 +1545,7 @@ class AppController {
 
     if (angleEl) angleEl.textContent = `${data.angle}°`;
     if (jointEl && data.jointLabel) jointEl.textContent = data.jointLabel;
+    this.renderMotionEngineTag(data);
     if (depthBarEl) depthBarEl.style.width = `${data.depthProgress}%`;
     this.renderMotionProgress(data.reps);
 
