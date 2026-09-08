@@ -1,5 +1,10 @@
 // 실시간 고정밀 GPS 및 스마트폰/워치 하이브리드 러닝 트래커 모듈 (GPS Runner Engine)
 
+// 노이즈 & 안티치트 기준값 (기획서 사양)
+const MIN_STEP_METERS = 1.5;        // 이보다 작은 변위는 제자리 흔들림으로 간주
+const MAX_ACCURACY_M = 25;          // 정확도 반경이 이보다 나쁜 측정치는 폐기
+const MAX_SPEED_MPS = 30 / 3.6;     // 시속 30km 초과 이동은 거리에서 배제 (차량 탑승 등)
+
 // 하버사인 공식 (지구 곡률 반영 거리 계산)
 function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
   const R = 6371000; // 지구 반지름 (미터)
@@ -217,10 +222,14 @@ export class GPSRunner {
     // GPS 정확도 상태 평가
     if (accuracy <= 15) {
       this.gpsAccuracy = `GPS 매우양호 (±${Math.round(accuracy)}m)`;
-    } else if (accuracy <= 35) {
+    } else if (accuracy <= MAX_ACCURACY_M) {
       this.gpsAccuracy = `GPS 보통 (±${Math.round(accuracy)}m)`;
     } else {
-      this.gpsAccuracy = `GPS 약함 (±${Math.round(accuracy)}m)`;
+      // 오차 반경이 이동 거리보다 큰 측정치는 그대로 쓰면 가짜 거리가 쌓입니다.
+      // 왜 거리가 안 늘어나는지 사용자가 알 수 있도록 상태 문구에 명시합니다.
+      this.gpsAccuracy = `GPS 정확도 낮음 (±${Math.round(accuracy)}m) · 거리 미집계`;
+      this.emitUpdate();
+      return;
     }
 
     if (!this.lastValidPos) {
@@ -238,14 +247,21 @@ export class GPSRunner {
 
       // GPS 튐 및 제자리 진동(Jitter) 보정 알고리즘
       // 1) 1.5m 이상 이동했을 때만 실제 이동으로 인정 (제자리 미세 흔들림 무시)
-      // 2) 초당 25m(시속 90km) 이상의 비정상 텔레포트 점프는 무시
+      // 2) 시속 30km 초과 이동(차량 탑승·GPS 튐)은 거리에서 배제
       const dt = (now - this.lastValidPos.time) / 1000;
       const speedCheck = dt > 0 ? dMeters / dt : 0;
 
-      if (dMeters >= 1.5 && speedCheck <= 25) {
+      if (dMeters >= MIN_STEP_METERS && speedCheck <= MAX_SPEED_MPS) {
         this.totalMeters += dMeters;
         this.lastValidPos = { lat: latitude, lng: longitude, time: now };
         this.positions.push({ lat: latitude, lng: longitude, time: now, speed: speed || speedCheck, accuracy });
+      } else if (dMeters >= MIN_STEP_METERS) {
+        // 속도 초과로 거부된 구간(차량 탑승·GPS 튐).
+        // 거리는 더하지 않되 기준점은 즉시 현재 위치로 옮깁니다.
+        // 기준점을 그대로 두면 이동을 멈춘 순간 dt가 커지면서
+        // 누적 변위 전체가 정상 속도로 계산돼 한꺼번에 거리로 인정됩니다.
+        this.lastValidPos = { lat: latitude, lng: longitude, time: now };
+        this.gpsAccuracy = "비정상 속도 감지 · 이 구간은 거리에 포함되지 않습니다";
       }
     }
 
