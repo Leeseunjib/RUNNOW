@@ -11,6 +11,13 @@ import { FirebaseSandbox } from './firebaseSandbox.js';
 import { firebaseCloud } from './firebaseClient.js';
 import { MotionTracker, EXERCISE_TYPES, DIFFICULTY_LEVELS, DEFAULT_DIFFICULTY } from './motionTracker.js';
 import { MotionSound } from './motionSound.js';
+import {
+  calcBmi as calcBmiPure,
+  bmiLabel as bmiLabelPure,
+  calcBmr as calcBmrPure,
+  parsePaceToSeconds,
+  calcRunCoins
+} from './metrics.js';
 import { SubscriptionManager, SUBSCRIPTION_PLANS } from './subscriptionManager.js';
 
 class AppController {
@@ -139,24 +146,19 @@ class AppController {
     } catch (_) {}
   }
 
+  // 계산 본체는 metrics.js에 있습니다. 기존 호출부(this.calcBmi 등)를 그대로 두기 위해
+  // 위임만 합니다. 같은 이름으로 임포트하면 실수로 this.를 붙였을 때 무한 재귀가 되므로
+  // 반드시 별칭(...Pure)으로 받습니다.
   calcBmi(heightCm, weightKg) {
-    const h = Number(heightCm) || 175;
-    const w = Number(weightKg) || 70;
-    return parseFloat((w / ((h / 100) * (h / 100))).toFixed(1));
+    return calcBmiPure(heightCm, weightKg);
   }
 
   bmiLabel(bmi) {
-    if (bmi < 18.5) return "저체중";
-    if (bmi <= 23) return "정상";
-    if (bmi <= 25) return "과체중";
-    return "비만";
+    return bmiLabelPure(bmi);
   }
 
   calcBmr(heightCm, weightKg, age, gender) {
-    const h = Number(heightCm) || 175;
-    const w = Number(weightKg) || 70;
-    const a = Number(age) || 30;
-    return Math.round(10 * w + 6.25 * h - 5 * a + (gender === "F" ? -161 : 5));
+    return calcBmrPure(heightCm, weightKg, age, gender);
   }
 
   persistUserProfile() {
@@ -1753,11 +1755,10 @@ class AppController {
         metricCircle.classList.remove("active-pulse");
         this.lockRunPlaceUi(false);
 
-        const paceParts = stats.pace.replace('"', '').split("'");
-        const paceSec = (parseInt(paceParts[0], 10) || 6) * 60 + (parseInt(paceParts[1], 10) || 0);
+        const paceSec = parsePaceToSeconds(stats.pace);
 
         const result = this.tamagotchi.addKmAndWorkout(stats.distanceKm, stats.elapsedSeconds, paceSec);
-        const earnedCoins = Math.round(stats.distanceKm * 20);
+        const earnedCoins = calcRunCoins(stats.distanceKm);
         this.userProfile.coins += earnedCoins;
 
         const workoutPayload = {
