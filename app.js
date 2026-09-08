@@ -3,7 +3,7 @@
 import { SHOP_ITEMS } from './catalog.js';
 import { TamagotchiEngine, DOG_STAGES, CAT_STAGES, STAGES } from './tamagotchi.js';
 import { GPSRunner } from './gpsRunner.js';
-import { ChallengeManager, CHALLENGE_DAYS, CHALLENGE_CHAPTERS, formatRunTime } from './challenge.js';
+import { ChallengeManager, CHALLENGE_DAYS, CHALLENGE_CHAPTERS, formatRunTime, localDateStr } from './challenge.js';
 import { QUEST_MAIN_TABS, DAILY_QUESTS, WEEKLY_QUESTS, BOUNTY_QUESTS, QUEST_CATEGORIES, QUESTS_DATA,
          isDailyQuestAchieved, isWeeklyQuestAchieved } from './quests.js';
 import { PayPalBridge } from './paypalBridge.js';
@@ -796,7 +796,7 @@ class AppController {
           currentDay: existingChal.currentDay || 1,
           streak: existingChal.streak || 0,
           habitCue,
-          startDate: existingChal.startDate || new Date().toISOString().slice(0, 10),
+          startDate: existingChal.startDate || localDateStr(),
           updatedAt: new Date().toISOString()
         };
 
@@ -2420,13 +2420,16 @@ class AppController {
     if (!listEl) return;
 
     const db = this.firebaseSandbox.getDB();
-    const today = new Date().toISOString().slice(0, 10);
+    // UTC 기준으로 잡으면 한국(UTC+9)에서 하루가 오전 9시에 바뀝니다.
+    const today = localDateStr();
     if (!db.daily_claimed) db.daily_claimed = {};
     if (!db.daily_claimed[this.currentUserId]) db.daily_claimed[this.currentUserId] = {};
     const claimedList = db.daily_claimed[this.currentUserId][today] || [];
 
     const workouts = db.workouts?.filter(w => w.userId === this.currentUserId) || [];
-    const todayWorkouts = workouts.filter(w => w.date === today || (w.timestamp && new Date(w.timestamp).toISOString().slice(0, 10) === today));
+    const todayWorkouts = workouts.filter((w) =>
+      w.date === today || (w.timestamp && localDateStr(new Date(w.timestamp)) === today)
+    );
     const todayKm = todayWorkouts.reduce((acc, cur) => acc + (cur.distanceKm || 0), 0);
     const todayCal = todayWorkouts.reduce((acc, cur) => acc + (cur.calories || 0), 0);
 
@@ -2528,7 +2531,7 @@ class AppController {
     const workouts = db.workouts?.filter(w => w.userId === this.currentUserId) || [];
     this.weeklyQuestStats = {
       totalKm: this.tamagotchi.totalKm,
-      streak: this.challengeManager.streak,
+      streak: this.challengeManager.getCurrentStreak(),
       weekCalories: workouts.reduce((acc, cur) => acc + (cur.calories || 0), 0),
       challengeClears: this.challengeManager.completedDays.length,
       petLevel: this.tamagotchi.level
@@ -2743,7 +2746,7 @@ class AppController {
       grid.appendChild(cell);
     });
 
-    document.getElementById("challenge-streak").textContent = `🔥 ${this.challengeManager.streak}일 연속`;
+    document.getElementById("challenge-streak").textContent = `🔥 ${this.challengeManager.getCurrentStreak()}일 연속`;
     document.getElementById("challenge-percent").textContent = `진행률 ${this.challengeManager.getProgressPercentage()}%`;
 
     this.renderChallengeDetail(currentMission);
@@ -2870,7 +2873,7 @@ class AppController {
       } else {
         const isAchieved = this.checkQuestCondition(q, {
           maxSingleMeters, maxSingleKm, maxSingleCal, totalDistKm, petLevel, petStage,
-          workouts, streak: this.challengeManager.streak
+          workouts, streak: this.challengeManager.getCurrentStreak()
         });
         if (isAchieved) totalCompleted++;
       }
@@ -2887,7 +2890,7 @@ class AppController {
       const isClaimed = claimedList.includes(q.id);
       const isAchieved = isClaimed || this.checkQuestCondition(q, {
         maxSingleMeters, maxSingleKm, maxSingleCal, totalDistKm, petLevel, petStage,
-        workouts, streak: this.challengeManager.streak
+        workouts, streak: this.challengeManager.getCurrentStreak()
       });
 
       const card = document.createElement("div");

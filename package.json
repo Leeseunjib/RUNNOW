@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "node tests/motionTracker.test.mjs && node tests/gpsRunner.test.mjs && node tests/tamagotchi.test.mjs && node tests/quests.test.mjs && node tests/subscriptionManager.test.mjs && node tests/paymentSecurity.test.mjs"
+    "test": "node tests/motionTracker.test.mjs && node tests/gpsRunner.test.mjs && node tests/tamagotchi.test.mjs && node tests/quests.test.mjs && node tests/challenge.test.mjs && node tests/subscriptionManager.test.mjs && node tests/paymentSecurity.test.mjs"
   },
   "keywords": [],
   "author": "",

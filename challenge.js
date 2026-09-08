@@ -123,6 +123,16 @@ export class ChallengeManager {
     return Math.max(1, Math.ceil((tomorrow.getTime() - now.getTime()) / 3600000));
   }
 
+  // 지금 이 순간 살아 있는 연속 기록.
+  // this.streak은 "마지막으로 완료한 날 기준" 값이라, 중단해도 옛 숫자가 그대로 남습니다.
+  // 그 값을 화면이나 보상 판정에 쓰면 2주를 쉬어도 "3일 연속"이 유지됩니다.
+  getCurrentStreak() {
+    if (!this.lastCompletedDate || this.completedDays.length === 0) return 0;
+    const gap = daysBetween(this.lastCompletedDate, localDateStr());
+    // 오늘(0) 또는 어제(1) 완료했다면 아직 이어갈 수 있는 상태입니다.
+    return gap >= 0 && gap <= 1 ? this.streak : 0;
+  }
+
   isDayCompleted(day) {
     return this.completedDays.includes(day);
   }
