@@ -1,5 +1,26 @@
 // 다마고치 캐릭터 엔진 및 5단계 성장 로직 (네이버 웹툰 스타일 강아지 & 고양이)
 
+// 돌보기 액션 쿨다운 (밀리초)
+// 쿨다운이 없으면 버튼 연타만으로 XP가 무한히 쌓여 "달린 만큼 진화"라는 전제가 무너집니다.
+// 밸런스 조정이 필요하면 이 값만 바꾸면 됩니다.
+const ACTION_COOLDOWNS = {
+  feed: 4 * 60 * 60 * 1000,      // 먹이주기 4시간
+  play: 2 * 60 * 60 * 1000,      // 놀아주기 2시간
+  rest: 3 * 60 * 60 * 1000,      // 휴식 3시간
+  rescue: 12 * 60 * 60 * 1000    // 힐링 케어 12시간
+};
+
+// 남은 쿨다운을 사람이 읽는 문구로 변환
+function formatRemaining(ms) {
+  const totalMin = Math.ceil(ms / 60000);
+  if (totalMin >= 60) {
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return m > 0 ? `${h}시간 ${m}분` : `${h}시간`;
+  }
+  return `${totalMin}분`;
+}
+
 // 🐶 강아지 계열 5단계 성장 (네이버 웹툰 스타일 댕댕이)
 export const DOG_STAGES = [
   {
@@ -139,6 +160,40 @@ export class TamagotchiEngine {
     
     this.statusCondition = initialData.statusCondition || "HEALTHY";
     this.lastFed = initialData.lastFed || Date.now();
+
+    // 돌보기 액션별 마지막 사용 시각. 0이면 아직 쓴 적 없음.
+    this.lastActionAt = {
+      feed: 0,
+      play: 0,
+      rest: 0,
+      rescue: 0,
+      ...(initialData.lastActionAt || {})
+    };
+  }
+
+  // 쿨다운이 남아 있으면 남은 시간을, 사용 가능하면 0을 돌려줍니다.
+  cooldownRemaining(action) {
+    const last = this.lastActionAt[action] || 0;
+    if (!last) return 0;
+    const elapsed = Date.now() - last;
+    const limit = ACTION_COOLDOWNS[action] || 0;
+    return elapsed >= limit ? 0 : limit - elapsed;
+  }
+
+  // 쿨다운 중이면 실패 응답을, 아니면 null을 돌려줍니다.
+  blockedByCooldown(action, label) {
+    const remaining = this.cooldownRemaining(action);
+    if (remaining <= 0) return null;
+    return {
+      success: false,
+      cooldown: true,
+      remainingMs: remaining,
+      msg: `⏳ ${label}는 ${formatRemaining(remaining)} 뒤에 다시 할 수 있어요. 그동안 함께 달려볼까요?`
+    };
+  }
+
+  markAction(action) {
+    this.lastActionAt[action] = Date.now();
   }
 
   setPetType(type) {
@@ -190,9 +245,17 @@ export class TamagotchiEngine {
       workoutType = "🌱 힐링 산책런 (컨디션 회복)";
     }
 
+    // 상한 100에 걸려 실제로는 +2만 올랐는데 화면에 "+50 성장"이 뜨면
+    // 사용자는 보상을 받지 못했다고 느낍니다. 실제 반영된 증가분만 보고합니다.
+    const before = { might: this.might, agility: this.agility, spirit: this.spirit };
     this.might = Math.min(100, this.might + statGrowth.might);
     this.agility = Math.min(100, this.agility + statGrowth.agility);
     this.spirit = Math.min(100, this.spirit + statGrowth.spirit);
+    statGrowth = {
+      might: this.might - before.might,
+      agility: this.agility - before.agility,
+      spirit: this.spirit - before.spirit
+    };
 
     const earnedXp = Math.round(km * 100);
     this.addXp(earnedXp);
@@ -238,6 +301,10 @@ export class TamagotchiEngine {
   }
 
   feed() {
+    const blocked = this.blockedByCooldown("feed", "먹이주기");
+    if (blocked) return blocked;
+
+    this.markAction("feed");
     this.hunger = Math.min(100, this.hunger + 30);
     this.energy = Math.min(100, this.energy + 10);
     this.lastFed = Date.now();
@@ -254,6 +321,10 @@ export class TamagotchiEngine {
     if (this.energy < 15) {
       return { success: false, msg: "💤 펫이 지쳐있어요. 휴식을 취하게 해주세요!" };
     }
+    const blocked = this.blockedByCooldown("play", "놀아주기");
+    if (blocked) return blocked;
+
+    this.markAction("play");
     this.happiness = Math.min(100, this.happiness + 25);
     this.energy = Math.max(0, this.energy - 15);
     this.addXp(20);
@@ -266,6 +337,10 @@ export class TamagotchiEngine {
   }
 
   rest() {
+    const blocked = this.blockedByCooldown("rest", "휴식");
+    if (blocked) return blocked;
+
+    this.markAction("rest");
     this.energy = Math.min(100, this.energy + 40);
     this.hunger = Math.max(0, this.hunger - 10);
     this.addXp(10);
@@ -278,6 +353,10 @@ export class TamagotchiEngine {
   }
 
   rescueVolt() {
+    const blocked = this.blockedByCooldown("rescue", "힐링 케어");
+    if (blocked) return blocked;
+
+    this.markAction("rescue");
     this.hunger = 100;
     this.happiness = 100;
     this.energy = 100;
@@ -339,7 +418,8 @@ export class TamagotchiEngine {
       agility: this.agility,
       spirit: this.spirit,
       statusCondition: this.statusCondition,
-      lastFed: this.lastFed
+      lastFed: this.lastFed,
+      lastActionAt: { ...this.lastActionAt }
     };
   }
 }

@@ -1309,3 +1309,44 @@ export const QUESTS_DATA = [
     icon: "👑"
   }
 ];
+
+// ---------------------------------------------------------------------------
+// 퀘스트 달성 판정 (단일 출처)
+// 렌더와 보상 수령이 서로 다른 판정을 쓰면, 화면에는 미달성인데 수령은 되는
+// 상태가 생깁니다. 두 곳 모두 아래 함수만 사용해야 합니다.
+// ---------------------------------------------------------------------------
+
+// stats에 필요한 값
+//   todayKm, todayCalories, petHunger, petHappiness
+//   totalKm, streak, weekCalories, challengeClears, petLevel
+export function isDailyQuestAchieved(questId, stats = {}) {
+  switch (questId) {
+    case "dq_01": return true;                                   // 출석
+    case "dq_02": return (stats.todayKm || 0) >= 1.0;
+    case "dq_03": return (stats.petHunger || 0) >= 90;
+    case "dq_04": return (stats.petHappiness || 0) >= 90;
+    case "dq_05": return (stats.todayCalories || 0) >= 100;
+    case "dq_06": return countDailyDone(stats) >= 5;             // 올클리어 보너스
+    default: return false;
+  }
+}
+
+// dq_06(올클리어) 판정용. 이미 수령한 퀘스트도 달성으로 셉니다.
+export function countDailyDone(stats = {}) {
+  const claimed = stats.claimedIds || [];
+  return DAILY_QUESTS.slice(0, 5).filter((q) => {
+    if (claimed.includes(q.id)) return true;
+    return isDailyQuestAchieved(q.id, stats);
+  }).length;
+}
+
+export function isWeeklyQuestAchieved(questId, stats = {}) {
+  switch (questId) {
+    case "wq_01": return (stats.totalKm || 0) >= 10.0;
+    case "wq_02": return (stats.streak || 0) >= 3;
+    case "wq_03": return (stats.weekCalories || 0) >= 600;
+    case "wq_04": return (stats.challengeClears || 0) >= 3;
+    case "wq_05": return (stats.petLevel || 0) >= 2;
+    default: return false;
+  }
+}

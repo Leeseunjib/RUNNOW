@@ -4,7 +4,8 @@ import { SHOP_ITEMS } from './catalog.js';
 import { TamagotchiEngine, DOG_STAGES, CAT_STAGES, STAGES } from './tamagotchi.js';
 import { GPSRunner } from './gpsRunner.js';
 import { ChallengeManager, CHALLENGE_DAYS, CHALLENGE_CHAPTERS, formatRunTime } from './challenge.js';
-import { QUEST_MAIN_TABS, DAILY_QUESTS, WEEKLY_QUESTS, BOUNTY_QUESTS, QUEST_CATEGORIES, QUESTS_DATA } from './quests.js';
+import { QUEST_MAIN_TABS, DAILY_QUESTS, WEEKLY_QUESTS, BOUNTY_QUESTS, QUEST_CATEGORIES, QUESTS_DATA,
+         isDailyQuestAchieved, isWeeklyQuestAchieved } from './quests.js';
 import { PayPalBridge } from './paypalBridge.js';
 import { FirebaseSandbox } from './firebaseSandbox.js';
 import { firebaseCloud } from './firebaseClient.js';
@@ -2429,15 +2430,14 @@ class AppController {
     const todayKm = todayWorkouts.reduce((acc, cur) => acc + (cur.distanceKm || 0), 0);
     const todayCal = todayWorkouts.reduce((acc, cur) => acc + (cur.calories || 0), 0);
 
-    const normalDoneCount = DAILY_QUESTS.slice(0, 5).filter(q => {
-      if (claimedList.includes(q.id)) return true;
-      if (q.id === "dq_01") return true; // 출석 완료
-      if (q.id === "dq_02") return todayKm >= 1.0;
-      if (q.id === "dq_03") return this.tamagotchi.hunger >= 90;
-      if (q.id === "dq_04") return this.tamagotchi.happiness >= 90;
-      if (q.id === "dq_05") return todayCal >= 100;
-      return false;
-    }).length;
+    // 판정 기준은 quests.js 하나만 씁니다(렌더와 수령이 어긋나지 않도록).
+    this.dailyQuestStats = {
+      todayKm,
+      todayCalories: todayCal,
+      petHunger: this.tamagotchi.hunger,
+      petHappiness: this.tamagotchi.happiness,
+      claimedIds: claimedList
+    };
 
     listEl.innerHTML = "";
 
@@ -2445,12 +2445,7 @@ class AppController {
       const isClaimed = claimedList.includes(q.id);
       let isAchieved = false;
 
-      if (q.id === "dq_01") isAchieved = true;
-      else if (q.id === "dq_02") isAchieved = todayKm >= 1.0;
-      else if (q.id === "dq_03") isAchieved = this.tamagotchi.hunger >= 90;
-      else if (q.id === "dq_04") isAchieved = this.tamagotchi.happiness >= 90;
-      else if (q.id === "dq_05") isAchieved = todayCal >= 100;
-      else if (q.id === "dq_06") isAchieved = normalDoneCount >= 5;
+      isAchieved = isDailyQuestAchieved(q.id, this.dailyQuestStats);
 
       const card = document.createElement("div");
       card.className = `quest-card ${isClaimed ? 'claimed' : isAchieved ? 'completed' : ''}`;
@@ -2496,6 +2491,13 @@ class AppController {
 
     if (db.daily_claimed[this.currentUserId][today].includes(q.id)) return;
 
+    // 화면 상태를 믿지 않고 수령 시점에 달성 여부를 다시 확인합니다.
+    // 렌더링 타이밍 문제로 버튼이 잘못 노출돼도 보상이 나가지 않게 합니다.
+    if (!isDailyQuestAchieved(q.id, this.dailyQuestStats || {})) {
+      alert("아직 달성하지 않은 퀘스트입니다.");
+      return;
+    }
+
     db.daily_claimed[this.currentUserId][today].push(q.id);
     this.firebaseSandbox.saveDB(db);
 
@@ -2524,9 +2526,13 @@ class AppController {
     const claimedList = db.weekly_claimed[this.currentUserId][currentWeekKey] || [];
 
     const workouts = db.workouts?.filter(w => w.userId === this.currentUserId) || [];
-    const totalKm = this.tamagotchi.totalKm;
-    const streak = this.challengeManager.streak;
-    const chalClears = this.challengeManager.completedDays.length;
+    this.weeklyQuestStats = {
+      totalKm: this.tamagotchi.totalKm,
+      streak: this.challengeManager.streak,
+      weekCalories: workouts.reduce((acc, cur) => acc + (cur.calories || 0), 0),
+      challengeClears: this.challengeManager.completedDays.length,
+      petLevel: this.tamagotchi.level
+    };
 
     listEl.innerHTML = "";
 
@@ -2534,11 +2540,7 @@ class AppController {
       const isClaimed = claimedList.includes(q.id);
       let isAchieved = false;
 
-      if (q.id === "wq_01") isAchieved = totalKm >= 10.0;
-      else if (q.id === "wq_02") isAchieved = streak >= 3;
-      else if (q.id === "wq_03") isAchieved = workouts.reduce((acc, cur) => acc + (cur.calories || 0), 0) >= 600;
-      else if (q.id === "wq_04") isAchieved = chalClears >= 3;
-      else if (q.id === "wq_05") isAchieved = this.tamagotchi.level >= 2;
+      isAchieved = isWeeklyQuestAchieved(q.id, this.weeklyQuestStats);
 
       const card = document.createElement("div");
       card.className = `quest-card ${isClaimed ? 'claimed' : isAchieved ? 'completed' : ''}`;
