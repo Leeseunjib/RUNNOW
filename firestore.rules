@@ -41,5 +41,18 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if false;
     }
+
+    // 구독 권한은 결제 검증을 마친 Cloud Functions(Admin SDK)만 씁니다.
+    // Admin SDK는 이 규칙을 우회하므로, 클라이언트 쓰기를 전부 막아도 서버는 정상 동작합니다.
+    // 클라이언트가 쓸 수 있으면 PRO를 무료로 발급하는 것과 같습니다.
+    match /subscriptions/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+
+    // 결제 주문 기록도 서버 전용입니다. 클라이언트는 열람할 필요가 없습니다.
+    match /payment_orders/{orderId} {
+      allow read, write: if false;
+    }
   }
 }

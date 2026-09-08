@@ -25,6 +25,9 @@ export const SUBSCRIPTION_PLANS = {
   }
 };
 
+// 주의: localStorage는 서버 응답을 잠깐 담아두는 캐시일 뿐, 권한의 근거가 아닙니다.
+// 실제 구독 여부는 Cloud Functions가 결제를 검증해 Firestore에 기록한 값이 정본입니다.
+// (firestore.rules에서 subscriptions 컬렉션의 클라이언트 쓰기를 전부 막아 두었습니다)
 const STORAGE_KEY = "runnow_subscription_state_v1";
 
 export class SubscriptionManager {
@@ -70,6 +73,32 @@ export class SubscriptionManager {
       console.warn("[SubscriptionManager] 로컬 상태 저장 오류:", err);
     }
     this.notifyListeners();
+  }
+
+  // 서버(Cloud Functions)가 돌려준 구독 상태를 그대로 반영합니다.
+  // 서버 응답이 있으면 로컬에 무엇이 저장돼 있든 그 값으로 덮어씁니다.
+  applyServerState(serverState) {
+    if (!serverState || typeof serverState !== "object") return this.state;
+
+    this.state = {
+      status: serverState.status || "inactive",
+      tier: serverState.tier || "free",
+      planId: serverState.planId || null,
+      planName: serverState.planName || null,
+      startedAt: serverState.startedAt || null,
+      expiresAt: serverState.expiresAt || null,
+      isCeoPass: Boolean(serverState.isCeoPass),
+      autoRenew: Boolean(serverState.autoRenew),
+      verifiedBy: "server"
+    };
+    this.saveState();
+    this.notifyListeners();
+    return this.state;
+  }
+
+  // 이 상태가 서버 검증을 거친 것인지 여부
+  isServerVerified() {
+    return this.state && this.state.verifiedBy === "server";
   }
 
   // PRO 구독 여부 판정 (Boolean)

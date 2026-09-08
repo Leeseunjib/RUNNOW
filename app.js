@@ -243,6 +243,7 @@ class AppController {
     this.bindSubscriptionEvents();
     this.bindRewardedAdEvents();
     await this.hydrateFromCloud();
+    await this.syncSubscriptionFromServer();
     this.renderTamagotchiView();
     this.renderDailyQuests();
     this.renderWeeklyQuests();
@@ -615,6 +616,7 @@ class AppController {
 
       // 1. 클라우드 동기화 시도
       await this.hydrateFromCloud();
+      await this.syncSubscriptionFromServer();
 
       const db = this.firebaseSandbox.getDB();
       if (!db.users) db.users = {};
@@ -1490,6 +1492,37 @@ class AppController {
     }
   }
 
+  // PayPal 결제를 서버에서 검증하고 구독 권한을 받아옵니다.
+  // 성공 시에만 true를 돌려주며, 로컬에서 임의로 PRO를 켜지 않습니다.
+  async verifySubscriptionOnServer(planId) {
+    try {
+      const order = await firebaseCloud.createPaypalOrder(planId);
+      if (!order || !order.orderId) throw new Error("주문 생성에 실패했습니다.");
+
+      const subscription = await firebaseCloud.capturePaypalOrder(order.orderId);
+      this.subscriptionManager.applyServerState(subscription);
+      return this.subscriptionManager.isSubscribed();
+    } catch (err) {
+      console.error("구독 결제 검증 실패:", err);
+      const reason = err && err.message ? err.message : "알 수 없는 오류";
+      alert(
+        `결제를 완료하지 못했습니다.\n\n사유: ${reason}\n\n`
+        + "결제가 승인된 경우 요금은 청구되지 않았거나 자동 취소됩니다.\n"
+        + "문제가 계속되면 고객센터로 문의해 주세요."
+      );
+      return false;
+    }
+  }
+
+  // 앱 시작 시 서버에 기록된 구독 상태를 받아 로컬 캐시를 덮어씁니다.
+  // 로컬 값은 캐시일 뿐이라 서버 응답이 있으면 항상 그쪽이 이깁니다.
+  async syncSubscriptionFromServer() {
+    const serverState = await firebaseCloud.fetchMySubscription();
+    if (!serverState) return;
+    this.subscriptionManager.applyServerState(serverState);
+    this.updateSubscriptionUi(this.subscriptionManager.isSubscribed());
+  }
+
   // 현재 구동 중인 AI 엔진 표시. 인식 문제를 신고받았을 때 원인 파악이 빨라집니다.
   renderMotionEngineTag(data) {
     const tagEl = document.getElementById("motion-engine-tag");
@@ -2092,8 +2125,12 @@ class AppController {
     if (btnPaypalSub) {
       btnPaypalSub.addEventListener("click", async () => {
         const plan = this.selectedSubPlan === "pro_annual" ? SUBSCRIPTION_PLANS.ANNUAL : SUBSCRIPTION_PLANS.MONTHLY;
-        await this.paypalBridge.processSubscription(plan, (paidPlan) => {
-          this.subscriptionManager.activate(paidPlan.id);
+        await this.paypalBridge.processSubscription(plan, async (paidPlan) => {
+          // 서버가 PayPal 결제를 검증하고 구독을 부여합니다.
+          // 검증에 실패하면 권한을 주지 않고 사유를 그대로 알립니다.
+          const granted = await this.verifySubscriptionOnServer(paidPlan.id);
+          if (!granted) return;
+
           this.closeSubscriptionModal();
           this.updateSubscriptionUi(true);
           alert(`🎉 축하합니다! [${paidPlan.name}] 구독이 성공적으로 완료되었습니다!\n\n✨ 해금된 PRO 전용 혜택:\n✓ AI 카메라 모션 피트니스 6종 무제한\n✓ 5단계 다마고치 사이버 펫 진화 & 스탯 육성\n✓ 21일 러닝 습관 형성 챌린지 & 퀘스트 보상\n✓ 볼트 상점 20종 장비 착용 및 VIP 상시 혜택\n\n모든 제한이 해제되었습니다. 멋진 러닝을 즐겨보세요! 🔥`);

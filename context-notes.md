@@ -193,3 +193,59 @@ speedCheck가 8.4로 떨어져 경계선에 걸립니다. 조금만 더 기다�
 - 트레드밀 모드(`tickTreadmill`, DeviceMotion 기반 걸음 감지) — 실기기 센서가 필요합니다
 - `startRun` 내부의 geolocation 연동 경로 — 브라우저 API라 단위 테스트 대상이 아닙니다
 테스트는 `handleGeoSuccess`와 `getStats`의 순수 계산부만 다룹니다.
+
+## 2026-09-07 (3) — 결제·구독 서버 검증
+
+### 왜 필요했나
+- 구독 상태가 `localStorage`에만 있었습니다. 콘솔 한 줄로 PRO가 됩니다.
+- `paypalBridge.js`는 `setTimeout` 후 가짜 주문번호를 만드는 **UI 시뮬레이션**이었습니다.
+  기획서의 "PayPal REST API v2 + 결제 검증/캡처"는 구현된 적이 없습니다.
+- `firestore.rules`에 subscriptions 규칙이 아예 없었습니다.
+
+### 전제 확인 — 인증이 진짜인가
+서버 검증은 신뢰할 수 있는 uid가 있어야 성립합니다. `firebaseClient.js`가
+`getAuth` / `signInWithPopup` / `createUserWithEmailAndPassword`를 쓰는
+**실제 Firebase Auth**임을 먼저 확인한 뒤 진행했습니다. 가짜 인증 위에 얹었으면 무의미했습니다.
+
+### 구조
+클라이언트는 `planId`와 `orderId`만 보냅니다. **금액은 절대 보내지 않습니다.**
+`functions/plans.js`가 서버 정본이며, 클라이언트가 보낸 가격을 쓰면 1센트 결제로
+PRO를 살 수 있습니다.
+
+캡처 단계에서 재검증하는 것들.
+- `status === "COMPLETED"`
+- 결제 금액·통화가 상품 정본과 일치
+- 주문 소유자 uid 대조 (타인 결제로 내 계정 업그레이드 차단)
+- `payment_orders`에 CAPTURED 기록 → 같은 주문 재사용 차단 (1회 결제 무한 연장 방지)
+
+### firestore.rules가 실질적 방어선
+`subscriptions/{userId}`는 **본인 읽기만 허용, 쓰기 전면 차단**입니다.
+Admin SDK는 규칙을 우회하므로 Cloud Functions만 쓸 수 있습니다.
+클라이언트가 쓸 수 있으면 PRO 무료 발급과 같습니다.
+
+### localStorage의 위상 변경
+캐시로 강등했습니다. `applyServerState()`가 서버 응답으로 항상 덮어쓰고,
+`verifiedBy: "server"` 표식을 남깁니다. 앱 시작과 로그인 직후
+`syncSubscriptionFromServer()`가 호출됩니다.
+
+함수 미배포·오프라인이면 `fetchMySubscription()`이 조용히 null을 반환해
+로컬 캐시로 동작합니다. 서버가 없다고 앱이 멈추면 안 되기 때문입니다.
+
+### 대표님이 직접 해야 하는 것 (제가 할 수 없음)
+1. **Firebase Blaze 플랜 전환** — Spark에서는 Cloud Functions가 외부 네트워크를
+   호출할 수 없어 PayPal API를 부를 수 없습니다. 유료 전환 결정은 대표님 몫입니다.
+2. **PayPal Client ID / Secret 발급 및 등록** — 시크릿은 제가 보거나 대신 입력하지 않습니다.
+   `firebase functions:secrets:set` 으로 직접 넣으셔야 합니다.
+자세한 절차는 `functions/README.md`에 정리했습니다.
+
+### 정직하게 남겨둔 한계
+AI 모션 인식은 기기에서 돌기 때문에, 클라이언트 코드를 고치면 화면 잠금 자체는
+우회할 수 있습니다. 온디바이스 구조의 본질적 한계입니다.
+서버 검증이 보장하는 것은 **결제 무결성**(실제 결제 여부, 금액 정확성, 환불 시 회수)이며,
+콘텐츠 보호가 아닙니다. 콘텐츠까지 막으려면 서버 렌더링이 필요하고 이는
+온디바이스 $0 서버비 전략과 상충합니다.
+
+### 아직 교체하지 않은 것
+`paypalBridge.js`의 결제 모달은 그대로 두었습니다. 지금은 사용자 확인 UI 역할만 하고,
+실제 주문 생성·캡처는 `verifySubscriptionOnServer()`가 Cloud Functions로 처리합니다.
+PayPal JS SDK 버튼으로 교체하려면 별도 작업이 필요합니다.

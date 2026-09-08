@@ -9,6 +9,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { firebaseConfig } from "./firebaseConfig.js";
 
 class FirebaseCloudClient {
@@ -27,6 +28,8 @@ class FirebaseCloudClient {
       this.app = initializeApp(firebaseConfig);
       this.db = getFirestore(this.app);
       this.auth = getAuth(this.app);
+      // Firestore와 같은 리전에 배포된 함수를 호출합니다.
+      this.functions = getFunctions(this.app, "asia-northeast3");
       this.googleProvider = new GoogleAuthProvider();
       this.googleProvider.setCustomParameters({ prompt: "select_account" });
       this.isInitialized = true;
@@ -107,6 +110,44 @@ class FirebaseCloudClient {
       }
       return session;
     } catch {
+      return null;
+    }
+  }
+
+  // ---------- 결제 · 구독 (서버 검증) ----------
+  // 금액과 권한 부여는 전부 Cloud Functions가 결정합니다.
+  // 클라이언트는 planId와 orderId만 넘기고, 결과를 받아 표시만 합니다.
+
+  async callFunction(name, payload = {}) {
+    if (!this.isInitialized || !this.functions) {
+      throw new Error("서버에 연결되어 있지 않습니다. 네트워크를 확인해 주세요.");
+    }
+    if (!this.auth || !this.auth.currentUser) {
+      throw new Error("결제는 로그인 후 이용할 수 있습니다.");
+    }
+    const fn = httpsCallable(this.functions, name);
+    const res = await fn(payload);
+    return res.data;
+  }
+
+  // PayPal 주문 생성. 가격은 서버 정본에서만 가져옵니다.
+  async createPaypalOrder(planId) {
+    return this.callFunction("createPaypalOrder", { planId });
+  }
+
+  // 결제 캡처 + 구독 부여. 서버가 PayPal 응답을 재검증한 뒤에만 성공합니다.
+  async capturePaypalOrder(orderId) {
+    return this.callFunction("capturePaypalOrder", { orderId });
+  }
+
+  // 서버가 보관 중인 구독 상태 조회. 로컬 값보다 항상 우선합니다.
+  async fetchMySubscription() {
+    if (!this.isInitialized || !this.auth || !this.auth.currentUser) return null;
+    try {
+      return await this.callFunction("getMySubscription");
+    } catch (err) {
+      // 함수 미배포·오프라인 상황에서 앱이 멈추면 안 되므로 조용히 null을 돌려줍니다.
+      console.warn("구독 상태 조회 실패(로컬 캐시 사용):", err && err.message);
       return null;
     }
   }
