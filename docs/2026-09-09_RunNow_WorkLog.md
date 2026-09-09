@@ -81,11 +81,12 @@
 - **Git 브랜치 이원화 (`develop` / `master`)**:
   - `develop`: 일상적인 기능 개발, UI 개선, 온디바이스 AI 튜닝 전용 브랜치. 배포 시 오직 `dev` 테스트 채널로만 배포 (`npm run deploy:dev`).
   - `master`: 상용 정식 릴리즈 전용 브랜치. 대표님 최종 승인 전까지 코드 직접 수정 엄금.
-- **구글 콘솔 스타일 1클릭 상용 승급 (Promote to Live)**:
-  - 검증 완료된 `dev` 빌드를 소스 재빌드 없이 단 1초 만에 상용으로 복제 승급:
+- **구글 콘솔 스타일 1클릭 상용 승급 (Promote to Live) - CEO 전결권**:
+  - AI 에이전트의 상용 배포 실행은 전면 금지되며, 오직 **이건우 대표님께서 직접 터미널에 입력하여 승급 실행**:
     ```bash
     npm run promote:live # (firebase hosting:clone runnow-37af9:dev runnow-37af9:live)
     ```
+  - 검증 완료된 `dev` 채널 빌드가 소스 재빌드 없이 단 1초 만에 상용 프로덕션으로 완벽 복제 승급.
   - 미완성 코드나 버그가 상용 공식 사이트로 유출될 확률을 0%로 완벽 차단.
 
 ---
