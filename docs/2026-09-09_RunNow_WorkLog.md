@@ -102,10 +102,16 @@ npm test
 
 ---
 
-## 4. 향후 계획
-1. **Google Play Console 전용 안드로이드 네이티브 앱(TWA/Capacitor) 패키징 준비**:
-   - 웹 기반 안정화 및 대표님 피드백 완료 후, Google Play 콘솔 내부 테스트 트랙용 AAB(Android App Bundle) 빌드 파이프라인 구축.
-2. **구글 애드센스 승인 모니터링**:
-   - `beauscreators.com` 사이트 검토 완료 시 즉시 실광고 슬롯 정식 개시.
-3. **내부 테스트 채널 피드백 수집**:
-   - `develop` 브랜치 기반으로 모션 트래커 및 러닝 GPS 실측 피드백 지속 고도화.
+## 5. [추가 작업] 클로드(Claude) 수정 사항 검증 및 내부테스트/상용 동시 배포
+
+- **일시**: 2026-09-09 18:45
+- **담당**: CTO 거누 & Claude Opus 5 협업
+- **수정 내역 및 검증 결과**:
+  1. `index.html`: CDN에서 404를 유발하던 미사용 `@mediapipe/camera_utils` 스크립트 제거 (콘솔 에러 0건 달성)
+  2. `motionTracker.js`: 다중 인원 선별(3명)이 가능한 Tasks Vision을 1순위로 승격, 구형 기기용 Classic Pose를 2순위 폴백으로 재구조화 (`tryTasksVision`, `tryClassicPose` 분리)
+  3. 전수 자동화 단위 테스트: 294개 테스트 100% ALL PASS
+- **배포 완료 현황**:
+  - **내부테스트(dev)**: `https://runnow-37af9--dev-irl7g2ve.web.app` (배포 완료)
+  - **상용 프로덕션(live)**: `https://runnow-37af9.web.app` 및 `https://runnow.beauscreators.com` (대표님 직접 지시에 따른 `promote:live` 완료)
+  - **Git 싱크**: `develop` 및 `master` 브랜치 모두 원격 GitHub에 푸시 완료
+
