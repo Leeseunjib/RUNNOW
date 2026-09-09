@@ -34,8 +34,8 @@ export class PayPalBridge {
             </div>
 
             <div class="pp-payment-method">
-              <span class="pp-badge">SECURE TEST</span>
-              <span>PayPal Balance / VISA •••• 4242</span>
+              <span class="pp-badge" style="background:#00e5ff; color:#08090C; font-weight:800;">SANDBOX TEST (실제 결제 0원)</span>
+              <span>PayPal Sandbox / VISA •••• 4242</span>
             </div>
 
             <div class="pp-actions">
@@ -43,7 +43,7 @@ export class PayPalBridge {
               <button class="pp-btn-cancel" id="pp-cancel-pay">취소</button>
             </div>
             
-            <div class="pp-secure-tag">🔒 End-to-End Encrypted 256-bit SSL Security</div>
+            <div class="pp-secure-tag" style="color:#00e5ff; font-weight:600;">🛡️ Sandbox Test Mode: 실제 청구 없는 안전 테스트 결제입니다.</div>
           </div>
         </div>
       `;
@@ -118,8 +118,8 @@ export class PayPalBridge {
             </div>
 
             <div class="pp-payment-method">
-              <span class="pp-badge">RECURRING BILLING</span>
-              <span>PayPal Pre-approved / VISA •••• 4242</span>
+              <span class="pp-badge" style="background:#00e5ff; color:#08090C; font-weight:800;">SANDBOX TEST (실제 결제 0원)</span>
+              <span>PayPal Pre-approved Sandbox / VISA •••• 4242</span>
             </div>
 
             <div class="pp-actions">
@@ -127,7 +127,7 @@ export class PayPalBridge {
               <button class="pp-btn-cancel" id="pp-cancel-sub">취소</button>
             </div>
             
-            <div class="pp-secure-tag">🔒 End-to-End Encrypted 256-bit SSL Recurring Security</div>
+            <div class="pp-secure-tag" style="color:#00e5ff; font-weight:600;">🛡️ Sandbox Test Mode: 실제 카드 결제 및 계좌 출금 없이 승인 플로우만 안전하게 실행됩니다.</div>
           </div>
         </div>
       `;

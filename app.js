@@ -20,6 +20,13 @@ import {
 } from './metrics.js';
 import { SubscriptionManager, SUBSCRIPTION_PLANS } from './subscriptionManager.js';
 
+// Unity 스타일 내부 테스터 화이트리스트 (구글 광고 안전 격리 & 개발 빌드 권한)
+export const INTERNAL_TESTERS = [
+  "dnswlq456@gmail.com", // 이건우 대표님 메인 계정
+  "user_geonu_ceo",      // 대표님 UID
+  "geonu_ceo"
+];
+
 class AppController {
   constructor() {
     this.firebaseSandbox = new FirebaseSandbox();
@@ -231,6 +238,7 @@ class AppController {
   }
 
   async init() {
+    this.initTestDeviceSystem();
     this.initThemeSystem();
     this.bindNavigation();
     this.bindWorkoutModeSwitcher();
@@ -239,6 +247,7 @@ class AppController {
     this.bindTamagotchiActions();
     this.bindQuestAndChallengeTabs();
     this.bindProfileForm();
+    this.bindTesterDevicePanel();
     this.bindCelebrationModal();
     this.bindAuthAndOnboarding();
     this.bindPetSelect();
@@ -384,7 +393,7 @@ class AppController {
     const coinEl = document.getElementById("header-coins");
     const lvlEl = document.getElementById("header-level");
     const userEl = document.getElementById("header-user-name");
-    if (coinEl) coinEl.textContent = `⚡ ${this.userProfile.coins.toLocaleString()} VC`;
+    if (coinEl) coinEl.textContent = `⚡ ${this.userProfile.coins.toLocaleString()}P`;
     if (lvlEl) lvlEl.textContent = `Lv. ${this.tamagotchi.level}`;
     if (userEl) userEl.textContent = this.userProfile.name;
   }
@@ -2049,8 +2058,11 @@ class AppController {
   updateSubModalCtaText() {
     const btnCta = document.getElementById("btn-confirm-paypal-sub");
     if (!btnCta) return;
-    const plan = this.selectedSubPlan === "pro_annual" ? SUBSCRIPTION_PLANS.ANNUAL : SUBSCRIPTION_PLANS.MONTHLY;
-    btnCta.innerHTML = `<span>⚡ PayPal로 ${plan.name} 시작하기 (₩${plan.priceKRW.toLocaleString()}${plan.periodName})</span>`;
+    const isAnnual = this.selectedSubPlan === "pro_annual";
+    const plan = isAnnual ? SUBSCRIPTION_PLANS.ANNUAL : SUBSCRIPTION_PLANS.MONTHLY;
+    btnCta.innerHTML = isAnnual
+      ? `<span>⚡ 7일 무료 체험으로 시작하기 (연 ₩${plan.priceKRW.toLocaleString()})</span>`
+      : `<span>⚡ 월 ₩${plan.priceKRW.toLocaleString()}로 시작하기 (언제든 1클릭 해지)</span>`;
   }
 
   updateSubscriptionUi(isPro) {
@@ -2135,7 +2147,7 @@ class AppController {
 
           this.closeSubscriptionModal();
           this.updateSubscriptionUi(true);
-          alert(`🎉 축하합니다! [${paidPlan.name}] 구독이 성공적으로 완료되었습니다!\n\n✨ 해금된 PRO 전용 혜택:\n✓ AI 카메라 모션 피트니스 6종 무제한\n✓ 5단계 다마고치 사이버 펫 진화 & 스탯 육성\n✓ 21일 러닝 습관 형성 챌린지 & 퀘스트 보상\n✓ 볼트 상점 20종 장비 착용 및 VIP 상시 혜택\n\n모든 제한이 해제되었습니다. 멋진 러닝을 즐겨보세요! 🔥`);
+          alert(`🎉 축하합니다! [${paidPlan.name}] 구독이 성공적으로 완료되었습니다!\n\n✨ 해금된 PRO 전용 혜택:\n✓ AI 카메라 모션 피트니스 6종 무제한\n✓ 러닝 파트너 펫 5단계 성장 & 스탯 육성\n✓ 21일 러닝 습관 형성 챌린지 & 스트릭 보호\n✓ 볼트 라운지 프리미엄 기어 착용 및 VIP 상시 혜택\n\n모든 제한이 해제되었습니다. 멋진 러닝을 즐겨보세요! 🔥`);
         });
       });
     }
@@ -2824,7 +2836,7 @@ class AppController {
           return;
         }
         this.applyChallengeClear(chalResult);
-        alert(`DAY ${c.day} 미션 성공!\n거리 ${qualifying.distanceKm}km · ${qualifying.calories}kcal · ${formatRunTime(qualifying.elapsedSeconds)}\n보상: +${c.xpReward} XP / +${c.coinReward} VC`);
+        alert(`DAY ${c.day} 미션 성공!\n거리 ${qualifying.distanceKm}km · ${qualifying.calories}kcal · ${formatRunTime(qualifying.elapsedSeconds)}\n보상: +${c.xpReward} XP / +${c.coinReward}P (볼트 포인트)`);
         this.updateHeaderStats();
         this.renderTamagotchiView();
         this.renderDailyQuests();
@@ -2914,7 +2926,7 @@ class AppController {
             <span class="quest-title">${q.title}</span>
           </div>
           <div class="quest-desc">${q.desc}</div>
-          <div class="quest-reward-pill">⚡ 보상: +${q.xpReward.toLocaleString()} XP / +${q.coinReward} VC</div>
+          <div class="quest-reward-pill">⚡ 보상: +${q.xpReward.toLocaleString()} XP / +${q.coinReward}P</div>
         </div>
         <div class="quest-action">${actionBtnHtml}</div>
       `;
@@ -2985,7 +2997,7 @@ class AppController {
     this.firebaseSandbox.setDoc("tamagotchi", this.currentUserId, this.tamagotchi.toJSON());
     this.firebaseSandbox.setDoc("users", this.currentUserId, { coins: this.userProfile.coins });
 
-    alert(`🎉 [${q.id.replace('q_', 'Q')}] ${q.title} 퀘스트 달성!\n\n✨ 보상 지급 완료:\n+${q.xpReward.toLocaleString()} XP (펫 성장치)\n+${q.coinReward} VC (볼트 코인)`);
+    alert(`🎉 [${q.id.replace('q_', 'Q')}] ${q.title} 퀘스트 달성!\n\n✨ 보상 지급 완료:\n+${q.xpReward.toLocaleString()} XP (펫 성장치)\n+${q.coinReward}P (볼트 포인트)`);
 
     this.updateHeaderStats();
     this.renderTamagotchiView();
@@ -3156,6 +3168,149 @@ class AppController {
     if (btnRefreshFirestore) {
       btnRefreshFirestore.addEventListener("click", () => {
         renderFirestoreJSON();
+      });
+    }
+  }
+
+  // 테스터 & 패밀리 기기 등록 시스템 초기화
+  initTestDeviceSystem() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const testerParam = urlParams.get("tester") || urlParams.get("admin_device");
+    
+    // 시크릿 키: bsc_family_2026 또는 bsc_geonu_2026
+    if (testerParam === "bsc_family_2026" || testerParam === "bsc_geonu_2026") {
+      localStorage.setItem("RUNNOW_IS_TESTER_DEVICE", "true");
+      localStorage.setItem("RUNNOW_TESTER_TYPE", testerParam === "bsc_geonu_2026" ? "ceo" : "family");
+      
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+
+      setTimeout(() => {
+        alert("🛡️ [공식 테스트 기기 등록 완료]\n\n이 기기는 RUNNOW 공식 안전 테스트 기기로 등록되었습니다.\n구글 광고 안전 모드(data-adtest='on')가 자동 적용되어, 실수로 광고를 누르셔도 계정이 100% 안전하게 보호됩니다!");
+      }, 500);
+    }
+
+    this.applyTestDeviceMode();
+  }
+
+  isTesterDevice() {
+    const isDeviceFlag = localStorage.getItem("RUNNOW_IS_TESTER_DEVICE") === "true";
+    const session = firebaseCloud.getCurrentSession();
+    const isWhitelistedEmail = Boolean(session?.email && INTERNAL_TESTERS.includes(session.email));
+    const isCeoUid = this.currentUserId === "user_geonu_ceo" || this.currentUserId === "geonu_ceo";
+    const isCeoName = Boolean(this.userProfile?.name && this.userProfile.name.includes("이건우"));
+    const isTestDomain = typeof window !== "undefined" && (
+      window.location.hostname.includes("--dev") ||
+      window.location.hostname.includes("localhost") ||
+      window.location.hostname.includes("127.0.0.1") ||
+      window.location.hostname.includes("preview")
+    );
+
+    return isDeviceFlag || isWhitelistedEmail || isCeoUid || isCeoName || isTestDomain;
+  }
+
+  applyTestDeviceMode() {
+    const isTester = this.isTesterDevice();
+    const ceoSection = document.getElementById("sub-ceo-section");
+    const headerTestBadge = document.getElementById("internal-test-badge");
+
+    // 0. 헤더 유니티 스타일 워터마크 뱃지 표출
+    if (headerTestBadge) {
+      headerTestBadge.style.display = isTester ? "inline-block" : "none";
+    }
+
+    // 1. 구글 광고 태그에 data-adtest="on" 주입 및 테스트 모드 표시
+    const adMark = document.querySelector(".ad-google-mark");
+    const previewBox = document.querySelector(".adsense-preview-box");
+
+    if (isTester) {
+      document.querySelectorAll(".adsbygoogle").forEach(el => {
+        el.setAttribute("data-adtest", "on");
+      });
+      if (adMark) {
+        adMark.innerHTML = "🛡️ Google Test Mode (안전 격리)";
+        adMark.style.color = "var(--cyber-cyan)";
+      }
+      if (previewBox && !previewBox.__boundTestClick) {
+        previewBox.__boundTestClick = true;
+        previewBox.style.cursor = "pointer";
+        previewBox.addEventListener("click", (e) => {
+          if (this.isTesterDevice()) {
+            e.preventDefault();
+            alert("🛡️ [Google AdSense 안전 테스트 확인]\n\n이 기기는 RUNNOW 공식 내부 테스터로 보호되고 있습니다.\n구글 실광고 네트워크와 완전 격리되어 있어, 클릭하셔도 무효 트래픽/어뷰징 제재가 100% 발생하지 않습니다.");
+          }
+        });
+      }
+      console.log("🛡️ [RUNNOW Security] Unity Internal Test Mode Active: Google AdSense isolated safely.");
+    } else {
+      if (adMark) {
+        adMark.textContent = "Google AdSense";
+        adMark.style.color = "";
+      }
+    }
+
+    // 2. 페이월의 마스터 패스 버튼은 오직 등록된 테스터 기기에서만 노출
+    if (ceoSection) {
+      ceoSection.style.display = isTester ? "block" : "none";
+    }
+
+    // 3. 프로필 설정 탭 UI 동기화
+    this.updateTesterUi();
+  }
+
+  updateTesterUi() {
+    const isTester = this.isTesterDevice();
+    const badge = document.getElementById("tester-status-badge");
+    const desc = document.getElementById("tester-status-desc");
+    const inputGroup = document.getElementById("tester-input-group");
+    const btnUnregister = document.getElementById("btn-unregister-tester");
+    const panel = document.getElementById("panel-tester-device");
+
+    if (badge) {
+      badge.textContent = isTester ? "🟢 내부 테스트 빌드 (안전 모드)" : "일반 사용자 (상용 프로덕션)";
+      badge.style.color = isTester ? "var(--cyber-cyan)" : "var(--text-muted)";
+      badge.style.borderColor = isTester ? "var(--cyber-cyan)" : "var(--border-glass)";
+    }
+    if (desc) {
+      desc.textContent = isTester
+        ? "이 기기는 패밀리 & 테스터 전용 기기로 인증되어 구글 광고 안전 모드(data-adtest='on')가 항상 작동 중입니다. 자유롭게 테스트하실 수 있습니다."
+        : "패밀리 및 테스터 기기 시크릿 코드를 입력하시면 구글 광고 안전 모드가 즉시 활성화됩니다.";
+    }
+    if (inputGroup) inputGroup.style.display = isTester ? "none" : "flex";
+    if (btnUnregister) btnUnregister.style.display = isTester ? "block" : "none";
+    if (panel) {
+      panel.style.borderColor = isTester ? "var(--primary-volt)" : "rgba(255,255,255,0.08)";
+    }
+  }
+
+  bindTesterDevicePanel() {
+    const btnRegister = document.getElementById("btn-register-tester");
+    const inputSecret = document.getElementById("tester-secret-input");
+    const btnUnregister = document.getElementById("btn-unregister-tester");
+
+    if (btnRegister && inputSecret) {
+      btnRegister.addEventListener("click", () => {
+        const code = inputSecret.value.trim();
+        if (code === "bsc_family_2026" || code === "bsc_geonu_2026") {
+          localStorage.setItem("RUNNOW_IS_TESTER_DEVICE", "true");
+          localStorage.setItem("RUNNOW_TESTER_TYPE", code === "bsc_geonu_2026" ? "ceo" : "family");
+          inputSecret.value = "";
+          this.applyTestDeviceMode();
+          alert("🛡️ [테스트 기기 등록 완료]\n\n이 기기가 성공적으로 테스트 전용 기기로 등록되었습니다!\n구글 광고 안전 모드가 즉시 적용됩니다.");
+        } else {
+          alert("❌ 올바른 시크릿 코드가 아닙니다. 대표님께 확인해 주세요.");
+        }
+      });
+    }
+
+    if (btnUnregister) {
+      btnUnregister.addEventListener("click", () => {
+        if (confirm("정말로 테스트 기기 인증을 해제하시겠습니까?\n해제 시 일반 사용자 모드로 복귀합니다.")) {
+          localStorage.removeItem("RUNNOW_IS_TESTER_DEVICE");
+          localStorage.removeItem("RUNNOW_TESTER_TYPE");
+          this.applyTestDeviceMode();
+          alert("⚡ 테스트 기기 인증이 해제되었습니다. 이제 일반 사용자 모드로 동작합니다.");
+        }
       });
     }
   }

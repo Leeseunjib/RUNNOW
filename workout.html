@@ -19,6 +19,30 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
 
+  <!-- Google AdSense Safe Environment Gate (Only loads on approved production domain) -->
+  <meta name="google-adsense-account" content="ca-pub-8037321916672881">
+  <script>
+    (function() {
+      const host = window.location.hostname;
+      const isTestEnv = host.includes("--dev") || 
+                        host.includes("preview") || 
+                        host.includes("localhost") || 
+                        host.includes("127.0.0.1") || 
+                        localStorage.getItem("RUNNOW_IS_TESTER_DEVICE") === "true";
+      window.__IS_INTERNAL_TEST_ENV__ = isTestEnv;
+
+      if (!isTestEnv) {
+        const s = document.createElement("script");
+        s.async = true;
+        s.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8037321916672881";
+        s.crossOrigin = "anonymous";
+        document.head.appendChild(s);
+      } else {
+        console.log("🛡️ [Google AdSense Safety Shield] Internal Test Environment Detected in workout.html.");
+      }
+    })();
+  </script>
+
   <!-- Google MediaPipe Pose Official Web Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.4/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js" crossorigin="anonymous"></script>

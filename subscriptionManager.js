@@ -4,24 +4,24 @@ export const SUBSCRIPTION_PLANS = {
   MONTHLY: {
     id: "pro_monthly",
     name: "RUNNOW PRO 월간 멤버십",
-    badge: "월간 플랜",
+    badge: "부담 없는 시작",
     priceKRW: 9900,
     priceUSD: 7.99,
     periodName: "/ 월",
     durationDays: 30,
     discountTag: null,
-    desc: "매월 자동 갱신 • 언제든지 1초 만에 해지 가능"
+    desc: "매월 자동 갱신 • 언제든지 위약금 없이 1클릭 해지 가능"
   },
   ANNUAL: {
     id: "pro_annual",
     name: "RUNNOW PRO 연간 멤버십",
-    badge: "35% 파격 할인",
+    badge: "러너 84%의 선택",
     priceKRW: 79000,
     priceUSD: 59.99,
     periodName: "/ 연 (월 ₩6,580)",
     durationDays: 365,
     discountTag: "BEST VALUE -35%",
-    desc: "연간 ₩39,800 절약 • 7일 무료 체험 포함"
+    desc: "연간 ₩39,800 절약 • 7일 무료 체험 후 시작"
   }
 };
 
