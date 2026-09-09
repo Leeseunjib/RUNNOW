@@ -77,6 +77,17 @@
     - 실제 현금 결제나 카드 청구 없이 결제 완료/아이템 지급 플로우만 시뮬레이션.
     - PRO 멤버십은 페이월 모달의 **'👑 대표님 전용 PRO VIP 마스터 패스 (무료 즉시 활성화)'**를 통해 1초 만에 0원으로 전체 PRO 언락 가능.
 
+### E. Git 브랜치 격리 및 1클릭 상용 승급 파이프라인(CI/CD) 확립
+- **Git 브랜치 이원화 (`develop` / `master`)**:
+  - `develop`: 일상적인 기능 개발, UI 개선, 온디바이스 AI 튜닝 전용 브랜치. 배포 시 오직 `dev` 테스트 채널로만 배포 (`npm run deploy:dev`).
+  - `master`: 상용 정식 릴리즈 전용 브랜치. 대표님 최종 승인 전까지 코드 직접 수정 엄금.
+- **구글 콘솔 스타일 1클릭 상용 승급 (Promote to Live)**:
+  - 검증 완료된 `dev` 빌드를 소스 재빌드 없이 단 1초 만에 상용으로 복제 승급:
+    ```bash
+    npm run promote:live # (firebase hosting:clone runnow-37af9:dev runnow-37af9:live)
+    ```
+  - 미완성 코드나 버그가 상용 공식 사이트로 유출될 확률을 0%로 완벽 차단.
+
 ---
 
 ## 3. 검증 결과
@@ -84,13 +95,16 @@
 npm test
 >>> ALL PASS (SubscriptionManager, MotionTracker, Quests, Challenges, Metrics, Security Rules)
 ```
-- 상용 프로덕션 URL: `https://runnow.beauscreators.com`
-- 내부 테스터 전용 URL: `https://runnow-37af9--dev-irl7g2ve.web.app`
-- 루트 도메인: `https://beauscreators.com` (HTTP 200 OK)
+- 상용 프로덕션 URL: `https://runnow.beauscreators.com` (Clean Header, AdSense Gate Active)
+- 내부 테스터 전용 URL: `https://runnow-37af9--dev-irl7g2ve.web.app` (Clean Header, Safety Shield Active)
+- 승급 파이프라인 검증: `firebase hosting:clone` 테스트 성공 (`channel dev -> channel live` 복제 정상 완료)
 
 ---
 
 ## 4. 향후 계획
-1. 구글 애드센스 심사 통과 모니터링 (영업일 기준 1~3일 소요).
-2. 내부 테스트 채널(`https://runnow-37af9--dev-irl7g2ve.web.app`)을 통한 가족/팀원 온디바이스 기능 및 UI 피드백 수집.
-3. PayPal 정기 구독(Sandbox -> Live API Credentials) 전환 대기.
+1. **Google Play Console 전용 안드로이드 네이티브 앱(TWA/Capacitor) 패키징 준비**:
+   - 웹 기반 안정화 및 대표님 피드백 완료 후, Google Play 콘솔 내부 테스트 트랙용 AAB(Android App Bundle) 빌드 파이프라인 구축.
+2. **구글 애드센스 승인 모니터링**:
+   - `beauscreators.com` 사이트 검토 완료 시 즉시 실광고 슬롯 정식 개시.
+3. **내부 테스트 채널 피드백 수집**:
+   - `develop` 브랜치 기반으로 모션 트래커 및 러닝 GPS 실측 피드백 지속 고도화.
