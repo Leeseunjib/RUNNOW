@@ -410,7 +410,6 @@
         <div class="brand-logo">
           <span class="brand-badge">RUN</span>
           <span class="brand-title">RUN<span>NOW</span></span>
-          <span id="internal-test-badge" style="display:none; font-size:9px; font-weight:800; background:rgba(0,240,255,0.15); color:var(--cyber-cyan); border:1px solid var(--cyber-cyan); padding:2px 6px; border-radius:6px; margin-left:4px; letter-spacing:0.5px;">INTERNAL TEST</span>
         </div>
         <div class="user-status-pill">
           <!-- Subscription Status Pill / Modal Button -->
@@ -419,9 +418,9 @@
             <span id="header-sub-text">⚡ BASIC</span>
           </button>
           <!-- Mobile Phone Connection Modal Button -->
-          <button id="btn-open-login" style="background:var(--surface-elevated); border:1px solid var(--border-card); color:var(--text-main); font-size:11px; font-weight:700; padding:4px 8px; border-radius:14px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+          <button id="btn-open-login" style="background:var(--surface-elevated); border:1px solid var(--border-card); color:var(--text-main); font-size:11px; font-weight:700; padding:4px 8px; border-radius:14px; display:flex; align-items:center; gap:4px; cursor:pointer; white-space:nowrap; flex-shrink:0;">
             <span id="header-user-icon">👤</span>
-            <span id="header-user-name">이건우 대표님</span>
+            <span id="header-user-name">이건우</span>
           </button>
           <div class="coin-badge" id="header-coins">⚡ 0P</div>
           <div class="coin-badge" id="header-level" style="color:var(--primary-accent); border-color:var(--border-card);">Lv. 1</div>
@@ -1551,7 +1550,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=6.2"></script>
+  <script type="module" src="app.js?v=6.3"></script>
   <script>
     // 즉시 등록 감지 시 팝업 띄우기
     if (window.__TESTER_JUST_REGISTERED__) {

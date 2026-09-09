@@ -3212,12 +3212,6 @@ class AppController {
   applyTestDeviceMode() {
     const isTester = this.isTesterDevice();
     const ceoSection = document.getElementById("sub-ceo-section");
-    const headerTestBadge = document.getElementById("internal-test-badge");
-
-    // 0. 헤더 유니티 스타일 워터마크 뱃지 표출
-    if (headerTestBadge) {
-      headerTestBadge.style.display = isTester ? "inline-block" : "none";
-    }
 
     // 1. 구글 광고 태그에 data-adtest="on" 주입 및 테스트 모드 표시
     const adMark = document.querySelector(".ad-google-mark");
