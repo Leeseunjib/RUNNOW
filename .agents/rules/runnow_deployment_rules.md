@@ -1,17 +1,39 @@
-# RUNNOW Deployment & Operational Rules (CEO Inviolable Constraint)
+# 전사 웹/앱 내부테스트 & 상용 분리 및 CEO 수동 승급 헌장 (CEO Universal Dual-Track Deployment Charter)
 
-Cursor 항상 적용 규칙. `.cursor/rules/runnow-internal-test-only.mdc`
+> **[최고 경영자 이건우 대표님 절대 헌장 - 2026-09-09 제정]**  
+> 본 헌장은 RUNNOW를 포함하여 BeausCreators(BSC)에서 제작하는 **모든 웹, 모바일 앱(Android/iOS), PWA 프로젝트에 영구 불변으로 적용**된다.
 
-## 0. 핵심 배포 원칙 (이건우 대표님 지침)
-- **Cursor 기본 작업 공간은 내부 테스트 전용이다.** 상용 주소는 확인·승급 지시가 있을 때만 연다.
-- **모든 일상 작업 및 리팩토링의 배포 대상**: 오직 **내부 테스트 전용 채널(`dev`)**로만 배포한다.
-  - 배포 명령어: `npm run deploy:dev` (`firebase hosting:channel:deploy dev --expires 30d`)
-  - 테스트 URL: `https://runnow-37af9--dev-irl7g2ve.web.app`
-- **상용 프로덕션(`runnow.beauscreators.com`) 승급 통제권 (CEO 전결 원칙)**:
-  - **AI 에이전트는 절대로 상용 승급 명령(`npm run promote:live` 또는 `firebase deploy --only hosting`)을 직접 실행하지 않는다.**
-  - AI 에이전트는 오직 `dev` 테스트 채널 배포(`npm run deploy:dev`)까지만 수행한다.
-  - 상용 배포는 **오직 이건우 대표님께서 검증 후 터미널(PowerShell)에 직접 `npm run promote:live`를 입력하여 최종 승인**한다.
+---
 
-## 1. 환경 분리 및 안전 격리
-- 내부 테스트 채널 접속 시 구글 광고 스크립트 실행이 완전 차단(Google Safety Shield)되어 무효 트래픽 위험 0%를 유지해야 한다.
-- 모든 결제 모달은 Sandbox Test 모드로 동작하여 실제 청구가 0원이어야 한다.
+## 제1조 (절대적 듀얼 트랙 이원화 원칙)
+1. 모든 프로젝트는 기획 및 개발 초기 단계부터 **[내부테스트 버전 (Internal Test)]**과 **[상용 공식 버전 (Production)]**을 인프라, 도메인, 브랜치 레벨에서 100% 물리적으로 격리하여 구축한다.
+2. AI 에이전트가 수행하는 모든 신규 기능 개발, 버그 수정, UI 변경, 리팩토링의 1차 배포 대상은 **예외 없이 오직 [내부테스트 전용 채널/트랙]**이어야 한다.
+3. 상용 프로덕션 환경으로의 직접 수정 및 무단 배포는 시스템적·규정상 엄격히 금지된다.
+
+---
+
+## 제2조 (선(先) 내부테스트 검증 필수주의)
+1. 코드가 완성된 후에는 반드시 내부테스트 채널에 먼저 배포하여, **이건우 대표님 및 내부 테스터(가족, BSC 팀원)의 실기기 테스트 및 검증**을 거쳐야 한다.
+2. 구글 광고(AdSense, AdMob)는 테스트 환경에서 100% 차단되거나 테스트 모드(`data-adtest="on"`)로 격리되어 계정 제재 리스크가 0%여야 한다.
+3. 결제 시스템(PayPal, Stripe, 인앱결제)은 테스트 환경에서 샌드박스(실제 청구 0원)로만 안전하게 동작해야 한다.
+
+---
+
+## 제3조 (CEO 전결 수동 터미널 승급 원칙 - Nuclear Launch Button)
+1. **AI 에이전트의 상용 배포 실행 전면 금지**: 저를 포함한 어떠한 AI 에이전트도 상용 사이트/앱스토어 승급 명령어(`npm run promote:live`, `firebase deploy --only hosting`, 스토어 프로덕션 출시 등)를 스스로 실행해서는 안 된다.
+2. **대표님 직접 입력 승인**: 상용 출시/승급은 오직 **이건우 대표님께서 내부 테스트 검증을 마치시고 "이제 상용으로 올리자"고 최종 결단을 내리신 후, 터미널(PowerShell)에 명령어를 직접 입력하여 엔터를 누르실 때만 실행**된다.
+3. AI 에이전트는 대표님께서 터미널에 복사해 넣으실 수 있는 안전한 1줄 승급 명령어만을 안내하는 보좌 역할에 국한된다.
+
+---
+
+## 🛠️ RUNNOW 프로젝트 표준 실행 가이드
+- **내부테스트 배포 (AI 전담)**:
+  ```bash
+  npm run deploy:dev
+  # URL: https://runnow-37af9--dev-irl7g2ve.web.app
+  ```
+- **상용 공식 승급 (대표님 직접 터미널 입력 전결)**:
+  ```bash
+  npm run promote:live
+  # URL: https://runnow.beauscreators.com
+  ```
