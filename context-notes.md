@@ -377,3 +377,10 @@ Firebase Hosting은 js/css에 `no-store`를 주므로 배포 환경에서는 발
 ### 남은 app.js
 DOM·상태에 얽힌 부분(렌더링, 이벤트 바인딩, Firestore 동기화)은 그대로 두었습니다.
 단위 테스트하려면 DOM 목이 필요한데, 비용 대비 실익이 크지 않다고 판단했습니다.
+
+## 2026-09-09 — Cursor 작업은 내부 테스트 전용
+
+대표님 지침. Cursor에서는 상용(`runnow.beauscreators.com`)에 배포하지 않는다.
+일상 배포는 `npm run deploy:dev`만. 상용 승급은 대표님이 직접 말한 뒤에만 `npm run promote:live`.
+QR/폰 링크 폴백을 테스트 채널 URL로 바꿨다. 페이지가 열린 origin이 있으면 그 주소를 쓴다.
+규칙 파일. `.cursor/rules/runnow-internal-test-only.mdc` (alwaysApply)

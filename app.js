@@ -1989,7 +1989,7 @@ class AppController {
     const qrImg = document.getElementById("mobile-qr-img");
     const urlText = document.getElementById("mobile-connect-url-text");
 
-    const liveUrl = "https://runnow-37af9.web.app";
+    const liveUrl = "https://runnow-37af9--dev-irl7g2ve.web.app";
     const currentUrl = (window.location.protocol === "http:" || window.location.protocol === "https:")
       ? window.location.href
       : liveUrl;
