@@ -432,36 +432,26 @@ export class MotionTracker {
     throw lastErr || new Error("vision bundle import failed");
   }
 
-  // 1순위 Classic Pose(폰 호환), 2순위 Tasks Vision CPU 버퍼 로드
+  // 엔진 우선순위: 1순위 Tasks Vision, 2순위 Classic Pose
+  // Tasks Vision만 여러 명을 동시에 검출할 수 있어(numPoses 3), 화면에 다른 사람이
+  // 있을 때 "운동 중인 본인"을 골라낼 수 있습니다. Classic Pose는 1명만 반환하므로
+  // 후보 선별이 불가능합니다. 대신 구형 기기에서 Tasks Vision(WASM)이 실패할 수 있어
+  // 폴백으로 남겨 둡니다.
   async initMediaPipe() {
     if (this.poseDetector || this.poseLandmarker) return true;
     this.lastLoadError = null;
 
-    if (await this.waitForClassicPose()) {
-      try {
-        const pose = new window.Pose({
-          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`
-        });
-        pose.setOptions({
-          modelComplexity: 0,
-          smoothLandmarks: true,
-          enableSegmentation: false,
-          minDetectionConfidence: 0.3,
-          minTrackingConfidence: 0.3
-        });
-        pose.onResults((results) => this.handlePoseResults(results));
-        // 타임아웃을 두어 CDN 지연으로 인한 무한 멈춤 차단
-        await this.promiseWithTimeout(pose.initialize(), 7000, "Classic Pose 초기화 시간 초과");
-        this.poseDetector = pose;
-        this.engineType = "classic_pose";
-        console.log("⚡ MediaPipe Classic Pose Engine Ready!");
-        return true;
-      } catch (err) {
-        console.warn("Classic Pose 초기화 실패, Tasks Vision 시도:", err);
-        this.lastLoadError = err;
-      }
-    }
+    if (await this.tryTasksVision()) return true;
 
+    console.warn("Tasks Vision 로드 실패, Classic Pose로 폴백합니다:", this.lastLoadError);
+    if (await this.tryClassicPose()) return true;
+
+    console.error("MediaPipe 모든 엔진 로드 실패:", this.lastLoadError);
+    return false;
+  }
+
+  // 다중 인원 검출이 가능한 주 엔진
+  async tryTasksVision() {
     const wasmPaths = [
       "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm",
       "https://unpkg.com/@mediapipe/tasks-vision@0.10.18/wasm"
@@ -506,14 +496,39 @@ export class MotionTracker {
         }
       }
     } catch (err) {
-      console.error("MediaPipe 모든 엔진 로드 실패:", err);
       this.lastLoadError = err;
       this.poseLandmarker = null;
+    }
+    return false;
+  }
+
+  // 구형 기기용 폴백 엔진. 1명만 검출되므로 다중 인원 선별은 동작하지 않습니다.
+  async tryClassicPose() {
+    if (!(await this.waitForClassicPose())) return false;
+
+    try {
+      const pose = new window.Pose({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`
+      });
+      pose.setOptions({
+        modelComplexity: 0,
+        smoothLandmarks: true,
+        enableSegmentation: false,
+        minDetectionConfidence: 0.3,
+        minTrackingConfidence: 0.3
+      });
+      pose.onResults((results) => this.handlePoseResults(results));
+      // 타임아웃을 두어 CDN 지연으로 인한 무한 멈춤 차단
+      await this.promiseWithTimeout(pose.initialize(), 7000, "Classic Pose 초기화 시간 초과");
+      this.poseDetector = pose;
+      this.engineType = "classic_pose";
+      console.log("⚡ MediaPipe Classic Pose Engine Ready (폴백)");
+      return true;
+    } catch (err) {
+      this.lastLoadError = err;
+      this.poseDetector = null;
       return false;
     }
-
-    console.error("MediaPipe 모든 엔진 로드 실패:", this.lastLoadError);
-    return false;
   }
 
   // 웹캠 스트림 시작 (Camera-First Flow: 카메라 즉시 실행 후 AI 모델 비동기 로드)
