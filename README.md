@@ -5,8 +5,23 @@
 
 ---
 
-## 🌐 라이브 데모 (Live Web App)
-- **Firebase Hosting 공식 배포**: [https://runnow-37af9.web.app](https://runnow-37af9.web.app)
+## 🌐 접속 주소 & 인프라 (Live Web App & Staging)
+- 🚀 **상용 공식 서비스 URL (일반 사용자)**: [https://runnow.beauscreators.com](https://runnow.beauscreators.com) (미러: [https://runnow-37af9.web.app](https://runnow-37af9.web.app))
+- 🛡️ **내부 테스트 전용 URL (개발/검증용)**: [https://runnow-37af9--dev-irl7g2ve.web.app](https://runnow-37af9--dev-irl7g2ve.web.app)
+- 🐙 **GitHub Repository**: [https://github.com/Leeseunjib/RUNNOW](https://github.com/Leeseunjib/RUNNOW)
+  - `master`: 상용 프로덕션 릴리즈 브랜치 (1클릭 승급 전용)
+  - `develop`: 일상 개발 & 내부 테스트 배포 브랜치
+
+---
+
+## 🚀 배포 및 상용 승급 파이프라인 (CI/CD)
+```bash
+# 1. 내부 테스트 채널에 안전 배포 (상용 사이트 미영향)
+npm run deploy:dev
+
+# 2. 대표님 검증 완료 후, 검증된 빌드를 상용으로 1초 승급 (Promote to Production)
+npm run promote:live
+```
 
 ---
 
