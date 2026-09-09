@@ -177,10 +177,15 @@ export const DEFAULT_DIFFICULTY = "intermediate";
 
 // 운동자 잠금(Subject Lock) 튜닝값
 // MediaPipe는 프레임마다 사람을 새로 고르므로, 신체 서명이 맞는 사람만 추적합니다.
-const SUBJECT_MATCH_TOLERANCE = 1.6;  // 이 값을 넘으면 "다른 사람"으로 간주
+// 절대 임계값으로 "다른 사람"을 걸러내는 방식은 쓰지 않습니다.
+// 측정 결과 스쿼트 중 본인의 서명 거리(최대 1.78)가 가까이 선 비슷한 체형의
+// 타인(0.89)보다 오히려 크게 나옵니다. 운동 중 몸 중심 이동량이 사람 사이 거리보다
+// 크기 때문이며, 추적 속도를 바꿔도 역전되지 않았습니다.
+// 따라서 절대 거부는 하지 않고, 여러 명일 때 "가장 가까운 후보"만 고릅니다.
 const SUBJECT_LOST_MS = 1200;         // 이 시간 넘게 놓치면 준비 페이즈로 되돌림
 const SUBJECT_RELEASE_MS = 10000;     // 완전히 사라지면 잠금 해제(다른 사람이 새로 시작 가능)
 const SUBJECT_LOCK_ALPHA = 0.3;       // 잠금 서명을 현재 자세로 따라가게 하는 EMA 계수
+const VERTICAL_WEIGHT = 0.4;          // 세로 이동은 운동 자체로 크게 변하므로 낮게 반영
 
 // 준비 게이트를 오래 통과하지 못할 때의 탈출구
 // 좁은 방·어두운 조명·폰 각도 때문에 전신이 안 잡히면 영영 카운트를 시작할 수 없습니다.
@@ -871,10 +876,18 @@ export class MotionTracker {
     };
   }
 
-  // 0에 가까울수록 동일인. 위치 차이는 몸 크기로 정규화해 거리와 무관하게 만듭니다.
+  // 0에 가까울수록 동일인. 위치 차이는 몸 크기로 정규화해 카메라 거리와 무관하게 만듭니다.
+  //
+  // 세로 이동에 가중치를 낮게 주는 이유:
+  // 운동 중에는 몸 중심이 "위아래"로 크게 움직이지만(스쿼트 한 번에 화면의 약 19%),
+  // 사람들은 보통 "좌우"로 떨어져 섭니다. 세로를 동등하게 보면 내 스쿼트 동작이
+  // 옆 사람보다 더 멀게 계산되어 엉뚱한 사람을 고릅니다(실측 45프레임 중 5건 오선택).
+  // 세로 가중치를 0.4로 낮추면 같은 조건에서 오선택이 0건이 됩니다.
   signatureDistance(sig, lock) {
     const ref = Math.max(0.04, (sig.scale + lock.scale) / 2);
-    const posDiff = Math.hypot(sig.center.x - lock.center.x, sig.center.y - lock.center.y) / ref;
+    const dx = Math.abs(sig.center.x - lock.center.x) / ref;
+    const dy = (Math.abs(sig.center.y - lock.center.y) / ref) * VERTICAL_WEIGHT;
+    const posDiff = Math.hypot(dx, dy);
     const scaleDiff = Math.abs(sig.scale - lock.scale) / lock.scale;
     const ratioDiff = Math.abs(sig.ratio - lock.ratio) / Math.max(0.3, lock.ratio);
     return posDiff + scaleDiff * 1.5 + ratioDiff * 0.8;
@@ -957,16 +970,21 @@ export class MotionTracker {
       return best.lm;
     }
 
-    let best = null;
-    let bestDistance = Infinity;
-    for (const c of scored) {
+    // 한 명뿐이면 고를 것이 없습니다. 여기서 거부하면 혼자 운동하는 대다수 사용자가
+    // 자기 동작 때문에 카운트를 놓칩니다(측정상 스쿼트 중 거리가 1.78까지 올라감).
+    if (scored.length === 1) return scored[0].lm;
+
+    // 여러 명일 때만 서명이 가장 가까운 사람을 고릅니다. 절대 거부는 하지 않습니다.
+    let best = scored[0];
+    let bestDistance = this.signatureDistance(best.sig, this.subjectLock);
+    for (const c of scored.slice(1)) {
       const d = this.signatureDistance(c.sig, this.subjectLock);
       if (d < bestDistance) {
         bestDistance = d;
         best = c;
       }
     }
-    return bestDistance <= SUBJECT_MATCH_TOLERANCE ? best.lm : null;
+    return best.lm;
   }
 
   // 운동자를 찾은 프레임

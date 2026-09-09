@@ -229,8 +229,11 @@ function movePerson(lm, dx, scale = 1) {
   t.lockSubject(me);
   check("잠금 후 · 두 명 중 잠긴 사람 선택", t.selectSubjectPose([other, me]) === me, true);
   check("잠금 후 · 순서를 바꿔도 동일인 선택", t.selectSubjectPose([me, other]) === me, true);
-  check("잠긴 사람이 없으면 null 반환", t.selectSubjectPose([other]), null);
-  check("검출된 인원수 집계", t.visiblePersonCount, 1);
+  check("검출된 인원수 집계", t.visiblePersonCount, 2);
+
+  // 혼자 남으면 고를 것이 없으므로 거부하지 않습니다.
+  // 절대 임계값으로 거부하면 혼자 운동하는 사용자가 자기 동작 때문에 카운트를 놓칩니다.
+  check("한 명만 있으면 거부하지 않음", t.selectSubjectPose([me]) === me, true);
 }
 
 // --- 11. 다른 사람의 동작은 카운트되지 않는다 ---------------------------
@@ -241,14 +244,61 @@ function movePerson(lm, dx, scale = 1) {
   t.lockSubject(me);
   feed(t, me); // 신전 관측
 
-  // 옆 사람이 아무리 스쿼트를 해도 selectSubjectPose가 걸러냅니다.
+  // 둘 다 화면에 있을 때, 옆 사람이 스쿼트를 해도 나를 계속 따라가야 합니다.
   const otherDown = movePerson(squatLandmarks(80), 0.3, 0.75);
   const otherUp = movePerson(squatLandmarks(170), 0.3, 0.75);
   for (let i = 0; i < 5; i++) {
-    check(`옆 사람 프레임 거부 #${i + 1}`, t.selectSubjectPose([otherDown]), null);
-    check(`옆 사람 프레임 거부(신전) #${i + 1}`, t.selectSubjectPose([otherUp]), null);
+    check(`옆 사람이 앉아도 나를 선택 #${i + 1}`, t.selectSubjectPose([otherDown, me]) === me, true);
+    check(`옆 사람이 서도 나를 선택 #${i + 1}`, t.selectSubjectPose([otherUp, me]) === me, true);
   }
   check("옆 사람 동작 → 내 카운트 변화 없음", t.repCount, 0);
+}
+
+// --- 11-2. 혼자 운동할 때는 어떤 프레임도 거부되지 않는다 -----------------
+// 가장 흔한 사용 상황입니다. 여기서 거부가 생기면 카운트가 어긋납니다.
+// 실측상 스쿼트 중 본인의 서명 거리가 1.78까지 올라가므로, 절대 임계값을 두면
+// 자기 동작 때문에 스스로 걸러집니다.
+{
+  const t = makeTracker("SQUAT", "intermediate");
+  t.lockSubject(squatLandmarks(175));
+
+  const cycle = [175, 160, 140, 120, 100, 85, 75, 85, 100, 120, 140, 160, 175];
+  let rejected = 0;
+  for (let r = 0; r < 5; r++) {
+    for (let i = 0; i < cycle.length; i++) {
+      // 자연스러운 좌우 흔들림까지 포함
+      const sway = Math.sin((r * cycle.length + i) * 0.5) * 0.02;
+      const frame = movePerson(squatLandmarks(cycle[i]), sway, 1);
+      const picked = t.selectSubjectPose([frame]);
+      if (!picked) rejected++;
+      else t.noteSubjectSeen(picked);
+    }
+  }
+  check("혼자 스쿼트 5회 · 거부된 프레임 수", rejected, 0);
+}
+
+// --- 11-3. 옆 사람이 함께 운동해도 나를 계속 따라간다 ---------------------
+// 세로 가중치를 낮추기 전에는 45프레임 중 5건에서 옆 사람을 골랐습니다.
+// 운동 중 몸 중심의 세로 이동이 사람 사이 가로 거리보다 커서 생긴 역전이었습니다.
+{
+  const t = makeTracker("SQUAT", "intermediate");
+  const me0 = squatLandmarks(175);
+  t.lockSubject(me0);
+
+  const cycle = [175, 150, 120, 90, 75, 90, 120, 150, 175];
+  let wrong = 0;
+  for (let r = 0; r < 5; r++) {
+    for (let i = 0; i < cycle.length; i++) {
+      const sway = Math.sin((r * cycle.length + i) * 0.5) * 0.02;
+      const mine = movePerson(squatLandmarks(cycle[i]), sway, 1);
+      // 옆 사람은 다른 박자로 스쿼트 중
+      const other = movePerson(squatLandmarks(cycle[(i + 4) % cycle.length]), 0.3, 0.75);
+      const picked = t.selectSubjectPose([other, mine]);
+      if (picked !== mine) wrong++;
+      else t.noteSubjectSeen(picked);
+    }
+  }
+  check("옆 사람도 운동 중 · 45프레임 오선택 수", wrong, 0);
 }
 
 // --- 12. 운동자를 놓치면 준비 페이즈로 되돌아가되 기록은 유지한다 --------
