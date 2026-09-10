@@ -517,17 +517,60 @@ body {
   margin-top: 4px;
 }
 
+.gps-status-indicator,
 .gps-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  background: var(--primary-accent-subtle);
-  color: var(--primary-accent);
-  font-size: 11px;
-  font-weight: 800;
-  padding: 4px 12px;
-  border-radius: var(--radius-pill);
-  margin-bottom: 18px;
+  justify-content: center;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-sub, #CBD5E1);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.25s ease;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  background: var(--text-muted);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.status-dot.ready {
+  background: #00FF87;
+  box-shadow: 0 0 8px rgba(0, 255, 135, 0.7);
+  animation: statusPulse 2s infinite ease-in-out;
+}
+
+.status-dot.searching {
+  background: #FFB800;
+  box-shadow: 0 0 8px rgba(255, 184, 0, 0.6);
+  animation: statusPulse 1.2s infinite ease-in-out;
+}
+
+.status-dot.indoor {
+  background: #94A3B8;
+  box-shadow: none;
+}
+
+.status-dot.warning {
+  background: #FF5252;
+  box-shadow: 0 0 8px rgba(255, 82, 82, 0.6);
+}
+
+@keyframes statusPulse {
+  0% { transform: scale(0.95); opacity: 0.75; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.75; }
 }
 
 .hud-grid {

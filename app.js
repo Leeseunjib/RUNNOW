@@ -877,11 +877,11 @@ class AppController {
     if (distEl) {
       if (stats.runMode === "treadmill") {
         distEl.textContent = stats.formattedTime;
-        if (unitEl) unitEl.textContent = "TIME";
-        if (subDistEl) subDistEl.textContent = "끝나면 기계 거리를 입력";
+        if (unitEl) unitEl.textContent = "시간";
+        if (subDistEl) subDistEl.textContent = "종료 후 거리 입력";
       } else {
         distEl.textContent = stats.displayMeters;
-        if (unitEl) unitEl.textContent = "METERS (m)";
+        if (unitEl) unitEl.textContent = "m";
         if (subDistEl) subDistEl.textContent = stats.displayKm;
       }
     }
@@ -897,29 +897,37 @@ class AppController {
     const paceNowEl = document.getElementById("live-pace-now");
     if (paceNowEl) {
       paceNowEl.textContent = stats.runMode === "treadmill"
-        ? "기계 거리 입력 후 계산"
-        : `지금 ${stats.currentPace || `--'--"`}`;
+        ? "거리 입력 후 산출"
+        : `현재 ${stats.currentPace || `--'--"`}`;
     }
 
     if (accuracyEl && stats.gpsAccuracy) {
-      // 내부테스트에서는 진단값을 함께 노출합니다. 어제처럼 "수치가 이상하다"는 보고를
-      // 받았을 때 추측하지 않고 원인을 좁히기 위한 정보입니다.
+      let dotClass = "ready";
+      let text = stats.gpsAccuracy;
+      if (stats.runMode === "treadmill") {
+        dotClass = "indoor";
+        text = "실내 트레드밀 모드";
+      } else if (text.includes("탐색") || text.includes("대기")) {
+        dotClass = "searching";
+      } else if (text.includes("거부") || text.includes("오류") || text.includes("약함") || text.includes("낮음")) {
+        dotClass = "warning";
+      } else {
+        dotClass = "ready";
+      }
+
       const isTestEnv = typeof window !== "undefined" && window.__IS_INTERNAL_TEST_ENV__;
-      let text = `🛰️ ${stats.gpsAccuracy}`;
+      let diagHtml = "";
       if (isTestEnv && stats.runMode === "gps") {
         const parts = [];
         if (stats.lastAccuracy != null) parts.push(`오차 ±${stats.lastAccuracy}m`);
-        parts.push(`인정구간 ${stats.routePoints.length}`);
-        if (stats.rejectedByAccuracy > 0) parts.push(`정확도폐기 ${stats.rejectedByAccuracy}`);
-        parts.push(`달린시간 ${stats.runningSeconds}s`);
-        if (stats.stationarySamples > 0) parts.push(`정지판정 ${stats.stationarySamples}`);
-        if (stats.skippedResumeSegments > 0) parts.push(`화면꺼짐 ${stats.skippedResumeSegments}`);
-        if (stats.lastAltitude != null) parts.push(`고도 ${stats.lastAltitude}m(+${stats.elevationGainM})`);
-        text += `
-${parts.join(" · ")}`;
+        parts.push(`인정 ${stats.routePoints.length}`);
+        if (stats.rejectedByAccuracy > 0) parts.push(`폐기 ${stats.rejectedByAccuracy}`);
+        parts.push(`시간 ${stats.runningSeconds}s`);
+        diagHtml = `<div style="font-size:9.5px; opacity:0.6; margin-top:2px;">${parts.join(" · ")}</div>`;
       }
-      accuracyEl.textContent = text;
-      accuracyEl.style.whiteSpace = "pre-line";
+
+      accuracyEl.innerHTML = `<span class="status-dot ${dotClass}"></span><span class="status-label">${text}</span>${diagHtml}`;
+      accuracyEl.style.whiteSpace = "normal";
     }
   }
 
@@ -1930,15 +1938,15 @@ ${parts.join(" · ")}`;
     if (metricCircle) metricCircle.classList.remove("active-pulse");
     if (btnPause) btnPause.textContent = "일시정지";
     if (distEl) distEl.textContent = "0";
-    if (unitEl) unitEl.textContent = "METERS (m)";
+    if (unitEl) unitEl.textContent = "m";
     if (subDistEl) subDistEl.textContent = "0.000 km";
     if (paceEl) paceEl.textContent = `--'--"`;
     if (timeEl) timeEl.textContent = "00:00";
     if (calEl) calEl.textContent = "0";
     if (accuracyEl) {
-      accuracyEl.textContent = this.runPlaceMode === "treadmill"
-        ? "헬스장 · 끝나면 기계 거리를 입력합니다"
-        : "🛰️ 야외 GPS 대기중";
+      accuracyEl.innerHTML = this.runPlaceMode === "treadmill"
+        ? `<span class="status-dot indoor"></span><span class="status-label">실내 트레드밀 (거리 수동 입력)</span>`
+        : `<span class="status-dot ready"></span><span class="status-label">GPS 준비 완료</span>`;
     }
     this.lockRunPlaceUi(false);
   }
@@ -1956,15 +1964,15 @@ ${parts.join(" · ")}`;
       });
       if (hint) hint.style.display = mode === "treadmill" ? "block" : "none";
       if (startLabel) {
-        startLabel.textContent = mode === "treadmill" ? "헬스장 러닝 시작" : "야외 GPS 러닝 시작";
+        startLabel.textContent = "러닝 시작";
       }
       if (cardLabel) {
-        cardLabel.textContent = mode === "treadmill" ? "GYM TREADMILL" : "LIVE GPS RUNNER";
+        cardLabel.textContent = mode === "treadmill" ? "GYM TREADMILL" : "LIVE RUNNER";
       }
       if (accuracyEl && !this.gpsRunner.isTracking) {
-        accuracyEl.textContent = mode === "treadmill"
-          ? "헬스장 · 끝나면 기계 거리를 입력합니다"
-          : "🛰️ 야외 GPS 대기중";
+        accuracyEl.innerHTML = mode === "treadmill"
+          ? `<span class="status-dot indoor"></span><span class="status-label">실내 트레드밀 (거리 수동 입력)</span>`
+          : `<span class="status-dot ready"></span><span class="status-label">GPS 준비 완료</span>`;
       }
     };
 

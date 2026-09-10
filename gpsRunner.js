@@ -223,7 +223,7 @@ export class GPSRunner {
     this.resumeFromHidden = false;
     this.filter.reset();
     this._deniedAlerted = false;
-    this.gpsAccuracy = useSimulation ? "시뮬레이션" : "GPS 신호 탐색중...";
+    this.gpsAccuracy = useSimulation ? "시뮬레이션" : "GPS 신호 연결 중...";
     this.requestWakeLock();
     this.startVisibilityWatch();
     this.emitUpdate();
@@ -234,7 +234,7 @@ export class GPSRunner {
         if (this.isSimulation) {
           this.simulateStep();
         } else if (this.runMode === "treadmill") {
-          this.gpsAccuracy = "헬스장 · 타이머 기록 중. 폰은 콘솔에 두셔도 됩니다";
+          this.gpsAccuracy = "실내 트레드밀 모드 (거리 수동 입력)";
         }
         this.emitUpdate();
       }
@@ -243,13 +243,13 @@ export class GPSRunner {
     if (this.isSimulation || this.runMode === "treadmill") return;
 
     if (!window.isSecureContext) {
-      this.gpsAccuracy = "HTTPS에서만 GPS 사용 가능";
+      this.gpsAccuracy = "보안(HTTPS) 환경 필요";
       this.emitUpdate();
       return;
     }
 
     if (!navigator.geolocation) {
-      this.gpsAccuracy = "이 기기는 GPS를 지원하지 않습니다";
+      this.gpsAccuracy = "GPS 미지원 기기";
       this.emitUpdate();
       alert("이 브라우저/기기는 위치 정보(GPS)를 지원하지 않습니다.");
       return;
@@ -265,17 +265,17 @@ export class GPSRunner {
       const code = err && err.code;
       if (code === 3 && this.positions.length > 0) return;
       if (code === 1) {
-        this.gpsAccuracy = "위치 권한이 거부됨. 브라우저 설정에서 허용하세요";
+        this.gpsAccuracy = "위치 권한 거부됨";
         if (!this._deniedAlerted) {
           this._deniedAlerted = true;
-          alert("위치 권한이 꺼져 있습니다. Safari/Chrome 사이트 설정에서 위치 접근을 허용한 뒤 다시 START를 눌러 주세요.");
+          alert("위치 권한이 꺼져 있습니다. 브라우저 설정에서 위치 접근을 허용한 뒤 다시 시작해 주세요.");
         }
       } else if (code === 2) {
-        this.gpsAccuracy = "GPS 신호를 찾을 수 없음. 야외로 이동해 보세요";
+        this.gpsAccuracy = "GPS 신호 탐색 중 (야외 권장)";
       } else if (code === 3) {
-        this.gpsAccuracy = "GPS 수신 대기 중... 야외에서 잠시 기다려 주세요";
+        this.gpsAccuracy = "GPS 연결 중...";
       } else {
-        this.gpsAccuracy = `GPS 오류 (${err && err.message ? err.message : code})`;
+        this.gpsAccuracy = "GPS 연결 지연";
       }
       this.emitUpdate();
     };
@@ -364,13 +364,12 @@ export class GPSRunner {
     // GPS 정확도 상태 평가
     this.lastAccuracy = Math.round(accuracy);
     if (accuracy <= 15) {
-      this.gpsAccuracy = `GPS 매우양호 (±${Math.round(accuracy)}m)`;
+      this.gpsAccuracy = "GPS 신호 우수";
     } else if (accuracy <= MAX_ACCURACY_M) {
-      this.gpsAccuracy = `GPS 보통 (±${Math.round(accuracy)}m)`;
+      this.gpsAccuracy = "GPS 신호 양호";
     } else {
       // 오차 반경이 이동 거리보다 큰 측정치는 그대로 쓰면 가짜 거리가 쌓입니다.
-      // 왜 거리가 안 늘어나는지 사용자가 알 수 있도록 상태 문구에 명시합니다.
-      this.gpsAccuracy = `GPS 정확도 낮음 (±${Math.round(accuracy)}m) · 거리 미집계`;
+      this.gpsAccuracy = "GPS 신호 탐색 중 (오차 조정)";
       this.lastAccuracy = Math.round(accuracy);
       this.rejectedByAccuracy += 1;
       this.emitUpdate();

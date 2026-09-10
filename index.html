@@ -566,53 +566,44 @@
               <!-- 실시간 정밀 거리 메트릭 서클 -->
               <div class="metric-circle" id="metric-circle">
                 <div class="main-distance-num" id="live-distance">0</div>
-                <div class="main-distance-unit" id="live-distance-unit">METERS (m)</div>
+                <div class="main-distance-unit" id="live-distance-unit">m</div>
                 <div id="live-distance-sub" style="font-size:13px; color:var(--cyber-cyan); font-weight:800; margin-top:4px; letter-spacing:0.5px;">0.000 km</div>
               </div>
-              <div class="gps-badge" id="live-gps-accuracy">🛰️ 야외 GPS 대기중</div>
 
-              <!-- 3대 러닝 메트릭 그리드 (페이스, 시간, 칼로리) -->
+              <!-- 정갈한 마이크로 GPS 상태 인디케이터 (Nike/Strava 스타일) -->
+              <div class="gps-status-indicator" id="live-gps-accuracy">
+                <span class="status-dot ready"></span>
+                <span class="status-label">GPS 준비 완료</span>
+              </div>
+
+              <!-- 3대 핵심 러닝 메트릭 그리드 (페이스, 시간, 칼로리) -->
               <div class="hud-grid">
                 <div class="hud-item">
                   <div class="hud-val" id="live-pace">--'--"</div>
-                  <div class="hud-lbl">AVG PACE (1km 소요)</div>
-                  <div class="hud-sub" id="live-pace-now">지금 --'--"</div>
+                  <div class="hud-lbl">평균 페이스</div>
+                  <div class="hud-sub" id="live-pace-now">현재 --'--"</div>
                 </div>
                 <div class="hud-item">
                   <div class="hud-val" id="live-time">00:00</div>
-                  <div class="hud-lbl">TIME (러닝 시간)</div>
+                  <div class="hud-lbl">시간</div>
                 </div>
                 <div class="hud-item">
                   <div class="hud-val" id="live-calories">0</div>
-                  <div class="hud-lbl">CALORIES (kcal)</div>
-                </div>
-              </div>
-
-              <!-- 페이스 가이드 팁 안내바 -->
-              <div style="font-size:11px; color:var(--text-muted); background:rgba(255,255,255,0.03); border:1px solid var(--border-glass); border-radius:8px; padding:6px 10px; margin-bottom:14px; text-align:center;">
-                💡 <strong>AVG PACE</strong>: 1km를 달리는 데 걸리는 시간 (예: 5'30" = 1km당 5분 30초)
-              </div>
-
-              <!-- Mini Tamagotchi status during run -->
-              <div style="display:flex; align-items:center; justify-content:center; gap:10px; background:var(--surface-elevated); padding:10px; border-radius:12px; margin-bottom:15px; border:1px solid var(--border-glass);">
-                <div id="mini-tamagotchi-icon" style="font-size:24px;">🥚</div>
-                <div style="font-size:12px; text-align:left;">
-                  <strong id="mini-tamagotchi-name">볼트몽 (누적 0m)</strong>
-                  <div style="color:var(--primary-volt); font-size:11px;" id="mini-tamagotchi-msg">"첫 번째 러닝을 시작해 파트너 펫을 부화시키세요!"</div>
+                  <div class="hud-lbl">칼로리</div>
                 </div>
               </div>
 
               <div id="run-init-controls">
                 <button class="btn-primary-volt" id="btn-start-live">
-                  <span id="btn-start-live-label">야외 GPS 러닝 시작</span>
+                  <span id="btn-start-live-label">러닝 시작</span>
                 </button>
               </div>
 
               <div class="run-controls" id="run-active-controls" style="display:none; flex-wrap:wrap;">
                 <button class="btn-secondary" id="btn-pause-run">일시정지</button>
-                <button class="btn-primary-volt" id="btn-stop-run" style="background:#FF5722; color:#fff;">완주 및 기록 저장</button>
+                <button class="btn-primary-volt" id="btn-stop-run" style="background:#FF5722; color:#fff;">러닝 종료</button>
                 <button type="button" class="btn-secondary" id="btn-discard-run" style="width:100%; padding:11px; font-size:13px; font-weight:700; color:#FF5722; border-color:rgba(255,87,34,0.4);">
-                  <span>🔄 새로고침 (기록 없이 취소)</span>
+                  <span>러닝 취소</span>
                 </button>
               </div>
             </div>
