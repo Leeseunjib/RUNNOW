@@ -120,4 +120,16 @@
 - `tests/gpsRunner.test.mjs`: 100% PASS (48/48)
 - `npm test`: 전체 회귀 테스트 스위트 100% ALL PASS 통과.
 
+## 4. 상용 버전 배포 및 Git 동기화 완료
+- **Git 커밋 및 브랜치 동기화**:
+  - 커밋: `feat(ux): 소비자 심리학 기반 AI 느낌 요소 제거 및 프로페셔널 러닝 UI 개편` (`449674e`)
+  - 원격 푸시: `develop` 및 `master` 브랜치 모두 GitHub 원격 저장소(`Leeseunjib/RUNNOW`)로 동기화 완료.
+- **Firebase Hosting 상용 승급 (Promotion)**:
+  - 1단계: `npm run deploy:dev` (`https://runnow-37af9--dev-irl7g2ve.web.app` 정상 배포 완료)
+  - 2단계: `npm run promote:live` (dev 채널의 검증된 빌드를 live 채널로 복제 승급 완료)
+- **상용 서비스 정상 작동 검증**:
+  - 상용 공식 도메인: `https://runnow.beauscreators.com` (`HTTP 200 OK`, ETag 일치)
+  - Firebase 도메인: `https://runnow-37af9.web.app` (`HTTP 200 OK`)
+
+
 
