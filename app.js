@@ -900,6 +900,7 @@ class AppController {
         parts.push(`달린시간 ${stats.runningSeconds}s`);
         if (stats.stationarySamples > 0) parts.push(`정지판정 ${stats.stationarySamples}`);
         if (stats.skippedResumeSegments > 0) parts.push(`화면꺼짐 ${stats.skippedResumeSegments}`);
+        if (stats.lastAltitude != null) parts.push(`고도 ${stats.lastAltitude}m(+${stats.elevationGainM})`);
         text += `
 ${parts.join(" · ")}`;
       }

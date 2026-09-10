@@ -1,5 +1,6 @@
 // RUNNOW AI Motion Fitness Engine powered by Google MediaPipe Pose Landmarker
 // Vision Edge Tasks WebAssembly + WebGL Acceleration
+import { caloriesForMet, metForExercise } from "./metabolics.js";
 
 export const EXERCISE_TYPES = {
   SQUAT: {
@@ -345,6 +346,15 @@ export class MotionTracker {
       jackReach: lv.jackReach,
       jackFeetRatio: lv.jackFeetRatio
     };
+  }
+
+  // 활동 칼로리는 회당 고정값이 아니라 MET × 운동 시간으로 계산합니다.
+  // 회당 고정값은 같은 횟수를 빠르게 하든 천천히 하든 똑같이 계산되어,
+  // 실제 소비와 어긋납니다. 상용 운동앱도 시간 기반 MET를 씁니다.
+  computeCalories() {
+    if (this.repCount <= 0 && this.elapsedSeconds <= 0) return 0;
+    const met = metForExercise(this.currentExercise.id);
+    return parseFloat(caloriesForMet(met, this.userWeightKg, this.elapsedSeconds).toFixed(1));
   }
 
   resetRepCycle() {
@@ -707,8 +717,7 @@ export class MotionTracker {
       if (!this.isRunning) return;
       this.elapsedSeconds++;
       // 실시간 칼로리 계산
-      const weightFactor = this.userWeightKg / 70.0;
-      this.caloriesBurned = parseFloat((this.repCount * this.currentExercise.caloriePerRep * weightFactor).toFixed(1));
+      this.caloriesBurned = this.computeCalories();
       
       this.emitLiveState();
     }, 1000);
@@ -1749,8 +1758,7 @@ export class MotionTracker {
 
     this.repCount++;
     this.lastRepTimestamp = Date.now();
-    const weightFactor = this.userWeightKg / 70.0;
-    this.caloriesBurned = parseFloat((this.repCount * this.currentExercise.caloriePerRep * weightFactor).toFixed(1));
+    this.caloriesBurned = this.computeCalories();
 
     this.emitFeedback(successMsg, true);
     this.onRepCount({
@@ -1971,9 +1979,8 @@ export class MotionTracker {
   // 운동 종료 리포트 데이터 반환
   getWorkoutSummary() {
     const durationSec = Math.max(1, this.elapsedSeconds);
-    const weightFactor = this.userWeightKg / 70.0;
     const rewardMul = this.difficulty.rewardMultiplier;
-    const totalCalories = parseFloat((this.repCount * this.currentExercise.caloriePerRep * weightFactor).toFixed(1));
+    const totalCalories = this.computeCalories();
     const totalXp = Math.round(this.repCount * this.currentExercise.xpPerRep * rewardMul);
     const totalVc = Math.round(this.repCount * this.currentExercise.vcPerRep * rewardMul);
 

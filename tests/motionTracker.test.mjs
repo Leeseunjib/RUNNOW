@@ -58,6 +58,12 @@ function situpLandmarks(hipAngleDeg, vis = 0.95) {
   return lm;
 }
 
+function checkNear2(label, actual, expected, tol) {
+  const ok = Number.isFinite(actual) && Math.abs(actual - expected) <= tol;
+  if (!ok) failed++;
+  console.log(`${ok ? "PASS" : "FAIL"} | ${label} | got=${actual} want=${expected}±${tol}`);
+}
+
 function makeTracker(exercise, difficulty) {
   const t = new MotionTracker({ difficulty });
   t.setExercise(exercise);
@@ -497,6 +503,40 @@ function trackThroughMotion(label, tracker, frames) {
               { deepest: 84, ...base, sideDelta: -1 },
               { deepest: 86, ...base, sideDelta: 3 }];
   check("미세한 차이는 보고하지 않음", t.buildFormReport().sideBias, null);
+}
+
+// --- 21. 활동 칼로리는 MET × 시간으로 계산된다 ---------------------------
+// 기존은 "회당 고정값 × 횟수"였습니다. 같은 횟수를 빠르게 하든 천천히 하든
+// 같은 값이 나와 실제 소비와 어긋났습니다.
+{
+  const t = makeTracker("SQUAT", "intermediate");
+  t.setWeight(70);
+  t.enterPhase("calibrating"); t.enterPhase("counting");
+
+  t.repCount = 20;
+  t.elapsedSeconds = 600;                     // 20회를 10분에 걸쳐
+  // 스쿼트 5.0 MET → (5-1) × 3.5 × 70 / 200 × 10분 = 49 kcal
+  checkNear2("스쿼트 20회 / 10분", t.computeCalories(), 49, 1);
+
+  t.elapsedSeconds = 300;                     // 같은 20회를 5분에
+  checkNear2("같은 20회라도 5분이면 절반", t.computeCalories(), 24.5, 1);
+
+  t.setWeight(100);
+  check("체중 반영", t.computeCalories() > 24.5, true);
+}
+
+{
+  // 종목별 MET가 다르게 반영되어야 합니다 (푸시업 8.0 > 스쿼트 5.0 > 플랭크 3.8)
+  const mk = (ex) => {
+    const t = makeTracker(ex, "intermediate");
+    t.setWeight(70);
+    t.enterPhase("calibrating"); t.enterPhase("counting");
+    t.elapsedSeconds = 600;
+    return t.computeCalories();
+  };
+  const push = mk("PUSHUP"), squat = mk("SQUAT"), plank = mk("PLANK");
+  check("푸시업이 스쿼트보다 높음", push > squat, true);
+  check("스쿼트가 플랭크보다 높음", squat > plank, true);
 }
 
 console.log(failed === 0 ? "\n✅ ALL PASS" : `\n❌ ${failed} FAILED`);

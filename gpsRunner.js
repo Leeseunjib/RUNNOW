@@ -1,4 +1,5 @@
 // 실시간 고정밀 GPS 및 스마트폰/워치 하이브리드 러닝 트래커 모듈 (GPS Runner Engine)
+import { caloriesForDistance } from "./metabolics.js";
 
 // 노이즈 & 안티치트 기준값
 const MIN_STEP_METERS = 1.5;        // 최소 인정 변위 하한선
@@ -143,6 +144,9 @@ export class GPSRunner {
     this.skippedResumeSegments = 0;
     this.stationarySamples = 0;
     this.recentFixes = [];   // 속도 미제공 기기의 정지 판정용
+    this.smoothedAltitude = null;
+    this.lastAltitude = null;
+    this.elevationGainM = 0;
     this.filter = new PositionFilter();
     this._onVisibility = null;
     this.rejectedByAccuracy = 0;
@@ -217,6 +221,9 @@ export class GPSRunner {
     this.skippedResumeSegments = 0;
     this.stationarySamples = 0;
     this.recentFixes = [];
+    this.smoothedAltitude = null;
+    this.lastAltitude = null;
+    this.elevationGainM = 0;
     this.resumeFromHidden = false;
     this.filter.reset();
     this._deniedAlerted = false;
@@ -314,6 +321,9 @@ export class GPSRunner {
     this.skippedResumeSegments = 0;
     this.stationarySamples = 0;
     this.recentFixes = [];
+    this.smoothedAltitude = null;
+    this.lastAltitude = null;
+    this.elevationGainM = 0;
     this.resumeFromHidden = false;
     this.filter.reset();
     this.lastMotionAt = Date.now();
@@ -388,7 +398,7 @@ export class GPSRunner {
 
   handleGeoSuccess(position) {
     if (this.isPaused) return;
-    const { latitude, longitude, accuracy, speed } = position.coords;
+    const { latitude, longitude, accuracy, speed, altitude, altitudeAccuracy } = position.coords;
     // 브라우저 처리 시각이 아니라 GPS가 측정한 시각을 씁니다.
     // 처리 지연이 섞이면 속도 계산과 필터의 시간 간격이 왜곡됩니다.
     const now = Number(position.timestamp) || Date.now();
@@ -418,6 +428,11 @@ export class GPSRunner {
     // 수용 여부와 무관하게 최근 측정을 남깁니다(정지 판정용).
     this.recentFixes.push({ lat: fLat, lng: fLng, time: now });
     if (this.recentFixes.length > 40) this.recentFixes.shift();
+
+    // 고도는 수집만 하고 칼로리에는 아직 반영하지 않습니다.
+    // GPS 고도는 수평 좌표보다 오차가 커(보통 ±2~3배), 검증 없이 경사에 쓰면
+    // 칼로리가 크게 왜곡될 수 있습니다. 실기기 데이터를 본 뒤 반영 여부를 정합니다.
+    this.trackAltitude(altitude, altitudeAccuracy);
 
     if (!this.lastValidPos) {
       // 최초 출발 위치 등록
@@ -539,6 +554,9 @@ export class GPSRunner {
     this.skippedResumeSegments = 0;
     this.stationarySamples = 0;
     this.recentFixes = [];
+    this.smoothedAltitude = null;
+    this.lastAltitude = null;
+    this.elevationGainM = 0;
     this.resumeFromHidden = false;
     this.filter.reset();
     this.isSimulation = false;
@@ -603,6 +621,26 @@ export class GPSRunner {
     return displacement / seconds < MOVING_SPEED_MPS;
   }
 
+  // 고도 추적. 노이즈가 커서 강하게 평활화한 뒤 누적 상승고도와 경사를 추정합니다.
+  trackAltitude(altitude, altitudeAccuracy) {
+    const alt = Number(altitude);
+    if (!Number.isFinite(alt)) return;
+    // 고도 오차가 15m를 넘으면 경사 추정에 쓸 수 없는 수준입니다.
+    if (Number.isFinite(altitudeAccuracy) && altitudeAccuracy > 15) return;
+
+    this.lastAltitude = Math.round(alt);
+    if (this.smoothedAltitude === null) {
+      this.smoothedAltitude = alt;
+      return;
+    }
+    const prev = this.smoothedAltitude;
+    this.smoothedAltitude = prev + 0.2 * (alt - prev);   // 강한 평활화
+
+    const gain = this.smoothedAltitude - prev;
+    // 1m 미만 변화는 노이즈로 봅니다.
+    if (gain > 1) this.elevationGainM += gain;
+  }
+
   // 이동이 끊겼다고 판단한 지점에서 필터를 현재 실측값으로 다시 세웁니다.
   resetFilterTo(lat, lng, accuracy, timeMs) {
     this.filter.reset();
@@ -630,9 +668,13 @@ export class GPSRunner {
       }
     }
 
-    // 3) 칼로리 소모량 (체중 x 이동거리 x 1.036 kcal/kg/km)
-    const rawCalories = distanceKm * this.userWeightKg * 1.036;
-    const caloriesInt = Math.round(rawCalories);
+    // 3) 활동 칼로리 (ACSM 대사 방정식)
+    //    거리만으로 계산하면 걷기와 달리기가 같아집니다.
+    //    실제로 걷기는 같은 거리에서 달리기의 절반 수준이며, 기존 공식은 걷기를
+    //    2배 과대계산하고 있었습니다. 속도와 시간을 함께 넣어 구분합니다.
+    const caloriesInt = Math.round(
+      caloriesForDistance(this.totalMeters, runningSeconds || this.elapsedSeconds, this.userWeightKg)
+    );
 
     return {
       distanceMeters: metersInt, // 정수 int (예: 1250)
@@ -650,6 +692,8 @@ export class GPSRunner {
       rejectedByAccuracy: this.rejectedByAccuracy,
       skippedResumeSegments: this.skippedResumeSegments,
       stationarySamples: this.stationarySamples,
+      lastAltitude: this.lastAltitude,
+      elevationGainM: Math.round(this.elevationGainM),
       routePoints: this.positions,
       runMode: this.runMode,
       treadmillSpeedKmh: this.runMode === "treadmill" ? this.treadmillSpeedKmh : null

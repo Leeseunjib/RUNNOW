@@ -125,13 +125,21 @@ function runStraight(r, meters, seconds, opts = {}) {
   checkNear("평균 페이스(초/km)", Math.round(100 / (r.totalMeters / 1000)), 303, 10);
 }
 
-// --- 6. 칼로리 계산 (체중 x km x 1.036) -----------------------------------
+// --- 6. 활동 칼로리 (ACSM 대사 방정식) -------------------------------------
+// 5km를 25분 = 시속 12km. VO2 = 0.2×200 + 3.5 = 43.5
+// 활동 칼로리 = (43.5-3.5) × 80 / 1000 × 5 × 25 = 400
 {
   const r = makeRunner(80);
   r.totalMeters = 5000;
   r.elapsedSeconds = 1500;
   const s = r.getStats();
-  check("80kg · 5km 칼로리", s.calories, Math.round(5 * 80 * 1.036));
+  check("80kg · 5km 25분 활동 칼로리", s.calories, 400);
+
+  // 같은 거리를 걸으면 절반 수준이어야 합니다(기존 공식은 동일하게 계산했습니다).
+  const w = makeRunner(80);
+  w.totalMeters = 5000;
+  w.elapsedSeconds = 3600;   // 5km를 60분 = 시속 5km (걷기)
+  check("같은 5km라도 걷기는 훨씬 적음", w.getStats().calories < s.calories * 0.6, true);
   check("5km / 25분 → 페이스 5'00\"", s.pace, "5'00\"");
   check("시간 포맷", s.formattedTime, "25:00");
 }
