@@ -1,5 +1,8 @@
 # 운동 수치 계산 표준화 체크리스트 (2026-09-10)
 
+## 🚨 [CEO 절대 헌장] 상용(Production) 승급 에이전트 실행 절대 금지
+> **규칙**: AI 에이전트는 어떠한 경우에도 상용 승급 명령어(`npm run promote:live`, `firebase hosting:clone ...:live`, `firebase deploy --only hosting`)를 터미널에서 직접 실행하지 않는다. 에이전트의 배포 한계선은 오직 **내부 테스트 채널(`npm run deploy:dev`)**까지로 엄격 제한되며, 상용 공식 서비스(`runnow.beauscreators.com`) 승급은 반드시 **이건우 대표님께서 직접 터미널에 명령어를 입력하여 실행**하신다.
+
 근거: ACSM 대사 방정식 + Compendium of Physical Activities MET 값.
 나이키·삼성·애플 등이 공통으로 기반하는 공개 표준입니다.
 
