@@ -3,7 +3,7 @@
 - **일자**: 2026-09-01
 - **작성자**: CTO 거누 (dept-dev)
 - **보고 대상**: 이건우 대표님
-- **문서 위치**: `proj_01/docs/2026-09-01_AI_Interactive_Training_Strategy_Report.md`
+- **문서 위치**: `Runnow/docs/2026-09-01_AI_Interactive_Training_Strategy_Report.md`
 
 ---
 

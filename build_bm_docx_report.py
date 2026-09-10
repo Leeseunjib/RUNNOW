@@ -410,11 +410,12 @@ def build_bm_report(output_file_path):
     print(f"✅ Word 보고서 생성 성공: {output_file_path}")
 
 if __name__ == "__main__":
-    local_path = r"c:\BeausCreators\03.Research\바이브코딩 연구\Test_proj\proj_01\docs\2026-09-07_RUNNOW_Master_BM_and_Consumer_Psychology_Strategy.docx"
+    root = os.path.dirname(os.path.abspath(__file__))
+    local_path = os.path.join(root, "docs", "2026-09-07_RUNNOW_Master_BM_and_Consumer_Psychology_Strategy.docx")
     build_bm_report(local_path)
 
     # 1. 여기 폴더 (프로젝트 루트에도 배치)
-    root_path = r"c:\BeausCreators\03.Research\바이브코딩 연구\Test_proj\proj_01\2026-09-07_RUNNOW_Master_BM_and_Consumer_Psychology_Strategy.docx"
+    root_path = os.path.join(root, "2026-09-07_RUNNOW_Master_BM_and_Consumer_Psychology_Strategy.docx")
     shutil.copy2(local_path, root_path)
     print(f"✅ 여기 폴더 복사 완료: {root_path}")
 

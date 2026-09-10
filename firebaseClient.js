@@ -7,7 +7,8 @@ import {
   signInWithPopup,
   signOut,
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { firebaseConfig } from "./firebaseConfig.js";
@@ -33,6 +34,17 @@ class FirebaseCloudClient {
       this.googleProvider = new GoogleAuthProvider();
       this.googleProvider.setCustomParameters({ prompt: "select_account" });
       this.isInitialized = true;
+
+      // 비동기 Auth 상태 실시간 동기화
+      onAuthStateChanged(this.auth, (user) => {
+        if (user) {
+          this.currentUser = user;
+          this.sessionFromUser(user);
+        } else {
+          this.currentUser = null;
+        }
+      });
+
       console.log("🔥 RUNNOW Cloud Firebase & Auth connected successfully!");
     } catch (err) {
       console.warn("⚠️ Firebase Cloud Init Fallback to Local Sandbox:", err);
@@ -187,6 +199,7 @@ class FirebaseCloudClient {
 
   async syncUser(userId, userData) {
     if (!this.isInitialized || !this.db || !userId) return false;
+    if (!this.auth?.currentUser || this.auth.currentUser.uid !== userId) return false;
     try {
       await setDoc(doc(this.db, "users", userId), {
         ...userData,
@@ -201,7 +214,8 @@ class FirebaseCloudClient {
   }
 
   async saveWorkout(userId, workoutData) {
-    if (!this.isInitialized || !this.db) return null;
+    if (!this.isInitialized || !this.db || !userId) return null;
+    if (!this.auth?.currentUser || this.auth.currentUser.uid !== userId) return null;
     try {
       const docRef = await addDoc(collection(this.db, "workouts"), {
         userId,
@@ -216,7 +230,8 @@ class FirebaseCloudClient {
   }
 
   async syncTamagotchi(userId, petData) {
-    if (!this.isInitialized || !this.db) return false;
+    if (!this.isInitialized || !this.db || !userId) return false;
+    if (!this.auth?.currentUser || this.auth.currentUser.uid !== userId) return false;
     try {
       await setDoc(doc(this.db, "tamagotchi", userId), {
         ...petData,
@@ -230,7 +245,8 @@ class FirebaseCloudClient {
   }
 
   async syncChallenge(userId, challengeData) {
-    if (!this.isInitialized || !this.db) return false;
+    if (!this.isInitialized || !this.db || !userId) return false;
+    if (!this.auth?.currentUser || this.auth.currentUser.uid !== userId) return false;
     try {
       await setDoc(doc(this.db, "challenges_progress", userId), {
         ...challengeData,

@@ -2,7 +2,7 @@
 - **일자**: 2026-09-04
 - **담당자**: CTO 거누 (Backend/Infra/Architecture Lead)
 - **프로젝트**: RUNNOW (RunGotchi)
-- **위치**: `proj_01` (Spoke) ➔ `01.BSC_HQ` (Hub)
+- **위치**: `Runnow` (Spoke) ➔ `01.BSC_HQ` (Hub)
 
 ---
 
@@ -40,11 +40,11 @@
 
 ### 2) 문서 산출물 생성 및 양방향 동기화
 - **Markdown 보고서 (`.md`)**:
-  - 로컬: `c:\BeausCreators\03.Research\바이브코딩 연구\Test_proj\proj_01\docs\2026-09-04_RUNNOW_Tech_and_Planning_Master_Report.md`
+  - 로컬: `c:\BeausCreators\03.Research\바이브코딩 연구\Test_proj\Runnow\docs\2026-09-04_RUNNOW_Tech_and_Planning_Master_Report.md`
   - HQ 동기화: `C:\BeausCreators\01.BSC_HQ\1.Documents\01.보고서\2026-09-04\2026-09-04_RUNNOW_Tech_and_Planning_Master_Report.md`
 - **Word 정밀 보고서 (`.docx`)**:
   - python-docx 라이브러리를 활용한 스타일링(슬레이트/다크 헤더, 테이블 테두리, 배경 음영, 마진 최적화) 빌드 완료
-  - 로컬: `c:\BeausCreators\03.Research\바이브코딩 연구\Test_proj\proj_01\docs\2026-09-04_RUNNOW_Tech_and_Planning_Master_Report.docx`
+  - 로컬: `c:\BeausCreators\03.Research\바이브코딩 연구\Test_proj\Runnow\docs\2026-09-04_RUNNOW_Tech_and_Planning_Master_Report.docx`
   - HQ 동기화: `C:\BeausCreators\01.BSC_HQ\1.Documents\01.보고서\2026-09-04\2026-09-04_RUNNOW_Tech_and_Planning_Master_Report.docx`
 
 ---

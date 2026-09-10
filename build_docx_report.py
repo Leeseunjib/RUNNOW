@@ -470,5 +470,6 @@ def build_word_report(output_path):
     print(f"Successfully generated docx: {output_path}")
 
 if __name__ == "__main__":
-    local_target = r"c:\BeausCreators\03.Research\바이브코딩 연구\Test_proj\proj_01\docs\2026-09-04_RUNNOW_Tech_and_Planning_Master_Report.docx"
+    root = os.path.dirname(os.path.abspath(__file__))
+    local_target = os.path.join(root, "docs", "2026-09-04_RUNNOW_Tech_and_Planning_Master_Report.docx")
     build_word_report(local_target)

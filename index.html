@@ -589,14 +589,8 @@
                 <button type="button" class="run-place-btn" data-run-place="treadmill">헬스장 트레드밀</button>
               </div>
 
-              <div id="treadmill-speed-row" class="pose-target-row" style="display:none;">
-                <span>트레드밀 속도</span>
-                <div class="motion-target-chips" id="treadmill-speed-chips">
-                  <button type="button" class="target-chip" data-speed="6">6 km/h</button>
-                  <button type="button" class="target-chip active" data-speed="8">8 km/h</button>
-                  <button type="button" class="target-chip" data-speed="10">10 km/h</button>
-                  <button type="button" class="target-chip" data-speed="12">12 km/h</button>
-                </div>
+              <div id="treadmill-hint" class="treadmill-hint" style="display:none;">
+                폰은 트레드밀 콘솔에 두셔도 됩니다. 끝나면 기계 화면에 나온 거리를 입력합니다.
               </div>
               
               <!-- 실시간 정밀 거리 메트릭 서클 -->
@@ -1248,6 +1242,20 @@
             <span>초기화 실행</span>
           </button>
         </div>
+      </div>
+    </div>
+
+    <div id="treadmill-distance-modal" class="modal-overlay" style="display:none;">
+      <div class="modal-card glow-volt" style="text-align:center; position:relative;">
+        <h2 style="font-size:20px; font-weight:900; color:var(--primary-volt); margin-bottom:6px;">헬스장 거리 입력</h2>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px; line-height:1.45;">
+          트레드밀 화면에 나온 거리를 그대로 입력하세요.<br>
+          기록된 시간: <strong id="treadmill-elapsed-label" style="color:var(--cyber-cyan);">00:00</strong>
+        </p>
+        <input id="treadmill-distance-input" type="number" inputmode="decimal" step="0.01" min="0.01" max="100" placeholder="예: 3.20" style="width:100%; box-sizing:border-box; padding:12px; border-radius:10px; border:1px solid var(--border-glass); background:var(--surface-carbon); color:var(--text-main); font-size:18px; font-weight:800; text-align:center; margin-bottom:8px;">
+        <p id="treadmill-distance-error" style="display:none; font-size:12px; color:#ff6b6b; margin-bottom:10px;"></p>
+        <button class="btn-primary-volt" id="btn-confirm-treadmill-distance" style="width:100%; padding:12px; margin-bottom:8px;">이 거리로 저장</button>
+        <button type="button" id="btn-cancel-treadmill-distance" style="width:100%; padding:10px; background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer;">기록 없이 닫기</button>
       </div>
     </div>
 

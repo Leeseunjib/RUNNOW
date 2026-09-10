@@ -5,6 +5,7 @@ import { caloriesForDistance } from "./metabolics.js";
 const MIN_STEP_METERS = 1.5;        // 최소 인정 변위 하한선
 const MAX_ACCURACY_M = 40;          // 이보다 오차가 큰 측정치는 폐기
 const MAX_SPEED_MPS = 30 / 3.6;     // 시속 30km 초과 이동은 거리에서 배제 (차량 탑승 등)
+const MAX_TREADMILL_KMH = 30;       // 헬스장 기계 거리 입력 상한 (차량 속도)
 
 // 실측 문제: 가만히 서 있어도 거리가 2m 이상 늘어났습니다.
 // 원인은 고정 1.5m 임계값이 GPS 오차(야외 보통 ±5~15m)보다 훨씬 작다는 것입니다.
@@ -134,7 +135,7 @@ export class GPSRunner {
     this.userWeightKg = options.weightKg || 70;
     this.gpsAccuracy = "탐색중";
     this.runMode = "gps";
-    this.treadmillSpeedKmh = 8;
+    this.treadmillSpeedKmh = null;
     this.motionGated = false;
     this.lastMotionAt = 0;
     this.lastStepAt = 0;
@@ -238,7 +239,7 @@ export class GPSRunner {
         if (this.isSimulation) {
           this.simulateStep();
         } else if (this.runMode === "treadmill") {
-          this.tickTreadmill();
+          this.gpsAccuracy = "헬스장 · 타이머 기록 중. 폰은 콘솔에 두셔도 됩니다";
         }
         this.emitUpdate();
       }
@@ -305,9 +306,9 @@ export class GPSRunner {
     );
   }
 
-  async startTreadmill(speedKmh = 8) {
+  async startTreadmill() {
     this.runMode = "treadmill";
-    this.treadmillSpeedKmh = Number(speedKmh) || 8;
+    this.treadmillSpeedKmh = null;
     this.isTracking = true;
     this.isPaused = false;
     this.isSimulation = false;
@@ -326,9 +327,9 @@ export class GPSRunner {
     this.elevationGainM = 0;
     this.resumeFromHidden = false;
     this.filter.reset();
-    this.lastMotionAt = Date.now();
+    this.lastMotionAt = 0;
     this.lastStepAt = 0;
-    this.gpsAccuracy = `트레드밀 ${this.treadmillSpeedKmh} km/h · 준비`;
+    this.gpsAccuracy = "헬스장 · 타이머 기록 중. 폰은 콘솔에 두셔도 됩니다";
     this.requestWakeLock();
     this.startVisibilityWatch();
     this.emitUpdate();
@@ -337,27 +338,27 @@ export class GPSRunner {
     this.timerId = setInterval(() => {
       if (!this.isPaused) {
         this.elapsedSeconds += 1;
-        this.tickTreadmill();
         this.emitUpdate();
       }
     }, 1000);
-
-    const motionOk = await this.enableMotionSensor();
-    this.motionGated = motionOk;
-    if (!motionOk) {
-      this.gpsAccuracy = `트레드밀 ${this.treadmillSpeedKmh} km/h · 속도 기준 기록`;
-      this.emitUpdate();
-    }
   }
 
-  tickTreadmill() {
-    const moving = !this.motionGated || (Date.now() - this.lastMotionAt < 3000) || this.elapsedSeconds <= 2;
-    if (moving) {
-      this.totalMeters += (this.treadmillSpeedKmh * 1000) / 3600;
-      this.gpsAccuracy = `트레드밀 ${this.treadmillSpeedKmh} km/h`;
-    } else {
-      this.gpsAccuracy = "움직임이 약합니다. 폰을 잡고 달려 주세요";
+  // 헬스장 정본 거리는 트레드밀 화면 숫자다. 속도 칩이나 폰 센서로 추정하지 않는다.
+  confirmConsoleDistance(distanceKm) {
+    const km = Number(String(distanceKm).replace(",", "."));
+    if (!Number.isFinite(km) || km <= 0) {
+      return { ok: false, reason: "invalid" };
     }
+    const hours = this.elapsedSeconds / 3600;
+    const maxKm = Math.max(0.01, hours * MAX_TREADMILL_KMH);
+    if (km > maxKm) {
+      return { ok: false, reason: "too_fast", maxKm };
+    }
+    this.totalMeters = km * 1000;
+    this.movingStartedSec = 0;
+    this.runMode = "treadmill";
+    this.gpsAccuracy = `헬스장 기계 ${km.toFixed(3)} km`;
+    return { ok: true, stats: this.getStats() };
   }
 
   async enableMotionSensor() {
@@ -696,7 +697,7 @@ export class GPSRunner {
       elevationGainM: Math.round(this.elevationGainM),
       routePoints: this.positions,
       runMode: this.runMode,
-      treadmillSpeedKmh: this.runMode === "treadmill" ? this.treadmillSpeedKmh : null
+      treadmillSpeedKmh: null
     };
   }
 

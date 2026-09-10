@@ -148,7 +148,7 @@
 ## 6. 📂 핵심 파일별 역할 및 시스템 매핑
 
 ```
-Test_proj/proj_01/
+Test_proj/Runnow/
 ├── index.html              # 메인 러닝 OS 앱 쉘 (5대 탭 UI, NRC Live HUD, 다마고치 룸)
 ├── workout.html            # AI 웹캠 모션 트레이닝 화면 (MediaPipe + YouTube 듀얼 뷰)
 ├── styles.css              # NRC 시그니처 볼트/다크 테마 디자인 시스템 (글래스모피즘)

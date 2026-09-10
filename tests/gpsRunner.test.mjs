@@ -358,5 +358,28 @@ function runStraight(r, meters, seconds, opts = {}) {
   check("리셋 후 기준점 해제", r.lastValidPos, null);
 }
 
+// --- 11. 헬스장 기계 거리 입력 -------------------------------------------
+{
+  const r = makeRunner();
+  r.runMode = "treadmill";
+  r.elapsedSeconds = 600;
+  r.totalMeters = 80;
+  check("입력 전 추정 거리는 정본이 아님", Math.floor(r.totalMeters) !== 1500, true);
+
+  const bad = r.confirmConsoleDistance(-1);
+  check("음수 거리 거부", bad.ok, false);
+
+  const tooFast = r.confirmConsoleDistance(20);
+  check("10분에 20km는 거부", tooFast.ok, false);
+  check("거부 사유는 too_fast", tooFast.reason, "too_fast");
+
+  const ok = r.confirmConsoleDistance("1,50");
+  check("기계 거리 입력 성공", ok.ok, true);
+  checkNear("정본 거리 1.5km", r.totalMeters, 1500, 0.001);
+  check("페이스 분모는 전체 시간", r.movingStartedSec, 0);
+  check("1.5km / 10분 페이스", ok.stats.pace, `6'40"`);
+  check("활동 칼로리 계산됨", ok.stats.calories > 0, true);
+}
+
 console.log(failed === 0 ? "\n✅ ALL PASS" : `\n❌ ${failed} FAILED`);
 process.exit(failed === 0 ? 0 : 1);

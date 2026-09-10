@@ -1,7 +1,7 @@
 # 📝 [2026-09-01] RUNNOW 프로젝트 작업일지 (WorkLog)
 
 - **프로젝트명**: RUNNOW (러닝 x 펫 육성 x AI 홈트레이닝 웹앱)
-- **작업 위치**: 지점(Spoke) (`c:\BeausCreators\03.Research\바이브코딩 연구\Test_proj\proj_01`)
+- **작업 위치**: 지점(Spoke) (`c:\BeausCreators\03.Research\바이브코딩 연구\Test_proj\Runnow`)
 - **담당자**: CTO 거누 (dept-dev)
 - **보고 대상**: 이건우 대표님
 
@@ -57,7 +57,7 @@
 ---
 
 ## 🔄 4. HQ 보고 및 산출물 보관 상태
-- **지점 산출물 보관**: `proj_01/docs/2026-09-01_RUNNOW_WorkLog.md` (완료)
-- **전략 보고서 보관**: `proj_01/docs/2026-09-01_AI_Interactive_Training_Strategy_Report.md` (완료)
+- **지점 산출물 보관**: `Runnow/docs/2026-09-01_RUNNOW_WorkLog.md` (완료)
+- **전략 보고서 보관**: `Runnow/docs/2026-09-01_AI_Interactive_Training_Strategy_Report.md` (완료)
 - **HQ 동기화 대기**: 본사 워크스페이스 세션 접속 시 즉시 본사 문서함(`BSC_HQ/1.BSC_Operation/2.문서/02.작업일지/`)으로 동기화 가능 상태 유지.
 

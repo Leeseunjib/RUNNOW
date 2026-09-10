@@ -96,7 +96,6 @@ class AppController {
     this.motionSound = new MotionSound();
     this.currentWorkoutMode = "list";
     this.runPlaceMode = "gps";
-    this.treadmillSpeedKmh = 8;
     this.targetMotionReps = 10;
     const savedLevel = localStorage.getItem("RUNNOW_MOTION_LEVEL");
     this.motionLevelId = DIFFICULTY_LEVELS[savedLevel] ? savedLevel : DEFAULT_DIFFICULTY;
@@ -875,16 +874,31 @@ class AppController {
     const calEl = document.getElementById("live-calories");
     const accuracyEl = document.getElementById("live-gps-accuracy");
 
-    if (distEl) distEl.textContent = stats.displayMeters;
-    if (unitEl) unitEl.textContent = "METERS (m)";
-    if (subDistEl) subDistEl.textContent = stats.displayKm;
-    if (paceEl) paceEl.textContent = stats.pace;
+    if (distEl) {
+      if (stats.runMode === "treadmill") {
+        distEl.textContent = stats.formattedTime;
+        if (unitEl) unitEl.textContent = "TIME";
+        if (subDistEl) subDistEl.textContent = "끝나면 기계 거리를 입력";
+      } else {
+        distEl.textContent = stats.displayMeters;
+        if (unitEl) unitEl.textContent = "METERS (m)";
+        if (subDistEl) subDistEl.textContent = stats.displayKm;
+      }
+    }
+    if (paceEl) {
+      paceEl.textContent = stats.runMode === "treadmill" ? `--'--"` : stats.pace;
+    }
     if (timeEl) timeEl.textContent = stats.formattedTime;
-    if (calEl) calEl.textContent = Number(stats.calories || 0).toLocaleString();
+    if (calEl) {
+      calEl.textContent = stats.runMode === "treadmill"
+        ? "—"
+        : Number(stats.calories || 0).toLocaleString();
+    }
     const paceNowEl = document.getElementById("live-pace-now");
     if (paceNowEl) {
-      // 전체 평균은 초반 대기와 중간 휴식에 끌려다녀 "지금 어느 정도인지"를 못 보여줍니다.
-      paceNowEl.textContent = `지금 ${stats.currentPace || `--'--"`}`;
+      paceNowEl.textContent = stats.runMode === "treadmill"
+        ? "기계 거리 입력 후 계산"
+        : `지금 ${stats.currentPace || `--'--"`}`;
     }
 
     if (accuracyEl && stats.gpsAccuracy) {
@@ -1689,7 +1703,7 @@ ${parts.join(" · ")}`;
       btnStartLive.addEventListener("click", async () => {
         this.gpsRunner.setWeight(this.userProfile.weightKg);
         if (this.runPlaceMode === "treadmill") {
-          await this.gpsRunner.startTreadmill(this.treadmillSpeedKmh);
+          await this.gpsRunner.startTreadmill();
         } else {
           this.gpsRunner.startRun(false);
         }
@@ -1756,10 +1770,99 @@ ${parts.join(" · ")}`;
 
     if (btnStop) {
       btnStop.addEventListener("click", () => {
-        const stats = this.gpsRunner.stopRun();
-        initBox.style.display = "block";
-        activeBox.style.display = "none";
-        metricCircle.classList.remove("active-pulse");
+        if (this.runPlaceMode === "treadmill" || this.gpsRunner.runMode === "treadmill") {
+          this.gpsRunner.stopRun();
+          this.openTreadmillDistanceModal();
+          return;
+        }
+        this.commitRun(this.gpsRunner.stopRun());
+      });
+    }
+    this.bindTreadmillDistanceModal();
+  }
+
+  openTreadmillDistanceModal() {
+    const initBox = document.getElementById("run-init-controls");
+    const activeBox = document.getElementById("run-active-controls");
+    const metricCircle = document.getElementById("metric-circle");
+    const modal = document.getElementById("treadmill-distance-modal");
+    const elapsedEl = document.getElementById("treadmill-elapsed-label");
+    const input = document.getElementById("treadmill-distance-input");
+    const err = document.getElementById("treadmill-distance-error");
+
+    if (initBox) initBox.style.display = "block";
+    if (activeBox) activeBox.style.display = "none";
+    if (metricCircle) metricCircle.classList.remove("active-pulse");
+    this.lockRunPlaceUi(false);
+
+    const stats = this.gpsRunner.getStats();
+    if (elapsedEl) elapsedEl.textContent = stats.formattedTime;
+    if (input) {
+      input.value = "";
+      input.focus();
+    }
+    if (err) {
+      err.style.display = "none";
+      err.textContent = "";
+    }
+    if (modal) modal.style.display = "flex";
+  }
+
+  bindTreadmillDistanceModal() {
+    const modal = document.getElementById("treadmill-distance-modal");
+    const input = document.getElementById("treadmill-distance-input");
+    const err = document.getElementById("treadmill-distance-error");
+    const btnConfirm = document.getElementById("btn-confirm-treadmill-distance");
+    const btnCancel = document.getElementById("btn-cancel-treadmill-distance");
+
+    const closeModal = () => {
+      if (modal) modal.style.display = "none";
+    };
+
+    const showError = (msg) => {
+      if (!err) return;
+      err.textContent = msg;
+      err.style.display = "block";
+    };
+
+    if (btnConfirm) {
+      btnConfirm.addEventListener("click", () => {
+        const result = this.gpsRunner.confirmConsoleDistance(input ? input.value : "");
+        if (!result.ok) {
+          if (result.reason === "too_fast") {
+            showError(`기록 시간 대비 너무 빠릅니다. ${result.maxKm.toFixed(2)} km 이하로 입력해 주세요.`);
+          } else {
+            showError("트레드밀 화면에 나온 거리를 km로 입력해 주세요.");
+          }
+          return;
+        }
+        closeModal();
+        this.commitRun(result.stats);
+      });
+    }
+
+    if (input) {
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") btnConfirm?.click();
+      });
+    }
+
+    if (btnCancel) {
+      btnCancel.addEventListener("click", () => {
+        this.gpsRunner.reset();
+        this.restoreIdleRunUi();
+        closeModal();
+      });
+    }
+  }
+
+  commitRun(stats) {
+        const initBox = document.getElementById("run-init-controls");
+        const activeBox = document.getElementById("run-active-controls");
+        const metricCircle = document.getElementById("metric-circle");
+        if (initBox) initBox.style.display = "block";
+        if (activeBox) activeBox.style.display = "none";
+        if (metricCircle) metricCircle.classList.remove("active-pulse");
         this.lockRunPlaceUi(false);
 
         const paceSec = parsePaceToSeconds(stats.pace);
@@ -1777,7 +1880,7 @@ ${parts.join(" · ")}`;
           earnedCoins: earnedCoins,
           workoutType: result.workoutType,
           runMode: stats.runMode || this.runPlaceMode,
-          treadmillSpeedKmh: stats.treadmillSpeedKmh || null
+          treadmillSpeedKmh: null
         };
 
         const savedLog = this.firebaseSandbox.addWorkoutLog(this.currentUserId, workoutPayload);
@@ -1807,8 +1910,6 @@ ${parts.join(" · ")}`;
         this.renderChallengeView();
         this.renderQuestView(this.currentQuestCategory || "all");
         this.showCelebrationModal(stats, result, earnedCoins, chalMsg);
-      });
-    }
   }
 
   restoreIdleRunUi() {
@@ -1836,14 +1937,14 @@ ${parts.join(" · ")}`;
     if (calEl) calEl.textContent = "0";
     if (accuracyEl) {
       accuracyEl.textContent = this.runPlaceMode === "treadmill"
-        ? `트레드밀 ${this.treadmillSpeedKmh} km/h 대기중`
+        ? "헬스장 · 끝나면 기계 거리를 입력합니다"
         : "🛰️ 야외 GPS 대기중";
     }
     this.lockRunPlaceUi(false);
   }
 
   bindRunPlaceMode() {
-    const speedRow = document.getElementById("treadmill-speed-row");
+    const hint = document.getElementById("treadmill-hint");
     const startLabel = document.getElementById("btn-start-live-label");
     const accuracyEl = document.getElementById("live-gps-accuracy");
     const cardLabel = document.getElementById("run-card-label");
@@ -1853,16 +1954,16 @@ ${parts.join(" · ")}`;
       document.querySelectorAll(".run-place-btn").forEach((btn) => {
         btn.classList.toggle("active", btn.dataset.runPlace === mode);
       });
-      if (speedRow) speedRow.style.display = mode === "treadmill" ? "flex" : "none";
+      if (hint) hint.style.display = mode === "treadmill" ? "block" : "none";
       if (startLabel) {
-        startLabel.textContent = mode === "treadmill" ? "트레드밀 러닝 시작" : "야외 GPS 러닝 시작";
+        startLabel.textContent = mode === "treadmill" ? "헬스장 러닝 시작" : "야외 GPS 러닝 시작";
       }
       if (cardLabel) {
         cardLabel.textContent = mode === "treadmill" ? "GYM TREADMILL" : "LIVE GPS RUNNER";
       }
       if (accuracyEl && !this.gpsRunner.isTracking) {
         accuracyEl.textContent = mode === "treadmill"
-          ? `트레드밀 ${this.treadmillSpeedKmh} km/h 대기중`
+          ? "헬스장 · 끝나면 기계 거리를 입력합니다"
           : "🛰️ 야외 GPS 대기중";
       }
     };
@@ -1874,23 +1975,11 @@ ${parts.join(" · ")}`;
       });
     });
 
-    document.querySelectorAll("#treadmill-speed-chips .target-chip").forEach((chip) => {
-      chip.addEventListener("click", () => {
-        if (this.gpsRunner.isTracking) return;
-        document.querySelectorAll("#treadmill-speed-chips .target-chip").forEach((c) => c.classList.remove("active"));
-        chip.classList.add("active");
-        this.treadmillSpeedKmh = parseFloat(chip.dataset.speed) || 8;
-        if (this.runPlaceMode === "treadmill" && accuracyEl && !this.gpsRunner.isTracking) {
-          accuracyEl.textContent = `트레드밀 ${this.treadmillSpeedKmh} km/h 대기중`;
-        }
-      });
-    });
-
     applyPlace(this.runPlaceMode);
   }
 
   lockRunPlaceUi(locked) {
-    document.querySelectorAll(".run-place-btn, #treadmill-speed-chips .target-chip").forEach((el) => {
+    document.querySelectorAll(".run-place-btn").forEach((el) => {
       el.disabled = !!locked;
     });
   }

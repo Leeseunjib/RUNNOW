@@ -2,7 +2,7 @@
 - **일자**: 2026-09-07
 - **담당자**: CTO 거누 (Backend/Infra/Architecture Lead)
 - **프로젝트**: RUNNOW (RunGotchi)
-- **위치**: `proj_01` (Spoke) ➔ `01.BSC_HQ` (Hub)
+- **위치**: `Runnow` (Spoke) ➔ `01.BSC_HQ` (Hub)
 
 ---
 
