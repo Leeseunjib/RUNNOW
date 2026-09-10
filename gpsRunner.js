@@ -136,9 +136,6 @@ export class GPSRunner {
     this.gpsAccuracy = "탐색중";
     this.runMode = "gps";
     this.treadmillSpeedKmh = null;
-    this.motionGated = false;
-    this.lastMotionAt = 0;
-    this.lastStepAt = 0;
     this.movingStartedSec = null;  // 첫 유효 이동이 관측된 시점의 경과초
     this.wakeLock = null;
     this.resumeFromHidden = false; // 화면이 꺼졌다 켜진 직후인지
@@ -152,7 +149,6 @@ export class GPSRunner {
     this._onVisibility = null;
     this.rejectedByAccuracy = 0;
     this.lastAccuracy = null;
-    this._onMotion = null;
   }
 
   setWeight(weightKg) {
@@ -203,7 +199,6 @@ export class GPSRunner {
   }
 
   startRun(useSimulation = false) {
-    this.stopMotionSensor();
     if (this.timerId) {
       clearInterval(this.timerId);
       this.timerId = null;
@@ -327,8 +322,6 @@ export class GPSRunner {
     this.elevationGainM = 0;
     this.resumeFromHidden = false;
     this.filter.reset();
-    this.lastMotionAt = 0;
-    this.lastStepAt = 0;
     this.gpsAccuracy = "헬스장 · 타이머 기록 중. 폰은 콘솔에 두셔도 됩니다";
     this.requestWakeLock();
     this.startVisibilityWatch();
@@ -359,42 +352,6 @@ export class GPSRunner {
     this.runMode = "treadmill";
     this.gpsAccuracy = `헬스장 기계 ${km.toFixed(3)} km`;
     return { ok: true, stats: this.getStats() };
-  }
-
-  async enableMotionSensor() {
-    try {
-      if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
-        const state = await DeviceMotionEvent.requestPermission();
-        if (state !== "granted") return false;
-      }
-      if (typeof DeviceMotionEvent === "undefined") return false;
-      this.stopMotionSensor();
-      this._onMotion = (event) => this.handleDeviceMotion(event);
-      window.addEventListener("devicemotion", this._onMotion);
-      return true;
-    } catch (err) {
-      console.warn("DeviceMotion 권한 실패:", err);
-      return false;
-    }
-  }
-
-  stopMotionSensor() {
-    if (this._onMotion) {
-      window.removeEventListener("devicemotion", this._onMotion);
-      this._onMotion = null;
-    }
-    this.motionGated = false;
-  }
-
-  handleDeviceMotion(event) {
-    const acc = event.accelerationIncludingGravity || event.acceleration;
-    if (!acc) return;
-    const mag = Math.sqrt((acc.x || 0) ** 2 + (acc.y || 0) ** 2 + (acc.z || 0) ** 2);
-    const now = Date.now();
-    if (mag > 12.5 && now - this.lastStepAt > 280) {
-      this.lastStepAt = now;
-      this.lastMotionAt = now;
-    }
   }
 
   handleGeoSuccess(position) {
@@ -535,7 +492,6 @@ export class GPSRunner {
       navigator.geolocation.clearWatch(this.watchId);
       this.watchId = null;
     }
-    this.stopMotionSensor();
   }
 
   stopRun() {
