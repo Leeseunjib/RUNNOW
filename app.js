@@ -908,7 +908,23 @@ class AppController {
     if (paceEl) paceEl.textContent = stats.pace;
     if (timeEl) timeEl.textContent = stats.formattedTime;
     if (calEl) calEl.textContent = Number(stats.calories || 0).toLocaleString();
-    if (accuracyEl && stats.gpsAccuracy) accuracyEl.textContent = `🛰️ ${stats.gpsAccuracy}`;
+    if (accuracyEl && stats.gpsAccuracy) {
+      // 내부테스트에서는 진단값을 함께 노출합니다. 어제처럼 "수치가 이상하다"는 보고를
+      // 받았을 때 추측하지 않고 원인을 좁히기 위한 정보입니다.
+      const isTestEnv = typeof window !== "undefined" && window.__IS_INTERNAL_TEST_ENV__;
+      let text = `🛰️ ${stats.gpsAccuracy}`;
+      if (isTestEnv && stats.runMode === "gps") {
+        const parts = [];
+        if (stats.lastAccuracy != null) parts.push(`오차 ±${stats.lastAccuracy}m`);
+        parts.push(`인정구간 ${stats.routePoints.length}`);
+        if (stats.rejectedByAccuracy > 0) parts.push(`정확도폐기 ${stats.rejectedByAccuracy}`);
+        parts.push(`달린시간 ${stats.runningSeconds}s`);
+        text += `
+${parts.join(" · ")}`;
+      }
+      accuracyEl.textContent = text;
+      accuracyEl.style.whiteSpace = "pre-line";
+    }
   }
 
   showWorkoutView(mode) {

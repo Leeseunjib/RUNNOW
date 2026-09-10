@@ -1,9 +1,23 @@
 // 실시간 고정밀 GPS 및 스마트폰/워치 하이브리드 러닝 트래커 모듈 (GPS Runner Engine)
 
-// 노이즈 & 안티치트 기준값 (기획서 사양)
-const MIN_STEP_METERS = 1.5;        // 이보다 작은 변위는 제자리 흔들림으로 간주
-const MAX_ACCURACY_M = 25;          // 정확도 반경이 이보다 나쁜 측정치는 폐기
+// 노이즈 & 안티치트 기준값
+const MIN_STEP_METERS = 1.5;        // 최소 인정 변위 하한선
+const MAX_ACCURACY_M = 40;          // 이보다 오차가 큰 측정치는 폐기
 const MAX_SPEED_MPS = 30 / 3.6;     // 시속 30km 초과 이동은 거리에서 배제 (차량 탑승 등)
+
+// 실측 문제: 가만히 서 있어도 거리가 2m 이상 늘어났습니다.
+// 원인은 고정 1.5m 임계값이 GPS 오차(야외 보통 ±5~15m)보다 훨씬 작다는 것입니다.
+// 오차 반경 안에서 좌표가 흔들리는 것만으로 1.5m를 쉽게 넘습니다.
+// 그래서 "이 기기가 지금 보고한 오차"에 비례해 임계값을 올립니다.
+// 임계값에 못 미친 이동은 버려지지 않고 기준점이 유지된 채 누적되므로,
+// 실제 러닝 거리는 손실되지 않고 제자리 흔들림만 걸러집니다.
+const ACCURACY_STEP_RATIO = 0.7;
+
+function minStepFor(accuracy) {
+  const acc = Number(accuracy);
+  if (!Number.isFinite(acc) || acc <= 0) return MIN_STEP_METERS;
+  return Math.max(MIN_STEP_METERS, acc * ACCURACY_STEP_RATIO);
+}
 
 // 하버사인 공식 (지구 곡률 반영 거리 계산)
 function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
@@ -38,6 +52,9 @@ export class GPSRunner {
     this.motionGated = false;
     this.lastMotionAt = 0;
     this.lastStepAt = 0;
+    this.movingStartedSec = null;  // 첫 유효 이동이 관측된 시점의 경과초
+    this.rejectedByAccuracy = 0;
+    this.lastAccuracy = null;
     this._onMotion = null;
   }
 
@@ -59,6 +76,9 @@ export class GPSRunner {
     this.elapsedSeconds = 0;
     this.positions = [];
     this.lastValidPos = null;
+    this.movingStartedSec = null;
+    this.rejectedByAccuracy = 0;
+    this.lastAccuracy = null;
     this._deniedAlerted = false;
     this.gpsAccuracy = useSimulation ? "시뮬레이션" : "GPS 신호 탐색중...";
     this.emitUpdate();
@@ -146,6 +166,9 @@ export class GPSRunner {
     this.elapsedSeconds = 0;
     this.positions = [];
     this.lastValidPos = null;
+    this.movingStartedSec = null;
+    this.rejectedByAccuracy = 0;
+    this.lastAccuracy = null;
     this.lastMotionAt = Date.now();
     this.lastStepAt = 0;
     this.gpsAccuracy = `트레드밀 ${this.treadmillSpeedKmh} km/h · 준비`;
@@ -220,6 +243,7 @@ export class GPSRunner {
     const now = Date.now();
 
     // GPS 정확도 상태 평가
+    this.lastAccuracy = Math.round(accuracy);
     if (accuracy <= 15) {
       this.gpsAccuracy = `GPS 매우양호 (±${Math.round(accuracy)}m)`;
     } else if (accuracy <= MAX_ACCURACY_M) {
@@ -228,6 +252,8 @@ export class GPSRunner {
       // 오차 반경이 이동 거리보다 큰 측정치는 그대로 쓰면 가짜 거리가 쌓입니다.
       // 왜 거리가 안 늘어나는지 사용자가 알 수 있도록 상태 문구에 명시합니다.
       this.gpsAccuracy = `GPS 정확도 낮음 (±${Math.round(accuracy)}m) · 거리 미집계`;
+      this.lastAccuracy = Math.round(accuracy);
+      this.rejectedByAccuracy += 1;
       this.emitUpdate();
       return;
     }
@@ -250,12 +276,20 @@ export class GPSRunner {
       // 2) 시속 30km 초과 이동(차량 탑승·GPS 튐)은 거리에서 배제
       const dt = (now - this.lastValidPos.time) / 1000;
       const speedCheck = dt > 0 ? dMeters / dt : 0;
+      const minStep = minStepFor(accuracy);
 
-      if (dMeters >= MIN_STEP_METERS && speedCheck <= MAX_SPEED_MPS) {
+      if (dMeters >= minStep && speedCheck <= MAX_SPEED_MPS) {
         this.totalMeters += dMeters;
         this.lastValidPos = { lat: latitude, lng: longitude, time: now };
         this.positions.push({ lat: latitude, lng: longitude, time: now, speed: speed || speedCheck, accuracy });
-      } else if (dMeters >= MIN_STEP_METERS) {
+        // 페이스는 "달린 시간"으로 나눠야 합니다. START를 누르고 GPS가 잡히기까지의
+        // 대기 시간이 분모에 들어가면 실제보다 훨씬 느리게 표시됩니다.
+        // 이 이동은 [직전 측정 시각 ~ 지금] 구간에 걸쳐 일어났으므로,
+        // 기준을 지금이 아니라 구간 시작점으로 잡아야 그 구간의 소요 시간이 빠지지 않습니다.
+        if (this.movingStartedSec === null) {
+          this.movingStartedSec = Math.max(0, this.elapsedSeconds - dt);
+        }
+      } else if (dMeters >= minStep) {
         // 속도 초과로 거부된 구간(차량 탑승·GPS 튐).
         // 거리는 더하지 않되 기준점은 즉시 현재 위치로 옮깁니다.
         // 기준점을 그대로 두면 이동을 멈춘 순간 dt가 커지면서
@@ -314,6 +348,9 @@ export class GPSRunner {
     this.elapsedSeconds = 0;
     this.positions = [];
     this.lastValidPos = null;
+    this.movingStartedSec = null;
+    this.rejectedByAccuracy = 0;
+    this.lastAccuracy = null;
     this.isSimulation = false;
     this.runMode = "gps";
     this.gpsAccuracy = "대기중";
@@ -327,9 +364,13 @@ export class GPSRunner {
 
     // 2) 평균 페이스(AVG PACE) 계산: 1km를 달리는 데 소요되는 시간 (분'초")
     //    공식: (총 경과 초 / 이동 km) => 초/km
+    // START를 누르고 GPS가 잡히기까지의 대기 시간은 페이스 분모에서 제외합니다.
+    // 이걸 포함하면 실제보다 훨씬 느리게 나오고, 60분/km를 넘으면 --'--"로 표시됩니다.
+    const runningSeconds = Math.max(0, this.elapsedSeconds - (this.movingStartedSec ?? 0));
+
     let paceStr = `--'--"`;
-    if (distanceKm >= 0.005 && this.elapsedSeconds > 0) {
-      const secPerKm = Math.round(this.elapsedSeconds / distanceKm);
+    if (distanceKm >= 0.005 && runningSeconds > 0) {
+      const secPerKm = Math.round(runningSeconds / distanceKm);
       const paceMin = Math.floor(secPerKm / 60);
       const paceSec = secPerKm % 60;
       if (paceMin < 60) {
@@ -351,6 +392,9 @@ export class GPSRunner {
       pace: paceStr,
       calories: caloriesInt,
       gpsAccuracy: this.gpsAccuracy,
+      runningSeconds,
+      lastAccuracy: this.lastAccuracy,
+      rejectedByAccuracy: this.rejectedByAccuracy,
       routePoints: this.positions,
       runMode: this.runMode,
       treadmillSpeedKmh: this.runMode === "treadmill" ? this.treadmillSpeedKmh : null

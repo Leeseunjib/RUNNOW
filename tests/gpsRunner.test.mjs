@@ -173,8 +173,58 @@ const METERS_PER_LAT_DEGREE = 6371000 * (Math.PI / 180);
   check("차량 이동 30초 → 거리 미반영", Math.round(r.totalMeters), 0);
 
   // 차에서 내려 60초 뒤 걷기 시작 (기준점이 재설정돼 있어야 함)
-  feedPoint(r, lat + 3 / METERS_PER_LAT_DEGREE, BASE_LNG, { secondsSinceLast: 60 });
-  check("정차 후에도 차량 구간이 거리로 둔갑하지 않음", Math.round(r.totalMeters), 3);
+  // 정확도 ±5m에서는 노이즈 임계값이 3.5m이므로, 그보다 확실히 큰 10m를 걷습니다.
+  feedPoint(r, lat + 10 / METERS_PER_LAT_DEGREE, BASE_LNG, { secondsSinceLast: 60 });
+  check("정차 후에도 차량 구간이 거리로 둔갑하지 않음", Math.round(r.totalMeters), 10);
+}
+
+// --- 9-3. 실측 회귀: 서 있는데 거리가 늘어나면 안 된다 -------------------
+// 실기기 테스트에서 "가만히 서 있는데 2m 이상 늘어난다"는 보고가 있었습니다.
+// 고정 1.5m 임계값이 GPS 오차(야외 ±5~15m)보다 작아 노이즈가 그대로 통과했습니다.
+{
+  const r = makeRunner();
+  // 정확도 ±12m 환경에서 제자리에 서 있는 상황 (좌표가 오차 범위 안에서 흔들림)
+  feedPoint(r, BASE_LAT, BASE_LNG, { accuracy: 12 });
+  let lat = BASE_LAT;
+  for (let i = 0; i < 60; i++) {
+    // 매 초 무작위 방향으로 2~4m씩 흔들림 (실제 GPS drift 수준)
+    const drift = ((i % 7) - 3) * 1.2 / METERS_PER_LAT_DEGREE;
+    lat = BASE_LAT + drift;
+    feedPoint(r, lat, BASE_LNG, { accuracy: 12, secondsSinceLast: 1 });
+  }
+  check("±12m 정확도로 60초 정지 → 누적 거리 0", Math.round(r.totalMeters), 0);
+}
+
+{
+  // 반대로, 정확도가 좋으면 작은 이동도 잡아야 합니다.
+  const r = makeRunner();
+  feedPoint(r, BASE_LAT, BASE_LNG, { accuracy: 3 });
+  feedPoint(r, BASE_LAT + 5 / METERS_PER_LAT_DEGREE, BASE_LNG, { accuracy: 3, secondsSinceLast: 2 });
+  checkNear("정확도 ±3m에서 5m 이동은 인정", r.totalMeters, 5, 0.5);
+}
+
+// --- 9-4. 실측 회귀: AVG PACE가 GPS 대기 시간에 오염되면 안 된다 ---------
+// START를 누르고 GPS가 잡히기까지 걸린 시간이 분모에 들어가면
+// 실제보다 훨씬 느리게 나오고, 60분/km를 넘으면 --'--"로 표시됩니다.
+{
+  const r = makeRunner();
+  r.elapsedSeconds = 90;          // START 후 90초간 GPS 대기 (아직 이동 없음)
+  feedPoint(r, BASE_LAT, BASE_LNG, { accuracy: 5 });
+
+  // 이제부터 300초 동안 1km 주행
+  let lat = BASE_LAT;
+  const step = 20 / METERS_PER_LAT_DEGREE;
+  for (let i = 0; i < 50; i++) {
+    lat += step;
+    r.elapsedSeconds += 6;
+    feedPoint(r, lat, BASE_LNG, { accuracy: 5, secondsSinceLast: 6 });
+  }
+
+  const s = r.getStats();
+  check("대기 시간은 페이스 분모에서 제외", s.runningSeconds, 300);
+  check("실제 페이스 5'00\" 표시", s.pace, "5'00\"");
+  // 대기 시간을 포함했다면 390초/km = 6'30"이 나왔을 것입니다.
+  check("총 경과 시간은 그대로 보존", s.elapsedSeconds, 390);
 }
 
 // --- 10. 리셋 -------------------------------------------------------------
