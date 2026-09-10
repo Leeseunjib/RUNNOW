@@ -539,5 +539,102 @@ function trackThroughMotion(label, tracker, frames) {
   check("스쿼트가 플랭크보다 높음", squat > plank, true);
 }
 
+// --- 22. 실기기 회귀: 다른 사람이 앞을 가로막아도 세지 않는다 -------------
+// 실기기 테스트에서 "다른 사람이 앞을 가로막았을 때 숫자가 막 세어졌다"는 보고를
+// 받았습니다. 화면에 한 명뿐이면 무조건 인정하던 규칙 때문이었습니다.
+//
+// 사람은 1/30초 만에 순간이동할 수 없습니다. 실측 프레임 간 변화량은
+//   내 스쿼트(흔들림 포함) 0.188 / 옆에서 끼어듦 0.411 / 앞을 가로막음 1.55~2.14
+// 로 확실히 갈리므로, 연속성으로 판정합니다.
+{
+  const squatCycle = [];
+  for (let a = 175; a >= 75; a -= 5) squatCycle.push(a);
+  for (let a = 75; a <= 175; a += 5) squatCycle.push(a);
+
+  const startTracking = () => {
+    const t = makeTracker("SQUAT", "intermediate");
+    t.lastLandmarks = squatLandmarks(175);
+    t.lockSubject(squatLandmarks(175));
+    t.enterPhase("calibrating");
+    t.enterPhase("counting");
+    return t;
+  };
+
+  // (1) 혼자 운동은 절대 놓치지 않는다
+  {
+    const t = startTracking();
+    let rejected = 0;
+    let n = 0;
+    for (let r = 0; r < 5; r++) {
+      for (const a of squatCycle) {
+        const frame = movePerson(squatLandmarks(a), Math.sin(n * 0.3) * 0.015, 1);
+        n++;
+        const picked = t.selectSubjectPose([frame]);
+        if (!picked) rejected++;
+        else t.noteSubjectSeen(picked);
+      }
+    }
+    check("혼자 스쿼트 5회 · 거부 프레임", rejected, 0);
+  }
+
+  // (2) 가로막은 사람만 보이면 한 프레임도 인정하지 않는다
+  {
+    const t = startTracking();
+    for (const a of squatCycle.slice(0, 10)) {
+      const picked = t.selectSubjectPose([squatLandmarks(a)]);
+      if (picked) t.noteSubjectSeen(picked);
+    }
+    let accepted = 0;
+    for (let i = 0; i < 20; i++) {
+      // 앞을 가로막은 사람은 더 크게(1.4배) 잡힙니다
+      if (t.selectSubjectPose([movePerson(squatLandmarks(170 - i * 2), 0.02, 1.4)])) accepted++;
+    }
+    check("가로막은 사람만 보임 · 인정 프레임", accepted, 0);
+  }
+
+  // (3) 나와 끼어든 사람이 동시에 보이면 나를 고른다
+  {
+    const t = startTracking();
+    let wrong = 0;
+    let n = 0;
+    for (let r = 0; r < 3; r++) {
+      for (const a of squatCycle) {
+        const me = squatLandmarks(a);
+        const other = movePerson(squatLandmarks(squatCycle[(n + 10) % squatCycle.length]), 0.28, 1.3);
+        n++;
+        const picked = t.selectSubjectPose([other, me]);
+        if (picked !== me) wrong++;
+        else t.noteSubjectSeen(picked);
+      }
+    }
+    check("나 + 끼어든 사람 · 오선택", wrong, 0);
+  }
+
+  // (4) 가로막은 사람이 스쿼트를 해도 내 카운트는 오르지 않는다
+  {
+    const t = startTracking();
+    for (const a of squatCycle.slice(0, 10)) {
+      const picked = t.selectSubjectPose([squatLandmarks(a)]);
+      if (picked) t.noteSubjectSeen(picked);
+    }
+    for (let r = 0; r < 5; r++) {
+      for (const a of squatCycle) {
+        const picked = t.selectSubjectPose([movePerson(squatLandmarks(a), 0.02, 1.4)]);
+        if (picked) t.processExerciseLogic(picked);
+      }
+    }
+    check("가로막은 사람이 스쿼트 5회 → 내 카운트", t.repCount, 0);
+  }
+
+  // (5) 추적이 오래 끊기면 아무도 인정하지 않고 재준비로 넘어간다
+  {
+    const t = startTracking();
+    const picked = t.selectSubjectPose([squatLandmarks(170)]);
+    if (picked) t.noteSubjectSeen(picked);
+    t.lastAcceptedAt = Date.now() - 2000;   // 2초 공백
+    check("2초 공백 후에는 인정하지 않음", t.selectSubjectPose([squatLandmarks(170)]), null);
+  }
+}
+
 console.log(failed === 0 ? "\n✅ ALL PASS" : `\n❌ ${failed} FAILED`);
 process.exit(failed === 0 ? 0 : 1);

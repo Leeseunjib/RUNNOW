@@ -182,6 +182,19 @@ const SUBJECT_RELEASE_MS = 10000;     // 완전히 사라지면 잠금 해제(�
 const SUBJECT_LOCK_ALPHA = 0.3;       // 잠금 서명을 현재 자세로 따라가게 하는 EMA 계수
 const VERTICAL_WEIGHT = 0.4;          // 세로 이동은 운동 자체로 크게 변하므로 낮게 반영
 
+// 프레임 간 연속성 검사 (카운트 중에만 적용)
+//
+// 사람은 1/30초 만에 순간이동할 수 없습니다. 실측한 프레임 간 변화량입니다.
+//   내 스쿼트 동작(흔들림 포함) : 최대 0.188
+//   옆에서 끼어듦               : 0.411
+//   앞을 가로막음               : 1.55 ~ 2.14
+// 이 격차를 이용하면 "나"와 "끼어든 사람"을 확실히 가릅니다.
+// 잠금 서명과의 절대 거리로는 구분할 수 없었습니다(운동 중 내 몸 이동량이
+// 옆 사람과의 거리보다 커서 값이 역전됨). 연속성은 그 역전이 없습니다.
+const JUMP_BASE = 0.25;               // 한 프레임에 허용하는 기본 변화량
+const JUMP_RATE = 0.8;                // 프레임 간격이 벌어진 만큼 추가 허용
+const MAX_TRACK_GAP_SEC = 0.6;        // 이보다 오래 끊기면 추적을 포기하고 재준비
+
 // 준비 게이트를 오래 통과하지 못할 때의 탈출구
 // 좁은 방·어두운 조명·폰 각도 때문에 전신이 안 잡히면 영영 카운트를 시작할 수 없습니다.
 const RELAX_OFFER_MS = 12000;         // 이 시간 넘게 막히면 완화 모드를 제안
@@ -243,6 +256,8 @@ export class MotionTracker {
     this.subjectLock = null;      // { center:{x,y}, scale, ratio }
     this.subjectMissingSince = 0;
     this.visiblePersonCount = 0;
+    this.lastAcceptedSig = null;   // 직전에 인정한 프레임의 신체 서명
+    this.lastAcceptedAt = 0;
 
     // 세트 종료 후 폼 리포트를 만들기 위한 회차별 기록
     this.repLog = [];           // { deepest, descentMs, ascentMs, sideDelta }
@@ -951,6 +966,8 @@ export class MotionTracker {
     this.subjectLock = null;
     this.subjectMissingSince = 0;
     this.visiblePersonCount = 0;
+    this.lastAcceptedSig = null;   // 직전에 인정한 프레임의 신체 서명
+    this.lastAcceptedAt = 0;
   }
 
   // 검출된 여러 사람 중 "잠긴 운동자"만 골라냅니다. 없으면 null(=판정 중단).
@@ -964,20 +981,37 @@ export class MotionTracker {
     this.visiblePersonCount = scored.length;
     if (scored.length === 0) return null;
 
-    if (!this.subjectLock) {
-      // 잠금 전에는 화면 가운데에 가장 크게 잡힌 사람을 후보로 봅니다.
-      let best = scored[0];
+    // 카운트 중에는 프레임 간 연속성으로 판정합니다.
+    // 사람은 순간이동할 수 없으므로, 직전 프레임에서 크게 튀면 다른 사람입니다.
+    // 화면에 한 명뿐이어도 그 사람이 내가 아니면 인정하지 않습니다.
+    if (this.phase === "counting" && this.lastAcceptedSig) {
+      const dt = Math.max(0, (Date.now() - this.lastAcceptedAt) / 1000);
+      if (dt > MAX_TRACK_GAP_SEC) return null;   // 너무 오래 끊겼으면 재준비
+
+      const maxJump = JUMP_BASE + JUMP_RATE * dt;
+      let best = null;
+      let bestJump = Infinity;
       for (const c of scored) {
-        if (this.setupScore(c.sig) > this.setupScore(best.sig)) best = c;
+        const jump = this.signatureDistance(c.sig, this.lastAcceptedSig);
+        if (jump < bestJump) {
+          bestJump = jump;
+          best = c;
+        }
       }
-      return best.lm;
+      return bestJump <= maxJump ? best.lm : null;
     }
 
-    // 한 명뿐이면 고를 것이 없습니다. 여기서 거부하면 혼자 운동하는 대다수 사용자가
-    // 자기 동작 때문에 카운트를 놓칩니다(측정상 스쿼트 중 거리가 1.78까지 올라감).
-    if (scored.length === 1) return scored[0].lm;
+    if (!this.subjectLock) {
+      // 아직 잠기지 않았으면 화면 가운데에 가장 크게 잡힌 사람을 후보로 봅니다.
+      let pick = scored[0];
+      for (const c of scored) {
+        if (this.setupScore(c.sig) > this.setupScore(pick.sig)) pick = c;
+      }
+      return pick.lm;
+    }
 
-    // 여러 명일 때만 서명이 가장 가까운 사람을 고릅니다. 절대 거부는 하지 않습니다.
+    // 준비 단계에서는 시작 자세를 유지해야 통과하므로, 지나가는 사람은
+    // 자세 요건에서 걸러집니다. 여기서는 잠금과 가장 가까운 사람을 고릅니다.
     let best = scored[0];
     let bestDistance = this.signatureDistance(best.sig, this.subjectLock);
     for (const c of scored.slice(1)) {
@@ -993,6 +1027,11 @@ export class MotionTracker {
   // 운동자를 찾은 프레임
   noteSubjectSeen(landmarks) {
     this.subjectMissingSince = 0;
+    const sig = this.poseSignature(landmarks);
+    if (sig) {
+      this.lastAcceptedSig = sig;
+      this.lastAcceptedAt = Date.now();
+    }
     if (this.subjectLock) this.updateSubjectLock(landmarks);
   }
 
@@ -1035,6 +1074,9 @@ export class MotionTracker {
       // 아래 onPhaseChange가 이미 3초를 알리므로 updateCountdown이 중복 통보하지 않게 맞춥니다.
       this.lastCountdownSecond = 3;
     } else if (next === "counting") {
+      // 연속성 기준을 지금 이 사람으로 새로 잡습니다.
+      this.lastAcceptedSig = this.lastLandmarks ? this.poseSignature(this.lastLandmarks) : null;
+      this.lastAcceptedAt = Date.now();
       // 세션 통계 초기화는 startCamera가 담당합니다.
       // 카메라 전환 등으로 재보정 후 돌아올 때 기록이 날아가면 안 됩니다.
       this.resetRepCycle();
