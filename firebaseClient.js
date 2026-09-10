@@ -164,10 +164,31 @@ class FirebaseCloudClient {
     }
   }
 
+  // 접속 도메인/환경(localhost, preview dev channel)에 따른 컬렉션 네임스페이스 자동 분기
+  getCollectionName(baseName) {
+    try {
+      const host = (typeof window !== 'undefined' && window.location?.hostname) || '';
+      const isDev = host === 'localhost' || host === '127.0.0.1' || host.includes('--dev-') || host.includes('dev');
+      return isDev ? `dev_${baseName}` : baseName;
+    } catch (e) {
+      return baseName;
+    }
+  }
+
+  isDevMode() {
+    try {
+      const host = (typeof window !== 'undefined' && window.location?.hostname) || '';
+      return host === 'localhost' || host === '127.0.0.1' || host.includes('--dev-') || host.includes('dev');
+    } catch (e) {
+      return false;
+    }
+  }
+
   async getUser(userId) {
     if (!this.isInitialized || !this.db || !userId) return null;
     try {
-      const snap = await getDoc(doc(this.db, "users", userId));
+      const col = this.getCollectionName("users");
+      const snap = await getDoc(doc(this.db, col, userId));
       return snap.exists() ? snap.data() : null;
     } catch (err) {
       console.error("Firestore getUser error:", err);
@@ -178,7 +199,8 @@ class FirebaseCloudClient {
   async getTamagotchi(userId) {
     if (!this.isInitialized || !this.db || !userId) return null;
     try {
-      const snap = await getDoc(doc(this.db, "tamagotchi", userId));
+      const col = this.getCollectionName("tamagotchi");
+      const snap = await getDoc(doc(this.db, col, userId));
       return snap.exists() ? snap.data() : null;
     } catch (err) {
       console.error("Firestore getTamagotchi error:", err);
@@ -189,7 +211,8 @@ class FirebaseCloudClient {
   async getChallenge(userId) {
     if (!this.isInitialized || !this.db || !userId) return null;
     try {
-      const snap = await getDoc(doc(this.db, "challenges_progress", userId));
+      const col = this.getCollectionName("challenges_progress");
+      const snap = await getDoc(doc(this.db, col, userId));
       return snap.exists() ? snap.data() : null;
     } catch (err) {
       console.error("Firestore getChallenge error:", err);
@@ -201,9 +224,11 @@ class FirebaseCloudClient {
     if (!this.isInitialized || !this.db || !userId) return false;
     if (!this.auth?.currentUser || this.auth.currentUser.uid !== userId) return false;
     try {
-      await setDoc(doc(this.db, "users", userId), {
+      const col = this.getCollectionName("users");
+      await setDoc(doc(this.db, col, userId), {
         ...userData,
         uid: userId,
+        env: this.isDevMode() ? "dev" : "prod",
         updatedAt: new Date().toISOString()
       }, { merge: true });
       return true;
@@ -217,9 +242,11 @@ class FirebaseCloudClient {
     if (!this.isInitialized || !this.db || !userId) return null;
     if (!this.auth?.currentUser || this.auth.currentUser.uid !== userId) return null;
     try {
-      const docRef = await addDoc(collection(this.db, "workouts"), {
+      const col = this.getCollectionName("workouts");
+      const docRef = await addDoc(collection(this.db, col), {
         userId,
         ...workoutData,
+        env: this.isDevMode() ? "dev" : "prod",
         timestamp: new Date().toISOString()
       });
       return docRef.id;
@@ -233,8 +260,10 @@ class FirebaseCloudClient {
     if (!this.isInitialized || !this.db || !userId) return false;
     if (!this.auth?.currentUser || this.auth.currentUser.uid !== userId) return false;
     try {
-      await setDoc(doc(this.db, "tamagotchi", userId), {
+      const col = this.getCollectionName("tamagotchi");
+      await setDoc(doc(this.db, col, userId), {
         ...petData,
+        env: this.isDevMode() ? "dev" : "prod",
         updatedAt: new Date().toISOString()
       }, { merge: true });
       return true;
@@ -248,8 +277,10 @@ class FirebaseCloudClient {
     if (!this.isInitialized || !this.db || !userId) return false;
     if (!this.auth?.currentUser || this.auth.currentUser.uid !== userId) return false;
     try {
-      await setDoc(doc(this.db, "challenges_progress", userId), {
+      const col = this.getCollectionName("challenges_progress");
+      await setDoc(doc(this.db, col, userId), {
         ...challengeData,
+        env: this.isDevMode() ? "dev" : "prod",
         updatedAt: new Date().toISOString()
       }, { merge: true });
       return true;
