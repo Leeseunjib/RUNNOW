@@ -64,6 +64,17 @@ function checkNear2(label, actual, expected, tol) {
   console.log(`${ok ? "PASS" : "FAIL"} | ${label} | got=${actual} want=${expected}±${tol}`);
 }
 
+// 실제 앱은 약 30fps로 검출합니다. 테스트는 순식간에 돌아 프레임 간격이 0이 되므로,
+// 직전 인정 시각을 되돌려 33ms 간격을 흉내냅니다. 연속성 판정이 프레임 간격에
+// 비례하기 때문에 이 재현이 없으면 실제와 다른 결과가 나옵니다.
+const FRAME_MS = 33;
+function simulateFrame(tracker, candidates) {
+  if (tracker.lastAcceptedAt) tracker.lastAcceptedAt -= FRAME_MS;
+  const picked = tracker.selectSubjectPose(candidates);
+  if (picked) tracker.noteSubjectSeen(picked);
+  return picked;
+}
+
 function makeTracker(exercise, difficulty) {
   const t = new MotionTracker({ difficulty });
   t.setExercise(exercise);
@@ -266,18 +277,23 @@ function movePerson(lm, dx, scale = 1) {
 // 자기 동작 때문에 스스로 걸러집니다.
 {
   const t = makeTracker("SQUAT", "intermediate");
+  // 실제로는 카운트 중에 일어나는 판정이므로 같은 단계로 맞춥니다.
+  t.lastLandmarks = squatLandmarks(175);
   t.lockSubject(squatLandmarks(175));
+  t.enterPhase("calibrating"); t.enterPhase("counting");
 
-  const cycle = [175, 160, 140, 120, 100, 85, 75, 85, 100, 120, 140, 160, 175];
+  // 30fps 기준: 스쿼트 1회 1.5초 → 프레임당 약 4.4도
+  const cycle = [];
+  for (let a = 175; a >= 75; a -= 4.4) cycle.push(a);
+  for (let a = 75; a <= 175; a += 4.4) cycle.push(a);
   let rejected = 0;
   for (let r = 0; r < 5; r++) {
     for (let i = 0; i < cycle.length; i++) {
       // 자연스러운 좌우 흔들림까지 포함
       const sway = Math.sin((r * cycle.length + i) * 0.5) * 0.02;
       const frame = movePerson(squatLandmarks(cycle[i]), sway, 1);
-      const picked = t.selectSubjectPose([frame]);
+      const picked = simulateFrame(t, [frame]);
       if (!picked) rejected++;
-      else t.noteSubjectSeen(picked);
     }
   }
   check("혼자 스쿼트 5회 · 거부된 프레임 수", rejected, 0);
@@ -289,9 +305,13 @@ function movePerson(lm, dx, scale = 1) {
 {
   const t = makeTracker("SQUAT", "intermediate");
   const me0 = squatLandmarks(175);
+  t.lastLandmarks = me0;
   t.lockSubject(me0);
+  t.enterPhase("calibrating"); t.enterPhase("counting");
 
-  const cycle = [175, 150, 120, 90, 75, 90, 120, 150, 175];
+  const cycle = [];
+  for (let a = 175; a >= 75; a -= 4.4) cycle.push(a);
+  for (let a = 75; a <= 175; a += 4.4) cycle.push(a);
   let wrong = 0;
   for (let r = 0; r < 5; r++) {
     for (let i = 0; i < cycle.length; i++) {
@@ -299,9 +319,8 @@ function movePerson(lm, dx, scale = 1) {
       const mine = movePerson(squatLandmarks(cycle[i]), sway, 1);
       // 옆 사람은 다른 박자로 스쿼트 중
       const other = movePerson(squatLandmarks(cycle[(i + 4) % cycle.length]), 0.3, 0.75);
-      const picked = t.selectSubjectPose([other, mine]);
+      const picked = simulateFrame(t, [other, mine]);
       if (picked !== mine) wrong++;
-      else t.noteSubjectSeen(picked);
     }
   }
   check("옆 사람도 운동 중 · 45프레임 오선택 수", wrong, 0);
@@ -333,11 +352,11 @@ function movePerson(lm, dx, scale = 1) {
 // --- 13. 잠금이 너무 빡빡해 본인을 놓치지 않는지 (오탐 방지) --------------
 // 이 테스트가 깨지면 실사용에서 "운동 중인데 자꾸 준비로 돌아가는" 문제가 납니다.
 function trackThroughMotion(label, tracker, frames) {
+  // 운동 중 판정이므로 카운트 단계로 맞춥니다.
+  if (tracker.phase === "idle") { tracker.enterPhase("calibrating"); tracker.enterPhase("counting"); }
   let dropped = 0;
   for (const lm of frames) {
-    const picked = tracker.selectSubjectPose([lm]);
-    if (!picked) dropped++;
-    else tracker.noteSubjectSeen(picked);
+    if (!simulateFrame(tracker, [lm])) dropped++;
   }
   check(`${label} · 동작 중 본인을 놓친 프레임 수`, dropped, 0);
 }
@@ -346,7 +365,9 @@ function trackThroughMotion(label, tracker, frames) {
   const t = makeTracker("SQUAT", "intermediate");
   t.lockSubject(squatLandmarks(175));
   // 서기 → 완전히 앉기 → 다시 서기를 3회 반복
-  const cycle = [175, 160, 140, 120, 100, 85, 75, 85, 100, 120, 140, 160, 175];
+  const cycle = [];
+  for (let a = 175; a >= 75; a -= 4.4) cycle.push(a);
+  for (let a = 75; a <= 175; a += 4.4) cycle.push(a);
   const frames = [];
   for (let r = 0; r < 3; r++) for (const a of cycle) frames.push(squatLandmarks(a));
   trackThroughMotion("스쿼트 3회", t, frames);
@@ -356,7 +377,9 @@ function trackThroughMotion(label, tracker, frames) {
   const t = makeTracker("SITUP", "intermediate");
   t.lockSubject(situpLandmarks(140));
   // 윗몸일으키기는 상체가 크게 회전해 몸통 중심이 많이 움직입니다.
-  const cycle = [140, 125, 110, 95, 80, 65, 80, 95, 110, 125, 140];
+  const cycle = [];
+  for (let a = 140; a >= 65; a -= 3.3) cycle.push(a);
+  for (let a = 65; a <= 140; a += 3.3) cycle.push(a);
   const frames = [];
   for (let r = 0; r < 3; r++) for (const a of cycle) frames.push(situpLandmarks(a));
   trackThroughMotion("윗몸일으키기 3회", t, frames);
@@ -569,9 +592,7 @@ function trackThroughMotion(label, tracker, frames) {
       for (const a of squatCycle) {
         const frame = movePerson(squatLandmarks(a), Math.sin(n * 0.3) * 0.015, 1);
         n++;
-        const picked = t.selectSubjectPose([frame]);
-        if (!picked) rejected++;
-        else t.noteSubjectSeen(picked);
+        if (!simulateFrame(t, [frame])) rejected++;
       }
     }
     check("혼자 스쿼트 5회 · 거부 프레임", rejected, 0);
@@ -580,13 +601,11 @@ function trackThroughMotion(label, tracker, frames) {
   // (2) 가로막은 사람만 보이면 한 프레임도 인정하지 않는다
   {
     const t = startTracking();
-    for (const a of squatCycle.slice(0, 10)) {
-      const picked = t.selectSubjectPose([squatLandmarks(a)]);
-      if (picked) t.noteSubjectSeen(picked);
-    }
+    for (const a of squatCycle.slice(0, 10)) simulateFrame(t, [squatLandmarks(a)]);
     let accepted = 0;
     for (let i = 0; i < 20; i++) {
       // 앞을 가로막은 사람은 더 크게(1.4배) 잡힙니다
+      if (t.lastAcceptedAt) t.lastAcceptedAt -= FRAME_MS;
       if (t.selectSubjectPose([movePerson(squatLandmarks(170 - i * 2), 0.02, 1.4)])) accepted++;
     }
     check("가로막은 사람만 보임 · 인정 프레임", accepted, 0);
@@ -602,9 +621,8 @@ function trackThroughMotion(label, tracker, frames) {
         const me = squatLandmarks(a);
         const other = movePerson(squatLandmarks(squatCycle[(n + 10) % squatCycle.length]), 0.28, 1.3);
         n++;
-        const picked = t.selectSubjectPose([other, me]);
+        const picked = simulateFrame(t, [other, me]);
         if (picked !== me) wrong++;
-        else t.noteSubjectSeen(picked);
       }
     }
     check("나 + 끼어든 사람 · 오선택", wrong, 0);
@@ -613,12 +631,10 @@ function trackThroughMotion(label, tracker, frames) {
   // (4) 가로막은 사람이 스쿼트를 해도 내 카운트는 오르지 않는다
   {
     const t = startTracking();
-    for (const a of squatCycle.slice(0, 10)) {
-      const picked = t.selectSubjectPose([squatLandmarks(a)]);
-      if (picked) t.noteSubjectSeen(picked);
-    }
+    for (const a of squatCycle.slice(0, 10)) simulateFrame(t, [squatLandmarks(a)]);
     for (let r = 0; r < 5; r++) {
       for (const a of squatCycle) {
+        if (t.lastAcceptedAt) t.lastAcceptedAt -= FRAME_MS;
         const picked = t.selectSubjectPose([movePerson(squatLandmarks(a), 0.02, 1.4)]);
         if (picked) t.processExerciseLogic(picked);
       }
@@ -626,11 +642,27 @@ function trackThroughMotion(label, tracker, frames) {
     check("가로막은 사람이 스쿼트 5회 → 내 카운트", t.repCount, 0);
   }
 
-  // (5) 추적이 오래 끊기면 아무도 인정하지 않고 재준비로 넘어간다
+  // (5) 추적 상실 후 준비 단계에서 다른 사람이 운동자로 승격되면 안 된다
+  // 스쿼트의 시작 자세는 "서 있기"라, 지나가던 사람이 서 있기만 해도 준비 게이트를
+  // 통과해 새 운동자가 되던 문제가 있었습니다.
   {
     const t = startTracking();
-    const picked = t.selectSubjectPose([squatLandmarks(170)]);
-    if (picked) t.noteSubjectSeen(picked);
+    t.subjectMissingSince = Date.now() - 2000;
+    t.noteSubjectMissing();
+    check("추적 상실 후 준비 단계로 복귀", t.phase, "calibrating");
+
+    const other = movePerson(squatLandmarks(175), 0.02, 1.4);
+    check("준비 단계에서 다른 사람 거부", t.selectSubjectPose([other]), null);
+
+    // 같은 자리로 돌아온 본인은 다시 인식되어야 합니다.
+    const meBack = movePerson(squatLandmarks(175), 0.01, 1.02);
+    check("같은 자리로 돌아온 본인은 재인식", t.selectSubjectPose([meBack]) === meBack, true);
+  }
+
+  // (6) 추적이 오래 끊기면 아무도 인정하지 않고 재준비로 넘어간다
+  {
+    const t = startTracking();
+    simulateFrame(t, [squatLandmarks(170)]);
     t.lastAcceptedAt = Date.now() - 2000;   // 2초 공백
     check("2초 공백 후에는 인정하지 않음", t.selectSubjectPose([squatLandmarks(170)]), null);
   }

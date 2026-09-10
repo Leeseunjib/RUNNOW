@@ -191,9 +191,25 @@ const VERTICAL_WEIGHT = 0.4;          // 세로 이동은 운동 자체로 크�
 // 이 격차를 이용하면 "나"와 "끼어든 사람"을 확실히 가릅니다.
 // 잠금 서명과의 절대 거리로는 구분할 수 없었습니다(운동 중 내 몸 이동량이
 // 옆 사람과의 거리보다 커서 값이 역전됨). 연속성은 그 역전이 없습니다.
-const JUMP_BASE = 0.25;               // 한 프레임에 허용하는 기본 변화량
-const JUMP_RATE = 0.8;                // 프레임 간격이 벌어진 만큼 추가 허용
+// 내 동작의 서명 변화 속도는 초당 약 5.7입니다(30fps에서 프레임당 0.188).
+// 반면 다른 사람으로 바뀌는 것은 프레임 간격과 무관한 불연속 점프입니다.
+// 따라서 허용치를 프레임 간격에 비례시키면, 기기가 느려도 내 동작은 통과하고
+// 사람이 바뀌는 것은 계속 걸러집니다.
+const JUMP_BASE = 0.12;               // 간격이 0에 가까울 때의 기본 허용치
+const JUMP_RATE = 6.0;                // 초당 허용 변화량 (내 동작 5.7에 여유 포함)
+const JUMP_CAP = 0.8;                 // 기기가 아주 느려도 이 이상은 허용하지 않음
 const MAX_TRACK_GAP_SEC = 0.6;        // 이보다 오래 끊기면 추적을 포기하고 재준비
+
+// 재인식 허용치 (준비 단계에서 잠긴 운동자를 다시 찾을 때)
+//
+// 준비 단계에서는 모두가 같은 시작 자세를 취하므로, 잠금 서명과의 절대 거리로
+// 비교해도 값이 뒤집히지 않습니다(운동 중과 달리 자세가 같기 때문).
+// 실측 거리입니다.
+//   같은 자리로 돌아온 나 0.091 / 조금 옮겨 선 나 0.419
+//   앞을 가로막은 사람 0.886 / 옆·뒤에 선 사람 1.43
+// 이 값을 넘으면 다른 사람으로 보고 거부합니다. 계속 거부되면 10초 뒤
+// 잠금이 풀려(SUBJECT_RELEASE_MS) 누구든 새로 시작할 수 있습니다.
+const REACQUIRE_TOLERANCE = 0.6;
 
 // 준비 게이트를 오래 통과하지 못할 때의 탈출구
 // 좁은 방·어두운 조명·폰 각도 때문에 전신이 안 잡히면 영영 카운트를 시작할 수 없습니다.
@@ -988,7 +1004,7 @@ export class MotionTracker {
       const dt = Math.max(0, (Date.now() - this.lastAcceptedAt) / 1000);
       if (dt > MAX_TRACK_GAP_SEC) return null;   // 너무 오래 끊겼으면 재준비
 
-      const maxJump = JUMP_BASE + JUMP_RATE * dt;
+      const maxJump = Math.min(JUMP_BASE + JUMP_RATE * dt, JUMP_CAP);
       let best = null;
       let bestJump = Infinity;
       for (const c of scored) {
@@ -1010,8 +1026,10 @@ export class MotionTracker {
       return pick.lm;
     }
 
-    // 준비 단계에서는 시작 자세를 유지해야 통과하므로, 지나가는 사람은
-    // 자세 요건에서 걸러집니다. 여기서는 잠금과 가장 가까운 사람을 고릅니다.
+    // 잠긴 운동자를 다시 찾는 단계입니다.
+    // 시작 자세가 "서 있기"인 종목은 지나가던 사람이 서 있기만 해도 준비 게이트를
+    // 통과해 버립니다. 그래서 자세 요건만으로는 부족하고, 잠금 서명과 대조해
+    // 확실히 다른 사람이면 거부해야 합니다.
     let best = scored[0];
     let bestDistance = this.signatureDistance(best.sig, this.subjectLock);
     for (const c of scored.slice(1)) {
@@ -1021,7 +1039,10 @@ export class MotionTracker {
         best = c;
       }
     }
-    return best.lm;
+    // 운동이 진행 중일 때만 이 방어를 겁니다. 대기 상태(idle)에서는 잠금 자체가
+    // 의미가 없으므로 가장 가까운 후보를 그대로 돌려줍니다.
+    const inWorkout = this.phase !== "idle";
+    return (!inWorkout || bestDistance <= REACQUIRE_TOLERANCE) ? best.lm : null;
   }
 
   // 운동자를 찾은 프레임
