@@ -32,13 +32,9 @@ class AppController {
     this.firebaseSandbox = new FirebaseSandbox();
     const db = this.firebaseSandbox.getDB();
     
-    // 장기 지속 세션 검사 (1년 유효)
+    // 정규 로그인 지속 세션 검사 (Google 또는 Email 필수)
     const activeSession = firebaseCloud.getCurrentSession();
-    this.currentUserId = activeSession ? activeSession.uid : localStorage.getItem("RUNNOW_CURRENT_USER_ID");
-    
-    if (!this.currentUserId) {
-      this.currentUserId = localStorage.getItem("RUNNOW_DEVICE_GUEST_UID") || "guest_runner";
-    }
+    this.currentUserId = activeSession ? activeSession.uid : null;
 
     const userDoc = db.users?.[this.currentUserId] || {};
     const globalProfile = this.getGlobalProfile();
@@ -88,7 +84,7 @@ class AppController {
 
     this.tamagotchi = new TamagotchiEngine(petDoc);
     this.challengeManager = new ChallengeManager(chalDoc);
-    if (this.currentUserId !== "guest_runner") {
+    if (this.currentUserId) {
       this.firebaseSandbox.setDoc("challenges_progress", this.currentUserId, this.challengeManager.toJSON());
     }
 
@@ -272,7 +268,7 @@ class AppController {
 
   async hydrateFromCloud() {
     const session = firebaseCloud.getCurrentSession();
-    if (!session?.uid || session.uid === "guest_runner") return;
+    if (!session?.uid) return;
 
     const user = await firebaseCloud.getUser(session.uid);
     if (user) {
@@ -653,29 +649,6 @@ class AppController {
       location.reload();
     };
 
-    // 게스트 로그인 바인딩 (랜덤 ID 대신 기기 고정 ID를 유지하여 재로그인 시에도 데이터 100% 보존)
-    const btnQuickGuestLogin = document.getElementById("btn-quick-guest-login");
-    if (btnQuickGuestLogin) {
-      btnQuickGuestLogin.onclick = async () => {
-        let guestUid = localStorage.getItem("RUNNOW_DEVICE_GUEST_UID");
-        if (!guestUid) {
-          guestUid = "guest_" + Math.random().toString(36).substring(2, 9);
-          localStorage.setItem("RUNNOW_DEVICE_GUEST_UID", guestUid);
-        }
-
-        const globalProfile = this.getGlobalProfile();
-        const guestSession = {
-          uid: guestUid,
-          displayName: globalProfile.displayName || globalProfile.name || "게스트 러너",
-          email: "",
-          photoURL: "",
-          expiresAt: Date.now() + (365 * 24 * 60 * 60 * 1000) // 1년 영구 지속
-        };
-        this.currentUserId = guestSession.uid;
-        await completeAuthLogin(guestSession);
-      };
-    }
-
     // Google 원클릭 로그인
     const btnPageGoogleLogin = document.getElementById("btn-page-google-login");
     const btnModalGoogleLogin = document.getElementById("btn-google-login");
@@ -908,6 +881,12 @@ class AppController {
     if (paceEl) paceEl.textContent = stats.pace;
     if (timeEl) timeEl.textContent = stats.formattedTime;
     if (calEl) calEl.textContent = Number(stats.calories || 0).toLocaleString();
+    const paceNowEl = document.getElementById("live-pace-now");
+    if (paceNowEl) {
+      // 전체 평균은 초반 대기와 중간 휴식에 끌려다녀 "지금 어느 정도인지"를 못 보여줍니다.
+      paceNowEl.textContent = `지금 ${stats.currentPace || `--'--"`}`;
+    }
+
     if (accuracyEl && stats.gpsAccuracy) {
       // 내부테스트에서는 진단값을 함께 노출합니다. 어제처럼 "수치가 이상하다"는 보고를
       // 받았을 때 추측하지 않고 원인을 좁히기 위한 정보입니다.
@@ -919,6 +898,8 @@ class AppController {
         parts.push(`인정구간 ${stats.routePoints.length}`);
         if (stats.rejectedByAccuracy > 0) parts.push(`정확도폐기 ${stats.rejectedByAccuracy}`);
         parts.push(`달린시간 ${stats.runningSeconds}s`);
+        if (stats.stationarySamples > 0) parts.push(`정지판정 ${stats.stationarySamples}`);
+        if (stats.skippedResumeSegments > 0) parts.push(`화면꺼짐 ${stats.skippedResumeSegments}`);
         text += `
 ${parts.join(" · ")}`;
       }

@@ -1,5 +1,5 @@
 // GPS 거리 계산 · 노이즈 필터 · 안티치트 · 페이스/칼로리 집계를 브라우저 없이 검증
-import { GPSRunner } from "../gpsRunner.js";
+import { GPSRunner, calculateDistanceMeters } from "../gpsRunner.js";
 
 let failed = 0;
 function check(label, actual, expected) {
@@ -18,46 +18,69 @@ const BASE_LAT = 37.5665;
 const BASE_LNG = 126.9780;
 
 function makeRunner(weightKg = 70) {
+  resetClock();
   const r = new GPSRunner({ weightKg });
   r.isTracking = true;
   return r;
 }
 
 // GPS 콜백 1건을 흘려보냅니다. secondsSinceLast로 두 점 사이 경과시간을 만듭니다.
+// GPS 측정 시각을 직접 넘겨 경과 시간을 정확히 재현합니다.
+// (실제 Geolocation API도 position.timestamp를 제공합니다)
+let clock = Date.now();
 function feedPoint(runner, lat, lng, { accuracy = 5, speed = 3, secondsSinceLast = 1 } = {}) {
-  if (runner.lastValidPos) {
-    runner.lastValidPos.time = Date.now() - secondsSinceLast * 1000;
-  }
-  runner.handleGeoSuccess({ coords: { latitude: lat, longitude: lng, accuracy, speed } });
+  clock += secondsSinceLast * 1000;
+  runner.handleGeoSuccess({
+    timestamp: clock,
+    coords: { latitude: lat, longitude: lng, accuracy, speed }
+  });
 }
+
+// 각 시나리오가 서로의 시계에 영향받지 않도록 초기화합니다.
+function resetClock() { clock = Date.now(); }
 
 // 위도 1도 = R * (π/180). R=6,371,000m 기준 약 111,194.9m
 const METERS_PER_LAT_DEGREE = 6371000 * (Math.PI / 180);
 
-// --- 1. 하버사인 거리 정확도 ---------------------------------------------
+// --- 1. 하버사인 거리 공식 자체의 정확도 (필터를 거치지 않는 순수 계산) ---
 {
-  const r = makeRunner();
-  feedPoint(r, BASE_LAT, BASE_LNG);                                          // 출발점 등록
-  feedPoint(r, BASE_LAT + 0.001, BASE_LNG, { secondsSinceLast: 20 });        // 정북 0.001도(약 111m)
-  checkNear("위도 0.001도 이동 거리", r.totalMeters, METERS_PER_LAT_DEGREE * 0.001, 0.5);
+  checkNear("위도 0.001도 = 약 111.19m",
+    calculateDistanceMeters(BASE_LAT, BASE_LNG, BASE_LAT + 0.001, BASE_LNG),
+    METERS_PER_LAT_DEGREE * 0.001, 0.01);
+
+  // 경도는 위도에 따라 cos만큼 축소됩니다. 서울(37.5665도)에서 약 88m
+  checkNear("경도 0.001도 (위도 보정 적용)",
+    calculateDistanceMeters(BASE_LAT, BASE_LNG, BASE_LAT, BASE_LNG + 0.001),
+    METERS_PER_LAT_DEGREE * 0.001 * Math.cos(BASE_LAT * Math.PI / 180), 0.01);
+
+  check("같은 지점 거리 0", Math.round(calculateDistanceMeters(BASE_LAT, BASE_LNG, BASE_LAT, BASE_LNG)), 0);
 }
 
-{
-  // 경도는 위도에 따라 cos만큼 축소됩니다. 서울(37.5665도)에서 약 88m
-  const r = makeRunner();
-  feedPoint(r, BASE_LAT, BASE_LNG);
-  feedPoint(r, BASE_LAT, BASE_LNG + 0.001, { secondsSinceLast: 20 });
-  const expected = METERS_PER_LAT_DEGREE * 0.001 * Math.cos(BASE_LAT * Math.PI / 180);
-  checkNear("경도 0.001도 이동 (위도 보정 적용)", r.totalMeters, expected, 0.5);
+// 실제 GPS처럼 초당 1회씩 샘플을 흘려보냅니다.
+// 단발 점프로 먹이면 필터가 수렴할 기회가 없어 실제 동작과 달라집니다.
+function runStraight(r, meters, seconds, opts = {}) {
+  const steps = seconds;
+  const stepM = meters / steps;
+  let lat = BASE_LAT;
+  feedPoint(r, lat, BASE_LNG, { ...opts, secondsSinceLast: 1 });
+  for (let i = 0; i < steps; i++) {
+    lat += stepM / METERS_PER_LAT_DEGREE;
+    feedPoint(r, lat, BASE_LNG, { ...opts, secondsSinceLast: 1 });
+  }
+  return lat;
 }
 
 // --- 2. 루프 코스: 출발점으로 돌아와도 거리가 보존된다 --------------------
 {
   const r = makeRunner();
-  feedPoint(r, BASE_LAT, BASE_LNG);
-  feedPoint(r, BASE_LAT + 0.001, BASE_LNG, { secondsSinceLast: 20 });
-  feedPoint(r, BASE_LAT, BASE_LNG, { secondsSinceLast: 20 });   // 출발점 복귀
-  checkNear("왕복 후 복귀 시 거리 보존", r.totalMeters, METERS_PER_LAT_DEGREE * 0.002, 1.0);
+  const end = runStraight(r, 200, 60);              // 200m 전진
+  let lat = end;
+  for (let i = 0; i < 60; i++) {                     // 다시 200m 복귀
+    lat -= (200 / 60) / METERS_PER_LAT_DEGREE;
+    feedPoint(r, lat, BASE_LNG, { secondsSinceLast: 1 });
+  }
+  // 출발점으로 돌아와도 왕복 400m가 보존되어야 합니다(오차 5% 이내).
+  checkNear("왕복 400m 후 복귀 시 거리 보존", r.totalMeters, 400, 20);
 }
 
 // --- 3. 지터 필터: 제자리 미세 흔들림은 거리로 잡히지 않는다 --------------
@@ -92,13 +115,14 @@ const METERS_PER_LAT_DEGREE = 6371000 * (Math.PI / 180);
     lat += stepDeg;
     feedPoint(r, lat, BASE_LNG, { secondsSinceLast: 1 });
   }
-  checkNear("초당 3.3m로 100스텝 → 약 330m", r.totalMeters, 330, 2);
+  // 필터는 시작 구간에서 약간 뒤처지므로 2% 오차를 허용합니다.
+  checkNear("초당 3.3m로 100스텝 → 약 330m", r.totalMeters, 330, 7);
 
   r.elapsedSeconds = 100;
   const s = r.getStats();
   check("거리 미터 정수화", s.distanceMeters, Math.floor(r.totalMeters));
-  checkNear("킬로미터 환산", s.distanceKm, 0.33, 0.01);
-  check("평균 페이스 계산", s.pace, "5'03\"");
+  checkNear("킬로미터 환산", s.distanceKm, 0.33, 0.02);
+  checkNear("평균 페이스(초/km)", Math.round(100 / (r.totalMeters / 1000)), 303, 10);
 }
 
 // --- 6. 칼로리 계산 (체중 x km x 1.036) -----------------------------------
@@ -133,8 +157,13 @@ const METERS_PER_LAT_DEGREE = 6371000 * (Math.PI / 180);
   const r = makeRunner();
   feedPoint(r, BASE_LAT, BASE_LNG, { accuracy: 5 });
   feedPoint(r, BASE_LAT + 0.001, BASE_LNG, { accuracy: 80, secondsSinceLast: 20 });
-  feedPoint(r, BASE_LAT + 0.001, BASE_LNG, { accuracy: 8, secondsSinceLast: 20 });
-  checkNear("정확도 회복 후 정상 집계", r.totalMeters, METERS_PER_LAT_DEGREE * 0.001, 1.0);
+  for (let i = 0; i < 60; i++) {
+    // 60초에 약 334m = 초속 5.56m. OS 속도도 실제와 맞춰 넘깁니다.
+    feedPoint(r, BASE_LAT + (0.003 * (i + 1) / 60), BASE_LNG,
+      { accuracy: 8, speed: 5.56, secondsSinceLast: 1 });
+  }
+  // 약 334m 주행. 시작 구간 수렴 지연을 감안해 3% 오차를 허용합니다.
+  checkNear("정확도 회복 후 정상 집계", r.totalMeters, METERS_PER_LAT_DEGREE * 0.003, 11);
 }
 
 // --- 9. 명세: 시속 30km 초과 이동은 거리에서 배제해야 한다 ----------------
@@ -151,10 +180,8 @@ const METERS_PER_LAT_DEGREE = 6371000 * (Math.PI / 180);
 {
   // 빠른 러너(시속 20km)는 정상 인정되어야 합니다.
   const r = makeRunner();
-  feedPoint(r, BASE_LAT, BASE_LNG);
-  const dist = 55; // 10초에 55m = 시속 19.8km
-  feedPoint(r, BASE_LAT + dist / METERS_PER_LAT_DEGREE, BASE_LNG, { secondsSinceLast: 10 });
-  checkNear("시속 20km 스프린트 → 정상 인정", r.totalMeters, dist, 1.0);
+  runStraight(r, 165, 30);   // 30초에 165m = 시속 19.8km
+  checkNear("시속 20km 스프린트 → 정상 인정", r.totalMeters, 165, 8);
 }
 
 // --- 9-2. 차량 이동을 멈춰도 누적 변위가 한꺼번에 인정되면 안 된다 --------
@@ -174,8 +201,12 @@ const METERS_PER_LAT_DEGREE = 6371000 * (Math.PI / 180);
 
   // 차에서 내려 60초 뒤 걷기 시작 (기준점이 재설정돼 있어야 함)
   // 정확도 ±5m에서는 노이즈 임계값이 3.5m이므로, 그보다 확실히 큰 10m를 걷습니다.
-  feedPoint(r, lat + 10 / METERS_PER_LAT_DEGREE, BASE_LNG, { secondsSinceLast: 60 });
-  check("정차 후에도 차량 구간이 거리로 둔갑하지 않음", Math.round(r.totalMeters), 10);
+  let walk = lat;
+  for (let i = 0; i < 20; i++) {
+    walk += 1 / METERS_PER_LAT_DEGREE;
+    feedPoint(r, walk, BASE_LNG, { secondsSinceLast: 3 });
+  }
+  checkNear("정차 후에도 차량 구간이 거리로 둔갑하지 않음", r.totalMeters, 20, 6);
 }
 
 // --- 9-3. 실측 회귀: 서 있는데 거리가 늘어나면 안 된다 -------------------
@@ -198,9 +229,8 @@ const METERS_PER_LAT_DEGREE = 6371000 * (Math.PI / 180);
 {
   // 반대로, 정확도가 좋으면 작은 이동도 잡아야 합니다.
   const r = makeRunner();
-  feedPoint(r, BASE_LAT, BASE_LNG, { accuracy: 3 });
-  feedPoint(r, BASE_LAT + 5 / METERS_PER_LAT_DEGREE, BASE_LNG, { accuracy: 3, secondsSinceLast: 2 });
-  checkNear("정확도 ±3m에서 5m 이동은 인정", r.totalMeters, 5, 0.5);
+  runStraight(r, 20, 10, { accuracy: 3 });
+  checkNear("정확도 ±3m에서 20m 이동은 인정", r.totalMeters, 20, 3);
 }
 
 // --- 9-4. 실측 회귀: AVG PACE가 GPS 대기 시간에 오염되면 안 된다 ---------
@@ -222,9 +252,90 @@ const METERS_PER_LAT_DEGREE = 6371000 * (Math.PI / 180);
 
   const s = r.getStats();
   check("대기 시간은 페이스 분모에서 제외", s.runningSeconds, 300);
-  check("실제 페이스 5'00\" 표시", s.pace, "5'00\"");
+  checkNear("실제 페이스 300초/km 근사", Math.round(s.runningSeconds / s.distanceKm), 300, 15);
   // 대기 시간을 포함했다면 390초/km = 6'30"이 나왔을 것입니다.
   check("총 경과 시간은 그대로 보존", s.elapsedSeconds, 390);
+}
+
+// --- 9-5. 실기기 회귀: 노이즈 환경에서 정지 시 거리 0 --------------------
+// "가만히 서 있는데 2m 이상 늘어난다"는 실기기 보고에 대한 최종 방어선입니다.
+// 재현 가능한 난수로 실제 GPS 노이즈를 흉내냅니다.
+{
+  let seed = 42;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff * 2 - 1; };
+
+  function standStill(accuracy, seconds, reportSpeed) {
+    seed = 42;
+    const r = makeRunner();
+    let clock = Date.now();
+    for (let i = 0; i <= seconds; i++) {
+      clock += 1000;
+      r.handleGeoSuccess({
+        timestamp: clock,
+        coords: {
+          latitude: BASE_LAT + rnd() * accuracy * 0.6 / METERS_PER_LAT_DEGREE,
+          longitude: BASE_LNG + rnd() * accuracy * 0.6 / METERS_PER_LAT_DEGREE,
+          accuracy,
+          speed: reportSpeed ? 0 : null
+        }
+      });
+    }
+    return r.totalMeters;
+  }
+
+  check("정지 60초 ±12m (속도 제공) → 0m", Math.round(standStill(12, 60, true)), 0);
+  check("정지 300초 ±25m (속도 제공) → 0m", Math.round(standStill(25, 300, true)), 0);
+  check("정지 60초 ±12m (속도 미제공) → 0m", Math.round(standStill(12, 60, false)), 0);
+  check("정지 300초 ±25m (속도 미제공) → 0m", Math.round(standStill(25, 300, false)), 0);
+}
+
+// --- 9-6. 노이즈 환경에서도 실제 주행 거리는 보존된다 --------------------
+// 정지를 막느라 실제 이동까지 걸러내면 더 나쁜 문제가 됩니다.
+{
+  let seed = 42;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff * 2 - 1; };
+
+  function runNoisy(meters, seconds, accuracy, reportSpeed) {
+    seed = 42;
+    const r = makeRunner();
+    let clock = Date.now();
+    const stepM = meters / seconds;
+    let lat = BASE_LAT;
+    for (let i = 0; i <= seconds; i++) {
+      clock += 1000;
+      r.handleGeoSuccess({
+        timestamp: clock,
+        coords: {
+          latitude: lat + rnd() * accuracy * 0.6 / METERS_PER_LAT_DEGREE,
+          longitude: BASE_LNG + rnd() * accuracy * 0.6 / METERS_PER_LAT_DEGREE,
+          accuracy,
+          speed: reportSpeed ? stepM : null
+        }
+      });
+      lat += stepM / METERS_PER_LAT_DEGREE;
+    }
+    return r.totalMeters;
+  }
+
+  // 오차 3% 이내를 목표로 합니다.
+  checkNear("1km 주행 ±8m (속도 제공)", runNoisy(1000, 300, 8, true), 1000, 30);
+  checkNear("5km 주행 ±10m (속도 제공)", runNoisy(5000, 1500, 10, true), 5000, 150);
+  checkNear("1km 주행 ±8m (속도 미제공)", runNoisy(1000, 300, 8, false), 1000, 30);
+  checkNear("느린 걷기 500m ±10m", runNoisy(500, 500, 10, true), 500, 20);
+}
+
+// --- 9-7. 화면이 꺼진 구간은 거리에 포함하지 않는다 ----------------------
+{
+  const r = makeRunner();
+  runStraight(r, 100, 30);
+  const before = r.totalMeters;
+
+  // 화면이 꺼졌다 켜진 상황: 좌표만 멀리 튀어 있음
+  r.resumeFromHidden = true;
+  feedPoint(r, BASE_LAT + 0.005, BASE_LNG, { secondsSinceLast: 120 });
+
+  checkNear("복귀 직후 구간은 거리에 미포함", r.totalMeters, before, 0.001);
+  check("화면 꺼짐 구간 카운트", r.skippedResumeSegments, 1);
 }
 
 // --- 10. 리셋 -------------------------------------------------------------

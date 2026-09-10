@@ -2947,3 +2947,351 @@ body {
   color: var(--primary-volt);
   line-height: 1.4;
 }
+
+/* ==========================================================================
+   100M Premium Design System & Consumer Psychology UI Components
+   Design Lead: 수석 디자이너 시안 · UI/UX 디자이너 재호 · BX 디자이너 태오
+   Zero Cognitive Friction (Toss/Apple) & Consumer Psychology 7 Laws
+   ========================================================================== */
+
+/* 1. 뒤로가기 알약 버튼 (대표님 지적 사항: btn-back-exercise-list 완전 개선) */
+.btn-back-exercise-list {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-card, #FFFFFF);
+  border: 1px solid var(--border-card, rgba(0, 0, 0, 0.1));
+  color: var(--text-main, #191F28);
+  padding: 8px 16px;
+  border-radius: var(--radius-pill, 9999px);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-bottom: 12px;
+  outline: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.btn-back-exercise-list::before {
+  content: '←';
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--primary-accent, #00C73C);
+  transition: transform 0.2s ease;
+}
+
+.btn-back-exercise-list:hover {
+  background: var(--surface-elevated, #F8FAFC);
+  border-color: var(--primary-accent, #00C73C);
+  color: var(--primary-accent, #00C73C);
+  box-shadow: 0 4px 14px rgba(0, 199, 60, 0.15);
+  transform: translateX(-2px);
+}
+
+.btn-back-exercise-list:hover::before {
+  transform: translateX(-3px);
+}
+
+.btn-back-exercise-list:active {
+  transform: scale(0.96);
+}
+
+/* 서브뷰 공통 상단 헤더 바 (NRC/Apple Health 스타일) */
+.subview-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 12px;
+}
+
+.subview-header-bar .btn-back-exercise-list {
+  margin-bottom: 0;
+}
+
+/* 2. 모션 스튜디오 카드 */
+.motion-studio-card {
+  background: var(--surface-card, #FFFFFF);
+  border: 1px solid var(--border-card, #E2E8F0);
+  border-radius: var(--radius-lg, 20px);
+  padding: 18px 16px;
+  box-shadow: var(--card-shadow, 0 4px 16px rgba(0,0,0,0.06));
+}
+
+/* 3. 성별 선택 버튼 (온보딩 & 프로필 공통) */
+.ob-gender-btn, .prof-gender-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--surface-elevated, #F8FAFC);
+  border: 1.5px solid var(--border-card, #E2E8F0);
+  border-radius: var(--radius-md, 14px);
+  color: var(--text-sub, #4E5968);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ob-gender-btn:hover, .prof-gender-btn:hover {
+  border-color: var(--primary-accent, #00C73C);
+  color: var(--primary-accent, #00C73C);
+  background: var(--primary-accent-subtle, rgba(0, 199, 60, 0.08));
+}
+
+.ob-gender-btn.active, .prof-gender-btn.active {
+  background: var(--primary-accent-subtle, rgba(0, 199, 60, 0.12));
+  border-color: var(--primary-accent, #00C73C);
+  color: var(--primary-accent, #00C73C);
+  font-weight: 900;
+  box-shadow: 0 2px 10px rgba(0, 199, 60, 0.18);
+}
+
+/* 4. 마스코트 이미지 래퍼 & 바운스 인터랙션 (소비자심리: 이케아 애착 효과) */
+.auth-mascot-img {
+  width: 160px;
+  height: 160px;
+  margin: 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid var(--primary-accent, #00C73C);
+  box-shadow: 0 10px 28px rgba(0, 199, 60, 0.2);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.auth-mascot-img:hover {
+  transform: scale(1.05) rotate(2deg);
+}
+
+/* 5. SEO 및 가이드 박스 */
+.auth-seo-guide {
+  margin-top: 24px;
+  background: var(--surface-card, #FFFFFF);
+  border: 1px solid var(--border-card, #E2E8F0);
+  border-radius: var(--radius-lg, 20px);
+  padding: 20px 18px;
+  box-shadow: var(--card-shadow, 0 4px 16px rgba(0,0,0,0.06));
+}
+
+/* 6. 앰비언트 글로우 효과 */
+.glow-volt {
+  box-shadow: 0 8px 30px rgba(0, 199, 60, 0.15);
+  border-color: var(--primary-accent, #00C73C) !important;
+}
+
+/* 7. 잠금 아이템 (Freemium Paywall 시각화) */
+.has-lock {
+  position: relative;
+  opacity: 0.85;
+}
+
+.has-lock::after {
+  content: '🔒 PRO';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  color: #FFD700;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+/* 8. 폭죽 & 피크-엔드 도파민 배지 */
+.confetti-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #FF9500, #FF5E3A);
+  color: #FFFFFF;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 900;
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.35);
+  animation: pulse-subtle 2s infinite;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+/* 9. 인체 스펙 그리드 */
+.physio-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 14px 0;
+}
+
+/* 10. 퀘스트 마스터 세그먼트 탭 */
+.quest-master-tabs {
+  display: flex;
+  background: var(--surface-elevated, #F8FAFC);
+  padding: 4px;
+  border-radius: var(--radius-pill, 9999px);
+  border: 1px solid var(--border-card, #E2E8F0);
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.quest-master-tabs button {
+  flex: 1;
+  padding: 9px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-sub, #4E5968);
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: var(--radius-pill, 9999px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quest-master-tabs button.active {
+  background: var(--surface-card, #FFFFFF);
+  color: var(--primary-accent, #00C73C);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* 11. 리워드 비디오 & 스포트라이트 */
+.rad-video-visual {
+  padding: 24px 16px;
+  background: var(--surface-elevated, #F8FAFC);
+  border-radius: var(--radius-md, 14px);
+  text-align: center;
+  border: 1px dashed var(--border-card, #E2E8F0);
+}
+
+/* 12. 스탯 프로그레스 바 & 자이고르닉 미완결 게이지 */
+.stat-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-subtle, #EBF0F4);
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-accent, #00C73C), var(--highlight-color, #3B82F6));
+  border-radius: 9999px;
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 13. 볼트 강조 텍스트 */
+.volt {
+  color: var(--primary-accent, #00C73C);
+  font-weight: 900;
+}
+
+/* 14. 소비자 심리학: 사회적 증명 배지 (Social Proof) */
+.social-proof-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: var(--primary-accent-subtle, rgba(0, 199, 60, 0.1));
+  border: 1px solid rgba(0, 199, 60, 0.2);
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--primary-accent, #00C73C);
+}
+
+/* 15. 소비자 심리학: 손실 회피 카드 (Loss Aversion) */
+.loss-aversion-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(255, 149, 0, 0.12), rgba(255, 87, 34, 0.08));
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  border-radius: var(--radius-md, 14px);
+  margin-bottom: 14px;
+}
+
+.loss-aversion-banner .streak-fire {
+  font-size: 22px;
+  animation: flame-flicker 1.5s infinite alternate;
+}
+
+@keyframes flame-flicker {
+  0% { transform: scale(1); filter: drop-shadow(0 0 4px #FF9500); }
+  100% { transform: scale(1.15); filter: drop-shadow(0 0 10px #FF5722); }
+}
+
+/* 16. 소비자 심리학: 앵커링 & 유인 효과 (Decoy Pricing Card) */
+.decoy-plan-card {
+  position: relative;
+  background: var(--surface-card, #FFFFFF);
+  border: 2px solid var(--primary-accent, #00C73C);
+  border-radius: var(--radius-lg, 20px);
+  padding: 18px 16px;
+  box-shadow: 0 8px 24px rgba(0, 199, 60, 0.15);
+}
+
+.decoy-best-badge {
+  position: absolute;
+  top: -12px;
+  right: 16px;
+  background: linear-gradient(135deg, #00C73C, #00A632);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  box-shadow: 0 4px 10px rgba(0, 199, 60, 0.3);
+}
+
+/* 17. 프리미엄 Google 로그인 버튼 */
+.btn-brand-google {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 14.5px;
+  font-weight: 800;
+  border-radius: var(--radius-md, 14px);
+  background: #FFFFFF;
+  color: #191F28;
+  border: 1.5px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+.btn-brand-google:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.btn-brand-google:active {
+  transform: scale(0.98);
+}
+
+
+/* 러닝 HUD 보조 수치 (현재 페이스) */
+.hud-sub {
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--cyber-cyan);
+  letter-spacing: -0.2px;
+}
