@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "test": "node tests/motionTracker.test.mjs && node tests/gpsRunner.test.mjs && node tests/metabolics.test.mjs && node tests/tamagotchi.test.mjs && node tests/quests.test.mjs && node tests/challenge.test.mjs && node tests/metrics.test.mjs && node tests/subscriptionManager.test.mjs && node tests/paymentSecurity.test.mjs",
-    "deploy:dev": "firebase hosting:channel:deploy dev --expires 30d",
+    "sync:hq": "node scripts/sync_hq.mjs",
+    "deploy:dev": "node scripts/sync_hq.mjs && firebase hosting:channel:deploy dev --expires 30d",
     "promote:live": "firebase hosting:clone runnow-37af9:dev runnow-37af9:live"
   },
   "keywords": [],
