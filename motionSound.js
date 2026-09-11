@@ -32,11 +32,36 @@ export class MotionSound {
     }
   }
 
+  pickBestKoreanVoice(voices = this.voices) {
+    if (!voices || voices.length === 0) return null;
+    const koVoices = voices.filter(v => v.lang && (v.lang.includes("ko") || v.lang.includes("KO")));
+    if (koVoices.length === 0) return null;
+
+    // 1순위: Google 인공신경망 고품질 음성 (Google 한국어) 또는 Natural / Neural 온라인 성우 음성
+    const neuralVoice = koVoices.find(v => 
+      v.name.includes("Google") || 
+      v.name.includes("Natural") || 
+      v.name.includes("Neural") || 
+      v.name.includes("Online")
+    );
+    if (neuralVoice) return neuralVoice;
+
+    // 2순위: 윈도우 구형 기계음(Heami)을 제외한 모바일/시스템 한국어 음성 (예: Yuna, SunHi 등)
+    const modernVoice = koVoices.find(v => !v.name.includes("Heami"));
+    if (modernVoice) return modernVoice;
+
+    // 3순위: 기본 한국어
+    return koVoices[0];
+  }
+
   initTTS() {
     if (!this.synth) return;
     const loadVoices = () => {
       this.voices = this.synth.getVoices();
-      this.koreanVoice = this.voices.find(v => v.lang.includes("ko") || v.lang.includes("KO")) || null;
+      this.koreanVoice = this.pickBestKoreanVoice(this.voices);
+      if (this.koreanVoice) {
+        console.log(`🎙️ [RUNNOW Voice] 고품질 음성 엔진 장착: ${this.koreanVoice.name} (${this.koreanVoice.lang})`);
+      }
     };
     loadVoices();
     if (speechSynthesis.onvoiceschanged !== undefined) {
@@ -164,7 +189,8 @@ export class MotionSound {
       phrase += "! 나이스!";
     }
 
-    this.speak(phrase, 1.2, 1.1, true);
+    // 자연스러운 인간의 발화 속도(1.02)와 안정된 톤(1.0)으로 도파민 카운팅
+    this.speak(phrase, 1.02, 1.0, true);
   }
 
   // 실시간 코칭 음성 피드백
@@ -177,15 +203,22 @@ export class MotionSound {
     }
     this.lastSpokenText = text;
     this.lastSpokenTime = now;
-    this.speak(text, 1.1, 1.0, false);
+    this.speak(text, 1.0, 1.0, false);
   }
 
-  speak(text, rate = 1.1, pitch = 1.0, cancelPrevious = false) {
+  speak(text, rate = 1.02, pitch = 1.0, cancelPrevious = false) {
     if (!this.ttsEnabled || !this.synth) return;
     try {
       if (cancelPrevious) {
         this.synth.cancel();
       }
+
+      // 비동기로 음성이 늦게 준비된 경우 재확인
+      if (!this.koreanVoice) {
+        this.voices = this.synth.getVoices();
+        this.koreanVoice = this.pickBestKoreanVoice(this.voices);
+      }
+
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = "ko-KR";
       utter.rate = rate;

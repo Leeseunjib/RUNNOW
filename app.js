@@ -2242,7 +2242,7 @@ class AppController {
 
           this.closeSubscriptionModal();
           this.updateSubscriptionUi(true);
-          alert(`🎉 축하합니다! [${paidPlan.name}] 구독이 성공적으로 완료되었습니다!\n\n✨ 해금된 PRO 전용 혜택:\n✓ AI 카메라 모션 피트니스 6종 무제한\n✓ 러닝 파트너 펫 5단계 성장 & 스탯 육성\n✓ 21일 러닝 습관 형성 챌린지 & 스트릭 보호\n✓ 볼트 라운지 프리미엄 기어 착용 및 VIP 상시 혜택\n\n모든 제한이 해제되었습니다. 멋진 러닝을 즐겨보세요! 🔥`);
+          alert(`🎉 축하합니다! [${paidPlan.name}] 구독이 성공적으로 완료되었습니다!\n\n✨ 해금된 PRO 전용 혜택:\n✓ 🚫 모든 광고 100% 완전 제거 (Ad-Free 클린 러닝)\n✓ AI 카메라 모션 피트니스 6종 무제한\n✓ 러닝 파트너 펫 5단계 성장 & 스탯 육성\n✓ 21일 러닝 습관 형성 챌린지 & 스트릭 보호\n✓ 볼트 라운지 프리미엄 기어 착용 및 VIP 상시 혜택\n\n모든 제한이 해제되었습니다. 멋진 러닝을 즐겨보세요! 🔥`);
         });
       });
     }
@@ -2256,7 +2256,7 @@ class AppController {
         this.closeSubscriptionModal();
         this.updateSubscriptionUi(isNowPro);
         if (isNowPro) {
-          alert(`👑 [이건우 대표님 VIP 마스터 패스 활성화]\n\n모든 PRO 기능이 1초 만에 즉시 언락되었습니다!\n- AI 운동 6종 전종목 해금\n- 다마고치 펫 진화 룸 풀액세스\n- 21일 챌린지 및 볼트 상점 자유 이용 가능`);
+          alert(`👑 [이건우 대표님 VIP 마스터 패스 활성화]\n\n모든 PRO 기능이 1초 만에 즉시 언락되었습니다!\n- 🚫 모든 광고 100% 완전 제거 (Ad-Free)\n- AI 운동 6종 전종목 해금\n- 다마고치 펫 진화 룸 풀액세스\n- 21일 챌린지 및 볼트 상점 자유 이용 가능`);
         } else {
           alert(`⚡ [BASIC 무료 모드로 전환 완료]\n\n기본 달리기(야외 GPS/트레드밀)만 무료 이용 가능하며, 나머지 항목은 PRO 구독 잠금 상태로 복귀되었습니다.`);
         }
