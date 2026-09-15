@@ -5,8 +5,8 @@ export const STAGE_TITLES = [
 const stageTitles = STAGE_TITLES;
 /**
  * tamagotchi.js
- * RunNow 5대 펫 종족 & 10단계 (아기~성체 마스터) 전사 진화 엔진
- * - 5대 종족: 댕댕이(Dog), 냥이(Cat), 토끼(Rabbit), 판다(Panda), 볼트몽(Boltmon)
+ * RunNow 4대 펫 종족 & 10단계 (아기~성체 마스터) 전사 진화 엔진
+ * - 4대 종족: 댕댕이(Dog), 냥이(Cat), 토끼(Rabbit), 판다(Panda)
  * - 10단계: 0km 응애 아기부터 180km+ 초월의 성체 마스터까지
  */
 
@@ -472,125 +472,16 @@ export const PANDA_STAGES = [
     "petType": "panda",
     "svg": "<img src=\"./assets/pets/panda_stage_10.jpg\" alt=\"판다멍\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FFD700;\">"
   }
-];
-export const BOLTMON_STAGES = [
-  {
-    "stage": 1,
-    "name": "볼트몽 St.1",
-    "nameKo": "응애 아기 (0km+)",
-    "minKm": 0,
-    "icon": "⚡",
-    "image": "./assets/pets/boltmon_stage_1.jpg",
-    "tagline": "푸른 번개 스파크를 깜빡이며 태어난 전설의 사이버 신수 아기 볼트",
-    "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_1.jpg\" alt=\"볼트몽\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00F0FF;\">"
-  },
-  {
-    "stage": 2,
-    "name": "볼트몽 St.2",
-    "nameKo": "걸음마 유아 (2km+)",
-    "minKm": 2,
-    "icon": "✨",
-    "image": "./assets/pets/boltmon_stage_2.jpg",
-    "tagline": "발바닥에서 찌릿찌릿 정전기를 뿜으며 아장아장 걷는 네온 볼트",
-    "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_2.jpg\" alt=\"볼트몽\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00F0FF;\">"
-  },
-  {
-    "stage": 3,
-    "name": "볼트몽 St.3",
-    "nameKo": "장난꾸러기 유치원 (5km+)",
-    "minKm": 5,
-    "icon": "🔋",
-    "image": "./assets/pets/boltmon_stage_3.jpg",
-    "tagline": "번개 회로를 타고 네온 트랙을 신나게 질주하는 유치원 볼트몽",
-    "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_3.jpg\" alt=\"볼트몽\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00E5FF;\">"
-  },
-  {
-    "stage": 4,
-    "name": "볼트몽 St.4",
-    "nameKo": "호기심 탐험가 (10km+)",
-    "minKm": 10,
-    "icon": "🔮",
-    "image": "./assets/pets/boltmon_stage_4.jpg",
-    "tagline": "사이버 시티의 디지털 그리드를 자유롭게 탐험하는 네온 탐험가",
-    "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_4.jpg\" alt=\"볼트몽\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00B0FF;\">"
-  },
-  {
-    "stage": 5,
-    "name": "볼트몽 St.5",
-    "nameKo": "트랙 꿈나무 (20km+)",
-    "minKm": 20,
-    "icon": "🚀",
-    "image": "./assets/pets/boltmon_stage_5.jpg",
-    "tagline": "터보 엔진을 가동하여 1초 만에 최고 속도에 도달하는 트랙 루키",
-    "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_5.jpg\" alt=\"볼트몽\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00C73C;\">"
-  },
-  {
-    "stage": 6,
-    "name": "볼트몽 St.6",
-    "nameKo": "질주 청소년 (35km+)",
-    "minKm": 35,
-    "icon": "🔥",
-    "image": "./assets/pets/boltmon_stage_6.jpg",
-    "tagline": "초고속 데이터 스트림을 가르며 달리는 사이버 청소년 볼트",
-    "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_6.jpg\" alt=\"볼트몽\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #7C4DFF;\">"
-  },
-  {
-    "stage": 7,
-    "name": "볼트몽 St.7",
-    "nameKo": "열정 페이스메이커 (55km+)",
-    "minKm": 55,
-    "icon": "🎧",
-    "image": "./assets/pets/boltmon_stage_7.jpg",
-    "tagline": "초정밀 GPS 레이더와 결합하여 1초의 오차도 없는 궁극의 페이스메이커",
-    "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_7.jpg\" alt=\"볼트몽\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #651FFF;\">"
-  },
-  {
-    "stage": 8,
-    "name": "볼트몽 St.8",
-    "nameKo": "프로 마라토너 (80km+)",
-    "minKm": 80,
-    "icon": "🏅",
-    "image": "./assets/pets/boltmon_stage_8.jpg",
-    "tagline": "에너지 100% 충전 상태로 마라톤 전 구간을 빛의 속도로 완주한 마라토너 볼트",
-    "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_8.jpg\" alt=\"볼트몽\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF9100;\">"
-  },
-  {
-    "stage": 9,
-    "name": "볼트몽 St.9",
-    "nameKo": "베테랑 챔피언 (120km+)",
-    "minKm": 120,
-    "icon": "🏆",
-    "image": "./assets/pets/boltmon_stage_9.jpg",
-    "tagline": "네온 번개 트로피를 차지한 디지털 세계의 베테랑 챔피언",
-    "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_9.jpg\" alt=\"볼트몽\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF6D00;\">"
-  },
-  {
-    "stage": 10,
-    "name": "볼트몽 St.10",
-    "nameKo": "초월의 성체 마스터 (180km+)",
-    "minKm": 180,
-    "icon": "👑",
-    "image": "./assets/pets/boltmon_stage_10.jpg",
-    "tagline": "천둥과 번개를 자유자재로 다루며 황금빛 사이버 아우라를 발산하는 초월의 전설 신수",
-    "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_10.jpg\" alt=\"볼트몽\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FFD700;\">"
-  }
-];
-
 export const STAGES = DOG_STAGES;
 
 export class TamagotchiEngine {
   constructor(initialData = {}) {
-    this.petType = initialData.petType || localStorage.getItem("RUNNOW_PET_SPECIES") || "dog";
+    let savedType = initialData.petType || localStorage.getItem("RUNNOW_PET_SPECIES") || "dog";
+    if (savedType === "boltmon") {
+      savedType = "dog";
+      localStorage.setItem("RUNNOW_PET_SPECIES", "dog");
+    }
+    this.petType = savedType;
     this.petChosen = initialData.petChosen === true;
     this.name = initialData.name || this.getDefaultName(this.petType);
     this.level = initialData.level || 1;
@@ -621,7 +512,6 @@ export class TamagotchiEngine {
       case "cat": return "냥냥이";
       case "rabbit": return "토순이";
       case "panda": return "판다멍";
-      case "boltmon": return "볼트몽";
       default: return "댕댕이";
     }
   }
@@ -650,7 +540,7 @@ export class TamagotchiEngine {
   }
 
   switchPetSpecies(type) {
-    const valid = ["dog", "cat", "rabbit", "panda", "boltmon"];
+    const valid = ["dog", "cat", "rabbit", "panda"];
     if (!valid.includes(type)) return;
     this.petType = type;
     this.name = this.getDefaultName(type);
@@ -663,7 +553,6 @@ export class TamagotchiEngine {
       case "cat": return CAT_STAGES;
       case "rabbit": return RABBIT_STAGES;
       case "panda": return PANDA_STAGES;
-      case "boltmon": return BOLTMON_STAGES;
       default: return DOG_STAGES;
     }
   }

@@ -5335,18 +5335,15 @@ button, .btn, .btn-shimmer, .btn-coach-action, .prompt-chip, .t-btn-action, .spe
   box-sizing: border-box !important;
 }
 
-/* 5대 펫 종족 선택 탭 스타일 */
+/* 4대 펫 종족 선택 탭 스타일 (댕댕이, 냥이, 토끼, 판다) */
 .pet-species-bar {
-  display: flex !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
   gap: 6px !important;
   margin-bottom: 12px !important;
-  overflow-x: auto !important;
-  padding-bottom: 4px !important;
-  scrollbar-width: none !important;
   width: 100% !important;
   box-sizing: border-box !important;
 }
-.pet-species-bar::-webkit-scrollbar { display: none !important; }
 
 .species-chip {
   flex: 1 1 auto !important;
