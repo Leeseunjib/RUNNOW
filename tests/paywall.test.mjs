@@ -108,5 +108,17 @@ function extractGatedTabs() {
   }
 }
 
+// --- 7. 종전가격(정가) 표시가 없다 ----------------------------------------
+// 실제로 그 가격에 판매한 이력이 없는 금액을 취소선으로 붙이면 표시광고법상
+// 허위 종전가격 표시가 됩니다. 판매 이력이 생기기 전까지는 표기하지 않습니다.
+{
+  const strikePrice = /text-decoration:\s*line-through[^>]*>\s*₩[\d,]+/.test(htmlSrc);
+  check("판매 화면에 취소선 가격 없음", strikePrice, false);
+
+  const plans2 = Object.values(SUBSCRIPTION_PLANS);
+  const refPrice = plans2.some((p) => /정가|원가|할인\s*전/.test(`${p.periodName || ""} ${p.badge || ""} ${p.desc || ""} ${p.discountTag || ""}`));
+  check("요금제 정의에 '정가' 표기 없음", refPrice, false);
+}
+
 console.log(failed === 0 ? "\n✅ ALL PASS" : `\n❌ ${failed} FAILED`);
 process.exit(failed === 0 ? 0 : 1);

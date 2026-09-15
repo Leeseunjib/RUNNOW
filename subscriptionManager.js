@@ -18,7 +18,7 @@ export const SUBSCRIPTION_PLANS = {
     badge: "👑 Best Value · 1:1 케어",
     priceKRW: 24900,
     priceUSD: 19.99,
-    periodName: "/ 월 (정가 ₩49,000)",
+    periodName: "/ 월",
     durationDays: 30,
     discountTag: "오프라인 PT 대비 합리적 선택",
     // VIP는 서버가 AI 키를 대신 쓰므로 사용자 설정이 필요 없습니다(chatWithCoach).
