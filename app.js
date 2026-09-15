@@ -1895,10 +1895,9 @@ class AppController {
         pill.classList.add("is-good");
       }
       if (data.secondsLeft > 0) {
-        this.motionSound.playDepthClick();
+        this.motionSound.playCoachAudio(`countdown_${data.secondsLeft}`, `${data.secondsLeft}`);
       } else {
-        this.motionSound.playRepBeep(1);
-        this.motionSound.speakCoaching("시작합니다");
+        this.motionSound.playCoachAudio("start", "시작합니다");
       }
       return;
     }

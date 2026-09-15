@@ -191,34 +191,55 @@ export class MotionSound {
   }
 
   // 한국어 음성 횟수 카운팅 (PT 코치 현장감 극대화)
-  speakRep(repCount, targetReps = 10) {
-    if (!this.ttsEnabled || !this.synth) return;
+  
+  // ⚡ 100% 실제 한국인 전문 성우 오디오 에셋 무지연 재생 (Zero-Latency Studio Audio)
+  playCoachAudio(key, fallbackText) {
+    if (!this.soundEnabled && !this.ttsEnabled) return;
+    this.ensureAudioUnlocked();
 
-    const koreanNumbers = [
-      "", "하나", "둘", "셋", "넷", "다섯", "여섯", "일곱", "여덟", "아홉", "열",
-      "열하나", "열둘", "열셋", "열넷", "열다섯", "열여섯", "열일곱", "열여덟", "열아홉", "스물"
-    ];
+    const coach = this.currentCoachId || "leo";
+    const audioPath = `assets/audio/coaches/${coach}/${key}.mp3`;
 
-    const isLeo = this.currentCoachId === "leo";
-    let numStr = repCount <= 20 ? (koreanNumbers[repCount] || `${repCount}개`) : `${repCount}회`;
-    let phrase = numStr;
-
-    // 코치 쌤의 실시간 감정 반응 (소비자 심리학: 동반자 효과 & 사회적 촉진)
-    if (repCount === 1) {
-      phrase += isLeo ? "! 좋습니다, 나이스 스타트!" : "! 호흡 뱉으면서 나이스 스타트!";
-    } else if (repCount === 3) {
-      phrase += isLeo ? "! 깊이 완벽합니다!" : "! 무릎 정렬 너무 좋아요!";
-    } else if (repCount === 5) {
-      phrase += isLeo ? "! 절반 돌파! 코어 힘!" : "! 절반 왔어요, 페이스 유지!";
-    } else if (targetReps > 0 && repCount === targetReps - 1) {
-      phrase += isLeo ? "! 마지막 하나 더!" : "! 끝까지 집중, 하나 더!";
-    } else if (targetReps > 0 && repCount >= targetReps) {
-      phrase += isLeo ? "! 완벽합니다, 세트 종료!" : "! 참 잘하셨어요, 완벽해요!";
-    } else if (repCount % 5 === 0) {
-      phrase += isLeo ? "! 나이스!" : "! 힘내세요!";
+    try {
+      if (this.currentAudio) {
+        this.currentAudio.pause();
+        this.currentAudio.currentTime = 0;
+      }
+      const audio = new Audio(audioPath);
+      audio.volume = 1.0;
+      this.currentAudio = audio;
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          if (fallbackText) this.speak(fallbackText, this.getCoachRate(), this.getCoachPitch(), true);
+        });
+      }
+    } catch (e) {
+      if (fallbackText) this.speak(fallbackText, this.getCoachRate(), this.getCoachPitch(), true);
     }
+  }
 
-    this.speak(phrase, this.getCoachRate(), this.getCoachPitch(), true);
+  speakRep(repCount, targetReps = 10) {
+    if (!this.ttsEnabled) return;
+
+    if (repCount <= 20) {
+      this.playCoachAudio(`count_${repCount}`, `${repCount}`);
+
+      // 성우 추임새 시차 재생 (0.75초 후 자연스럽게 연결)
+      if (repCount === 1) {
+        setTimeout(() => this.playCoachAudio("cheer_good", "좋습니다"), 750);
+      } else if (repCount === 3) {
+        setTimeout(() => this.playCoachAudio("cheer_depth", "깊이 완벽합니다"), 750);
+      } else if (repCount === Math.floor(targetReps / 2) && targetReps >= 6) {
+        setTimeout(() => this.playCoachAudio("cheer_half", "절반 돌파"), 750);
+      } else if (targetReps > 0 && repCount === targetReps - 1) {
+        setTimeout(() => this.playCoachAudio("cheer_last", "마지막 하나 더"), 750);
+      } else if (targetReps > 0 && repCount >= targetReps) {
+        setTimeout(() => this.playCoachAudio("cheer_finish", "완벽합니다"), 750);
+      }
+    } else {
+      this.speak(`${repCount}회!`, this.getCoachRate(), this.getCoachPitch(), true);
+    }
   }
 
   // 실시간 코칭 음성 피드백

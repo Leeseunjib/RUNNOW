@@ -46,7 +46,7 @@
   <link rel="apple-touch-icon" href="assets/hero_mascot.jpg">
   <link rel="icon" type="image/jpeg" href="assets/hero_mascot.jpg">
 
-  <link rel="stylesheet" href="styles.css?v=8.2_premium_hud">
+  <link rel="stylesheet" href="styles.css?v=8.3_wide_camera">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
@@ -709,11 +709,7 @@
                 </div>
               </div>
 
-              <div class="pose-stage" id="motion-viewport-container">
-                <video id="motion-video" playsinline muted autoplay></video>
-                <canvas id="motion-canvas"></canvas>
-
-                <!-- ⚡ 1:1 전담 PT 에이전트 프리미엄 라이브 HUD (나이키 x 애플 스타일) -->
+              <!-- ⚡ 1:1 전담 PT 에이전트 프리미엄 라이브 HUD (나이키 x 애플 스타일) -->
                 <div id="motion-pt-coach-hud" class="pt-coach-live-hud">
                   <div class="pt-coach-header-row">
                     <div class="pt-coach-profile">
@@ -745,6 +741,10 @@
                     <span id="motion-coach-speech-text">"대표님, 카메라 앞 2m에 서주세요! 레오가 전담 마크 들어갑니다! 🔥"</span>
                   </div>
                 </div>
+
+              <div class="pose-stage" id="motion-viewport-container">
+                <video id="motion-video" playsinline muted autoplay></video>
+                <canvas id="motion-canvas"></canvas>
 
                 <div id="motion-standby-overlay" class="pose-standby">
                   <img id="motion-cover-img" class="pose-cover-img" alt="" src="./assets/exercises/squat.jpg">
@@ -2261,7 +2261,7 @@
   <script src="reelsGenerator.js"></script>
   <script src="pet3d.js"></script>
 
-  <script type="module" src="app.js?v=8.2_premium_hud"></script>
+  <script type="module" src="app.js?v=8.3_wide_camera"></script>
   <script>
     // 즉시 등록 감지 시 팝업 띄우기
     if (window.__TESTER_JUST_REGISTERED__) {

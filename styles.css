@@ -1747,12 +1747,15 @@ body {
 .pose-stage {
   position: relative;
   width: 100%;
-  height: 400px;
-  background: #0b1220;
-  border-radius: 16px;
+  min-height: 520px !important;
+  height: 60vh !important;
+  max-height: 680px !important;
+  background: #060911;
+  border-radius: 20px;
   overflow: hidden;
-  border: 1px solid var(--border-card);
-  margin-bottom: 10px;
+  border: 1.5px solid rgba(0, 240, 255, 0.4) !important;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 240, 255, 0.15) !important;
+  margin-bottom: 14px !important;
 }
 
 .pose-stage video,
@@ -1844,8 +1847,11 @@ body {
 }
 
 .pose-badge-reps {
-  top: 92px;
-  left: 10px;
+  top: 14px !important;
+  left: 14px !important;
+  background: rgba(8, 12, 20, 0.88) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6) !important;
 }
 
 .pose-badge-reps #motion-live-reps {
@@ -1866,8 +1872,11 @@ body {
 }
 
 .pose-badge-angle {
-  top: 92px;
-  right: 10px;
+  top: 14px !important;
+  right: 14px !important;
+  background: rgba(8, 12, 20, 0.88) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6) !important;
   flex-direction: column;
   align-items: flex-end;
   gap: 0;
@@ -1889,8 +1898,8 @@ body {
 
 .pose-hud-tools {
   position: absolute;
-  top: 58px;
-  right: 10px;
+  top: 68px !important;
+  right: 14px !important;
   z-index: 6;
   display: flex;
   gap: 6px;
@@ -4412,18 +4421,20 @@ body {
    1:1 전담 PT 에이전트 라이브 HUD (나이키 x 애플 스타일 프리미엄 오버레이)
    ========================================================================== */
 .pt-coach-live-hud {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  right: 10px;
-  z-index: 25;
-  background: rgba(8, 12, 20, 0.94) !important;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  width: 100% !important;
+  z-index: 10;
+  background: rgba(10, 15, 26, 0.96) !important;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1.5px solid rgba(0, 240, 255, 0.5) !important;
-  border-radius: 16px;
-  padding: 10px 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75), 0 0 16px rgba(0, 240, 255, 0.2);
+  border: 1.5px solid rgba(0, 240, 255, 0.45) !important;
+  border-radius: 18px;
+  padding: 12px 14px;
+  margin-bottom: 12px !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), 0 0 14px rgba(0, 240, 255, 0.15);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: auto;
 }
@@ -4777,4 +4788,17 @@ body {
   padding: 11px 16px !important;
   margin-bottom: 12px !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 파트너 댕댕이가 운동 중 화면 하단을 가리지 않도록 처리 */
+.pose-mascot {
+  position: relative !important;
+  bottom: auto !important;
+  left: auto !important;
+  right: auto !important;
+  width: 100% !important;
+  margin-bottom: 10px !important;
+  background: rgba(14, 20, 32, 0.92) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 12px !important;
 }
