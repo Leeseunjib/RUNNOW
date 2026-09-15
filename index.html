@@ -465,15 +465,15 @@
           <div id="workout-view-list">
 
             <!-- 🌤️ 기상청 & 에어코리아 공공데이터 실시간 러닝 기상캐스터 위젯 -->
-            <div id="weather-running-widget" class="glow-card" style="background:linear-gradient(135deg, rgba(18,22,31,0.95), rgba(10,14,20,0.98)); border:1.5px solid rgba(0,240,255,0.4); border-radius:20px; padding:18px 16px; margin-bottom:16px; box-shadow:0 8px 30px rgba(0,240,255,0.12);">
+            <div id="weather-running-widget" class="weather-running-card">
               <!-- Top Row: 공공데이터 타이틀 & 위치 선택기 -->
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:10px;">
-                <div style="display:flex; align-items:center; gap:6px;">
-                  <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#00F0FF; box-shadow:0 0 8px #00F0FF; animation:pulse 2s infinite;"></span>
-                  <strong style="font-size:12px; font-weight:800; color:var(--cyber-cyan); letter-spacing:0.5px;">🌤️ 기상청 공공데이터 실시간 러닝 기상</strong>
+              <div class="weather-card-header">
+                <div style="display:flex; align-items:center; gap:6px; min-width:0;">
+                  <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--primary-accent); box-shadow:0 0 8px var(--primary-accent); animation:pulse 2s infinite; flex-shrink:0;"></span>
+                  <strong class="weather-card-title">🌤️ 실시간 러닝 기상</strong>
                 </div>
-                <div style="display:flex; align-items:center; gap:6px;">
-                  <select id="weather-city-select" onchange="onWeatherCityChange(this.value)" style="background:var(--surface-elevated, #1A1F2C); border:1px solid rgba(255,255,255,0.15); color:var(--text-main); font-size:11px; font-weight:700; padding:4px 8px; border-radius:10px; cursor:pointer; outline:none;">
+                <div style="display:flex; align-items:center; gap:5px; flex-shrink:0;">
+                  <select id="weather-city-select" onchange="onWeatherCityChange(this.value)" class="weather-select-box">
                     <option value="seoul">서울</option>
                     <option value="gyeonggi">경기/수원</option>
                     <option value="incheon">인천</option>
@@ -485,54 +485,54 @@
                     <option value="gangwon">강원</option>
                     <option value="jeju">제주</option>
                   </select>
-                  <button type="button" onclick="refreshWeatherWithGps()" title="GPS 위치 갱신" style="background:var(--surface-elevated, #1A1F2C); border:1px solid rgba(0,240,255,0.4); color:var(--cyber-cyan); font-size:11px; font-weight:800; padding:4px 8px; border-radius:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
+                  <button type="button" onclick="refreshWeatherWithGps()" title="GPS 위치 갱신" class="weather-gps-btn">
                     <span>📍 GPS</span>
                   </button>
                 </div>
               </div>
 
               <!-- Main Grid: 3열 날씨 지표 (현재기온 / 러닝쾌적지수 / 미세먼지) -->
-              <div style="display:grid; grid-template-columns:1fr 1.2fr 1fr; gap:8px; align-items:center; text-align:center;">
+              <div class="weather-metrics-grid">
                 <!-- 1열: 기온 & 날씨 -->
-                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:14px; padding:10px 6px;">
-                  <div id="weather-icon" style="font-size:26px; line-height:1; margin-bottom:4px;">☀️</div>
+                <div class="weather-metric-box">
+                  <div id="weather-icon" style="font-size:24px; line-height:1; margin-bottom:3px;">☀️</div>
                   <div style="display:flex; align-items:baseline; justify-content:center; gap:2px;">
-                    <span id="weather-temp" style="font-size:18px; font-weight:900; color:var(--text-main);">20.5</span>
-                    <span style="font-size:11px; color:var(--text-muted);">℃</span>
+                    <span id="weather-temp" class="weather-temp-num">20.5</span>
+                    <span class="weather-temp-unit">℃</span>
                   </div>
-                  <div id="weather-label" style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">맑음</div>
-                  <div id="weather-apparent" style="font-size:9.5px; color:var(--cyber-cyan); margin-top:1px;">체감 20.0℃</div>
+                  <div id="weather-label" class="weather-label-text">맑음</div>
+                  <div id="weather-apparent" class="weather-apparent-text">체감 20.0℃</div>
                 </div>
 
                 <!-- 2열: 러닝 쾌적 지수 (핵심 지표) -->
-                <div style="background:linear-gradient(135deg, rgba(0,240,255,0.08), rgba(204,255,0,0.08)); border:1.5px solid rgba(0,240,255,0.3); border-radius:14px; padding:10px 6px; box-shadow:inset 0 0 12px rgba(0,240,255,0.05);">
-                  <div style="font-size:9.5px; font-weight:800; color:var(--text-muted); margin-bottom:2px;">RUNNING INDEX</div>
-                  <div id="weather-running-score" style="font-size:24px; font-weight:900; color:var(--primary-volt); text-shadow:0 0 10px rgba(204,255,0,0.4); line-height:1.1;">95<span style="font-size:12px; font-weight:700;">점</span></div>
-                  <div id="weather-running-status" style="font-size:10px; font-weight:800; color:var(--cyber-cyan); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">👑 골든 러닝 타임</div>
+                <div class="weather-metric-box weather-score-box">
+                  <div class="weather-score-label">RUNNING INDEX</div>
+                  <div id="weather-running-score" class="weather-score-num">95<span style="font-size:12px; font-weight:700;">점</span></div>
+                  <div id="weather-running-status" class="weather-score-status">👑 골든 러닝 타임</div>
                 </div>
 
                 <!-- 3열: 에어코리아 공공 대기질 / 미세먼지 -->
-                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:14px; padding:10px 6px;">
-                  <div style="font-size:9.5px; font-weight:800; color:var(--text-muted); margin-bottom:4px;">대기질 (에어코리아)</div>
-                  <div id="weather-air-badge" style="display:inline-block; background:rgba(0,255,136,0.15); border:1px solid #00FF88; color:#00FF88; padding:3px 7px; border-radius:10px; font-size:10.5px; font-weight:800;">
+                <div class="weather-metric-box">
+                  <div class="weather-air-label">대기질 (에어코리아)</div>
+                  <div id="weather-air-badge" class="weather-air-badge">
                     좋음 🟢
                   </div>
-                  <div id="weather-air-details" style="font-size:9.5px; color:var(--text-muted); margin-top:4px;">
+                  <div id="weather-air-details" class="weather-air-details">
                     PM10 22 • PM2.5 11
                   </div>
                 </div>
               </div>
 
-              <!-- AI 코치 날씨 반응형 브리핑 (소비자 심리학 핑계 격파) -->
-              <div id="weather-coach-box" style="background:rgba(0,240,255,0.05); border:1px dashed rgba(0,240,255,0.25); border-radius:14px; padding:10px 12px; margin-top:12px; display:flex; align-items:flex-start; gap:10px;">
+              <!-- AI 코치 날씨 반응형 브리핑 -->
+              <div id="weather-coach-box" class="weather-coach-briefing">
                 <span id="weather-coach-avatar" style="font-size:22px; flex-shrink:0;">🦁</span>
-                <div style="flex:1;">
-                  <div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;">
-                    <strong id="weather-coach-title" style="font-size:11.5px; font-weight:800; color:var(--primary-volt);">🦁 레오 수석 코치의 러닝 기상 브리핑</strong>
-                    <span id="weather-coach-badge" style="font-size:9.5px; background:rgba(204,255,0,0.15); color:var(--primary-volt); padding:1px 5px; border-radius:4px; font-weight:700;">골든 아워</span>
+                <div style="flex:1; min-width:0;">
+                  <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px; flex-wrap:wrap;">
+                    <strong id="weather-coach-title" class="weather-coach-title">🦁 레오의 기상 브리핑</strong>
+                    <span id="weather-coach-badge" class="weather-coach-badge">🔥 골든 러닝 지수 90+ 달성</span>
                   </div>
-                  <p id="weather-coach-msg" style="font-size:11px; color:var(--text-main); margin:0; line-height:1.45;">
-                    기온 20.5℃, 미세먼지 '좋음' 청정 구역! 달리기 딱 좋은 골든 아워입니다. 지금 15분만 달려도 하루 도파민이 폭발합니다! 🔥
+                  <p id="weather-coach-msg" class="weather-coach-message">
+                    기온 20.5℃, 미세먼지 '좋음' 청정 구역! 달리기 딱 좋은 골든 아워입니다. 지금 15분만 달려도 하루 활력이 넘칩니다!
                   </p>
                 </div>
               </div>
@@ -2152,50 +2152,76 @@
       const elUpdated = document.getElementById('weather-updated-time');
 
       if (elIcon) elIcon.innerText = data.weatherIcon || "☀️";
-      if (elTemp) elTemp.innerText = data.temp;
-      if (elLabel) elLabel.innerText = data.weatherLabel || "맑음";
-      if (elApparent) elApparent.innerText = `체감 ${data.apparentTemp}℃ • 습도 ${data.humidity}%`;
+      if (elTemp) {
+        elTemp.innerText = data.temp;
+        elTemp.style.color = "var(--text-main)";
+      }
+      if (elLabel) {
+        elLabel.innerText = data.weatherLabel || "맑음";
+        elLabel.style.color = "var(--text-sub)";
+      }
+      if (elApparent) {
+        elApparent.innerText = `체감 ${data.apparentTemp}℃ • 습도 ${data.humidity}%`;
+        elApparent.style.color = "var(--primary-accent)";
+      }
 
       if (elScore && data.runningIndex) {
         elScore.innerHTML = `${data.runningIndex.score}<span style="font-size:12px; font-weight:700;">점</span>`;
-        elScore.style.color = data.runningIndex.color || "var(--primary-volt)";
+        elScore.style.color = "var(--primary-accent)";
       }
       if (elStatus && data.runningIndex) {
         elStatus.innerText = data.runningIndex.status;
-        elStatus.style.color = data.runningIndex.color || "var(--cyber-cyan)";
+        elStatus.style.color = "var(--text-main)";
       }
 
       if (elAirBadge && data.airQuality) {
         elAirBadge.innerText = data.airQuality.label;
         if (data.airQuality.grade === 'good') {
-          elAirBadge.style.background = 'rgba(0,255,136,0.15)';
-          elAirBadge.style.borderColor = '#00FF88';
-          elAirBadge.style.color = '#00FF88';
+          elAirBadge.style.background = 'var(--primary-accent-subtle, rgba(0,255,136,0.15))';
+          elAirBadge.style.borderColor = 'var(--primary-accent, #00FF88)';
+          elAirBadge.style.color = 'var(--primary-accent, #00A63E)';
         } else if (data.airQuality.grade === 'normal') {
           elAirBadge.style.background = 'rgba(255,215,0,0.15)';
           elAirBadge.style.borderColor = '#FFD700';
-          elAirBadge.style.color = '#FFD700';
+          elAirBadge.style.color = '#B45309';
         } else {
           elAirBadge.style.background = 'rgba(255,112,67,0.15)';
           elAirBadge.style.borderColor = '#FF7043';
-          elAirBadge.style.color = '#FF7043';
+          elAirBadge.style.color = '#C2410C';
         }
       }
 
       if (elAirDetails && data.airQuality) {
         elAirDetails.innerText = `PM10 ${data.airQuality.pm10} • PM2.5 ${data.airQuality.pm2_5}`;
+        elAirDetails.style.color = "var(--text-muted)";
       }
 
       if (data.coachingBriefing) {
         const cb = data.coachingBriefing;
         if (elCoachAvatar) elCoachAvatar.innerText = cb.coach === '루나' ? '🧘' : (cb.coach === '닥터케이' ? '🩺' : '🦁');
-        if (elCoachTitle) elCoachTitle.innerText = `${cb.coach === '루나' ? '🧘' : (cb.coach === '닥터케이' ? '🩺' : '🦁')} ${cb.coach}의 기상 브리핑`;
-        if (elCoachBadge) elCoachBadge.innerText = cb.badge || "데일리 가이드";
-        if (elCoachMsg) elCoachMsg.innerText = cb.message;
+        if (elCoachTitle) {
+          elCoachTitle.innerText = `${cb.coach === '루나' ? '🧘' : (cb.coach === '닥터케이' ? '🩺' : '🦁')} ${cb.coach}의 기상 브리핑`;
+          elCoachTitle.style.color = "var(--text-main)";
+        }
+        if (elCoachBadge) {
+          elCoachBadge.innerText = cb.badge || "데일리 가이드";
+          elCoachBadge.style.background = "var(--primary-accent-subtle)";
+          elCoachBadge.style.color = "var(--primary-accent)";
+        }
+        if (elCoachMsg) {
+          elCoachMsg.innerText = cb.message;
+          elCoachMsg.style.color = "var(--text-main)";
+        }
       }
 
-      if (elLocation) elLocation.innerText = `📍 ${data.locationName} (기상청 표준관측소)`;
-      if (elUpdated) elUpdated.innerText = data.updatedAt || "방금 전";
+      if (elLocation) {
+        const loc = data.locationName || "수도권/경기 GPS";
+        elLocation.innerText = loc.includes("기상청") ? `📍 ${loc}` : `📍 ${loc} 표준관측소`;
+        elLocation.style.color = "var(--text-muted)";
+      }
+      if (elUpdated) {
+        elUpdated.innerText = data.updatedAt || "방금 전";
+      }
     }
 
     async function onWeatherCityChange(cityKey) {
@@ -2364,11 +2390,11 @@
 
       <video id="reels-rendered-video" class="reels-video-screen" controls autoplay loop playsinline style="display:none;"></video>
 
-      <div style="display:flex; gap:10px; justify-content:center;">
-        <button type="button" class="btn-primary-volt" id="btn-download-reels" style="display:none; padding:12px 20px; font-size:14px; font-weight:800;">
+      <div class="reels-modal-actions">
+        <button type="button" class="btn-primary-volt" id="btn-download-reels" style="display:none;">
           <span>💾 비디오 저장하기 (.webm)</span>
         </button>
-        <button type="button" class="btn-secondary" onclick="document.getElementById('reels-preview-modal').style.display='none'" style="padding:12px 16px; font-size:13px;">
+        <button type="button" class="btn-secondary reels-close-btn" onclick="document.getElementById('reels-preview-modal').style.display='none'">
           <span>닫기</span>
         </button>
       </div>
@@ -2376,7 +2402,7 @@
   </div>
 
   <!-- Warehouse Skill Scripts -->
-  <script src="reelsGenerator.js"></script>
+  <script src="reelsGenerator.js?t=1789456457069"></script>
   <script type="module" src="app.js?v=8.5_profile_persistence"></script>
   <script>
     // 즉시 등록 감지 시 팝업 띄우기

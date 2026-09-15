@@ -184,8 +184,12 @@
     }
 
     drawBentoCard(ctx, x, y, w, h, label, value, valColor, tag) {
+      ctx.save();
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+
       // 글래스모피즘 배경
-      ctx.fillStyle = "rgba(18, 22, 31, 0.85)";
+      ctx.fillStyle = "rgba(18, 22, 31, 0.88)";
       ctx.beginPath();
       ctx.roundRect(x, y, w, h, 18);
       ctx.fill();
@@ -208,12 +212,20 @@
       // 라벨
       ctx.fillStyle = "#718096";
       ctx.font = "700 13px 'Inter', sans-serif";
-      ctx.fillText(label, x + 16, y + 70);
+      ctx.fillText(label, x + 16, y + 68);
 
-      // 값
+      // 값 (자동 폰트 리사이징으로 카드 영역 절대 오버플로우 방지)
       ctx.fillStyle = valColor;
-      ctx.font = "900 24px 'Montserrat', sans-serif";
-      ctx.fillText(value, x + 16, y + 105);
+      let fontSize = (w > 400) ? 20 : 24;
+      ctx.font = `800 ${fontSize}px 'Montserrat', -apple-system, 'Pretendard', sans-serif`;
+      const maxTextWidth = w - 36;
+      while (ctx.measureText(value).width > maxTextWidth && fontSize > 13) {
+        fontSize -= 1;
+        ctx.font = `800 ${fontSize}px 'Montserrat', -apple-system, 'Pretendard', sans-serif`;
+      }
+      ctx.fillText(value, x + 18, y + 102);
+
+      ctx.restore();
     }
   }
 
