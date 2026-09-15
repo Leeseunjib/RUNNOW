@@ -10,7 +10,7 @@ export const SUBSCRIPTION_PLANS = {
     periodName: "/ 월",
     durationDays: 30,
     discountTag: "BYOK FREE AI",
-    desc: "광고 100% 제거 • 펫 무제한 진화 • 내 구글 계정 무료 AI 무제한 연동"
+    desc: "광고 100% 제거 • 펫 무제한 진화 • 내 구글 AI 키 연동 시 코치 대화 무제한"
   },
   VIP_CARE: {
     id: "vip_monthly",
@@ -21,10 +21,10 @@ export const SUBSCRIPTION_PLANS = {
     periodName: "/ 월 (정가 ₩49,000)",
     durationDays: 30,
     discountTag: "오프라인 PT 대비 합리적 선택",
-    // 주의: "설정 없이 즉시"라고 적혀 있었으나, 현재 AI 코치는 PRO와 동일하게
-    // 사용자 본인의 구글 AI 키 연동(BYOK)이 필요합니다. 서버가 AI를 제공하는
-    // 경로는 아직 구현되지 않았습니다. 사실과 다른 문구를 제거했습니다.
-    desc: "4대 코치 무제한 대화 • 실시간 음성(TTS) • 맞춤 식단/운동 가이드 (구글 AI 키 연동 필요)"
+    // VIP는 서버가 AI 키를 대신 쓰므로 사용자 설정이 필요 없습니다(chatWithCoach).
+    // 다만 비용이 실제로 발생해 하루 100회 상한이 있습니다. 상한을 숨기고 "무제한"이라고
+    // 팔면 나중에 한도에 걸린 사용자가 속았다고 느끼므로 설명에 명시합니다.
+    desc: "키 설정 없이 바로 대화 (하루 100회) • 실시간 음성(TTS) • 맞춤 식단/운동 가이드"
   },
   ANNUAL: {
     id: "pro_annual",

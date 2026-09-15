@@ -75,12 +75,18 @@ function extractGatedTabs() {
 // 경로가 없는 동안 "설정 없이 즉시"라고 파는 것은 사실과 다릅니다.
 {
   const careSrc = readFileSync(new URL("../careTeam.js", import.meta.url), "utf8");
-  const needsUserKey = careSrc.includes("RUNNOW_USER_GEMINI_KEY");
-  const hasServerKeyPath = /serverKey|SERVER_GEMINI|vipKey/i.test(careSrc);
+  const fnSrc = readFileSync(new URL("../functions/index.js", import.meta.url), "utf8");
 
-  check("케어팀은 사용자 키를 사용", needsUserKey, true);
+  // 서버가 키를 대신 쓰는 경로가 실제로 존재하는가.
+  // 클라이언트 호출과 서버 함수가 둘 다 있어야 성립합니다.
+  const hasServerKeyPath = careSrc.includes("chatWithCoach")
+    && fnSrc.includes("exports.chatWithCoach");
 
-  if (needsUserKey && !hasServerKeyPath) {
+  check("VIP 서버 AI 경로 존재", hasServerKeyPath, true);
+  check("PRO용 BYOK 경로도 유지", careSrc.includes("RUNNOW_USER_GEMINI_KEY"), true);
+
+  // 서버 경로가 없다면 "설정 없이"라고 팔 수 없습니다.
+  if (!hasServerKeyPath) {
     const planText = Object.values(SUBSCRIPTION_PLANS)
       .map((p) => `${p.name} ${p.badge || ""} ${p.desc || ""} ${p.discountTag || ""}`)
       .join(" ");
@@ -89,6 +95,16 @@ function extractGatedTabs() {
 
     const uiNoSetup = /설정\s*0%|설정\s*없이/.test(htmlSrc);
     check("판매 화면에 '설정 없이' 주장 없음", uiNoSetup, false);
+  } else {
+    // 서버 경로가 있으면 "설정 불필요"는 정당합니다. 대신 사용량 상한을
+    // 숨기고 "무제한"이라고 팔면 한도에 걸린 사용자가 속았다고 느낍니다.
+    const require2 = (await import("node:module")).createRequire(import.meta.url);
+    const ai = require2("../functions/aiCoach.js");
+
+    const vip = SUBSCRIPTION_PLANS.VIP_CARE;
+    check("VIP 설명에 상한 명시", vip.desc.includes(String(ai.DAILY_CALL_LIMIT)), true);
+    check("VIP 설명에 '무제한' 표현 없음", /무제한/.test(vip.desc), false);
+    check("판매 화면에 상한 안내", htmlSrc.includes(`하루 ${ai.DAILY_CALL_LIMIT}회`), true);
   }
 }
 

@@ -185,6 +185,32 @@
       const profile = COACH_PROFILES[this.currentCoachId];
       const geminiKey = localStorage.getItem(GEMINI_API_KEY_STORAGE);
 
+      // 2-0. VIP 구독자는 서버가 키를 대신 씁니다(설정 불필요).
+      //      구독 확인과 사용량 상한은 전부 서버가 판단하므로 여기서는 시도만 합니다.
+      //      실패하면 아래 BYOK/로컬 경로로 자연스럽게 내려갑니다.
+      if (window.firebaseCloud && typeof window.firebaseCloud.chatWithCoach === "function") {
+        try {
+          const res = await window.firebaseCloud.chatWithCoach(profile.systemPrompt, text);
+          if (res && res.reply) {
+            const schedules = this.parseSchedulesFromText(text);
+            this.handleCoachReply(res.reply, "cheer", schedules);
+            this.lastServerUsage = res.usage || null;
+            return;
+          }
+        } catch (err) {
+          // VIP가 아니거나(permission-denied) 한도 초과(resource-exhausted)면
+          // 사용자에게 사유를 그대로 알려야 혼란이 없습니다.
+          const code = err && err.code ? String(err.code) : "";
+          if (code.includes("resource-exhausted")) {
+            this.handleCoachReply(err.message || "오늘의 대화 한도를 모두 사용하셨습니다.", "rest", []);
+            return;
+          }
+          if (!code.includes("permission-denied")) {
+            console.warn("[CareTeam] 서버 AI 호출 실패, BYOK/로컬로 폴백:", err);
+          }
+        }
+      }
+
       // 2. BYOK Google Gemini 무료 연동 또는 룰 기반 스마트 엔진 분기
       if (geminiKey && geminiKey.trim().length > 10) {
         try {

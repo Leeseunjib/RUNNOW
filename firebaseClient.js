@@ -152,6 +152,12 @@ class FirebaseCloudClient {
     return this.callFunction("capturePaypalOrder", { orderId });
   }
 
+  // VIP 전용 서버 AI 코치 호출. 사용자가 키를 준비하지 않아도 됩니다.
+  // 구독 확인과 사용량 상한은 전부 서버가 판단합니다.
+  async chatWithCoach(systemPrompt, userText) {
+    return this.callFunction("chatWithCoach", { systemPrompt, userText });
+  }
+
   // 서버가 보관 중인 구독 상태 조회. 로컬 값보다 항상 우선합니다.
   async fetchMySubscription() {
     if (!this.isInitialized || !this.auth || !this.auth.currentUser) return null;
@@ -294,3 +300,9 @@ class FirebaseCloudClient {
 }
 
 export const firebaseCloud = new FirebaseCloudClient();
+
+// careTeam.js 등 모듈 스코프 밖(IIFE)에서도 서버 호출을 쓸 수 있도록 전역에 노출합니다.
+// 노출하지 않으면 VIP 서버 AI 경로가 조용히 건너뛰어져 BYOK로만 동작합니다.
+if (typeof window !== "undefined") {
+  window.firebaseCloud = firebaseCloud;
+}

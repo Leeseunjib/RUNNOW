@@ -72,6 +72,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // AI 사용량 기록. 클라이언트가 고칠 수 있으면 상한이 무의미해집니다.
+    // 본인 사용량 조회는 허용하되, 쓰기는 Cloud Functions(Admin SDK)만 합니다.
+    match /ai_usage/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+
     // 결제 주문 기록도 서버 전용입니다. 클라이언트는 열람할 필요가 없습니다.
     match /payment_orders/{orderId} {
       allow read, write: if false;

@@ -32,3 +32,12 @@
 ## 3. 결과 및 확인
 - 엑셀 파일 정상 생성 확인 및 무결성 검증 완료
 - 바탕화면 바로 열기 가능 확인
+
+---
+
+## 4. 추가 (2026-09-15 · 소하) — 전사 Web→Expo 앱 전환 운영표준 HQ 등재
+
+- **지시**: 이건우 대표님 — 앞으로 앱은 웹 제작 후 React Native(Expo)로 전환. 웹 원본 비파괴·복제본 실험.
+- **산출**: `docs/2026-09-15_BSC_Web우선_ReactNative_Expo앱_전환_운영표준_보고서.md`
+- **맵**: `projects/Directory_Map.md`에 `sandbox/Runnow_mb_v` 예정 및 전사 파이프라인 표기
+- **HQ**: Spoke `sync_hq` Dual-Write → `01.BSC_HQ/1.Documents/01.보고서/2026-09-15/`

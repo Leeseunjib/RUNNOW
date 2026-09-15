@@ -9,6 +9,7 @@ const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 
 const { getPlan } = require("./plans");
 const paypal = require("./paypalClient");
+const aiCoach = require("./aiCoach");
 
 initializeApp();
 const db = getFirestore();
@@ -17,6 +18,12 @@ const PAYPAL_CLIENT_ID = defineSecret("PAYPAL_CLIENT_ID");
 const PAYPAL_SECRET = defineSecret("PAYPAL_SECRET");
 const PAYPAL_WEBHOOK_ID = defineSecret("PAYPAL_WEBHOOK_ID");
 const PAYPAL_ENV = defineString("PAYPAL_ENV", { default: "sandbox" }); // 'sandbox' | 'live'
+
+// VIP 전용 서버 AI 코치용 키. 배포 전 firebase functions:secrets:set 으로 등록합니다.
+const GEMINI_API_KEY = defineSecret("GEMINI_API_KEY");
+// 모델명은 수시로 바뀌므로 파라미터로 둡니다. 배포 시점에 사용 가능한 Flash 계열을
+// 지정하세요. (2026-09 기준 Flash-Lite는 10월 16일 지원 종료 예정입니다)
+const GEMINI_MODEL = defineString("GEMINI_MODEL", { default: "gemini-flash-latest" });
 
 const REGION = "asia-northeast3"; // Firestore와 같은 리전
 
@@ -245,6 +252,86 @@ exports.paypalWebhook = onRequest(
     } catch (err) {
       console.error("[paypalWebhook] 처리 오류:", err);
       res.status(500).send("error");
+    }
+  }
+);
+
+/**
+ * 5) VIP 전용 AI 코치 대화
+ *
+ * PRO는 사용자 본인의 키를 씁니다(클라이언트에서 직접 호출). VIP만 서버가 키를
+ * 대신 써 주므로, 여기서 두 가지를 반드시 서버에서 확인합니다.
+ *   - 정말 유효한 VIP 구독인가 (클라이언트 주장 불신)
+ *   - 사용량 상한을 넘지 않았는가 (비용이 실제로 발생하므로)
+ */
+exports.chatWithCoach = onCall(
+  { region: REGION, secrets: [GEMINI_API_KEY] },
+  async (request) => {
+    const uid = requireAuth(request);
+    const { systemPrompt, userText } = request.data || {};
+
+    if (typeof userText !== "string" || userText.trim().length === 0) {
+      throw new HttpsError("invalid-argument", "메시지를 입력해 주세요.");
+    }
+    if (userText.length > aiCoach.MAX_PROMPT_CHARS) {
+      throw new HttpsError("invalid-argument", "메시지가 너무 깁니다.");
+    }
+    if (typeof systemPrompt !== "string" || systemPrompt.length === 0) {
+      throw new HttpsError("invalid-argument", "코치 정보가 없습니다.");
+    }
+
+    // --- VIP 구독 확인 (서버 정본) ---
+    const subSnap = await db.collection("subscriptions").doc(uid).get();
+    if (!aiCoach.isActiveVip(subSnap.exists ? subSnap.data() : null)) {
+      throw new HttpsError(
+        "permission-denied",
+        "VIP 케어팀 전용 기능입니다. PRO 이용 중이시면 구글 AI 키를 연동해 주세요."
+      );
+    }
+
+    // --- 사용량 상한 확인 및 차감 (동시 호출에도 안전하도록 트랜잭션) ---
+    const usageRef = db.collection("ai_usage").doc(uid);
+    const verdict = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(usageRef);
+      const result = aiCoach.evaluateUsage(snap.exists ? snap.data() : null);
+      if (!result.allowed) return result;
+      tx.set(usageRef, { ...result.next, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+      return result;
+    });
+
+    if (!verdict.allowed) {
+      const msg = verdict.reason === "daily"
+        ? `오늘의 대화 한도(${aiCoach.DAILY_CALL_LIMIT}회)를 모두 사용하셨습니다. 내일 다시 이어가실 수 있습니다.`
+        : `이번 달 대화 한도(${aiCoach.MONTHLY_CALL_LIMIT}회)를 모두 사용하셨습니다.`;
+      throw new HttpsError("resource-exhausted", msg);
+    }
+
+    // --- 실제 호출 ---
+    try {
+      const reply = await aiCoach.callGemini({
+        apiKey: GEMINI_API_KEY.value(),
+        model: GEMINI_MODEL.value(),
+        systemPrompt,
+        userText: userText.trim()
+      });
+      return {
+        reply,
+        usage: {
+          dailyUsed: verdict.next.dailyCount,
+          dailyLimit: aiCoach.DAILY_CALL_LIMIT
+        }
+      };
+    } catch (err) {
+      console.error("[chatWithCoach] Gemini 호출 실패:", err);
+      // 호출이 실패했으면 차감을 되돌립니다. 사용자 잘못이 아니기 때문입니다.
+      await usageRef.set({
+        day: verdict.day,
+        month: verdict.month,
+        dailyCount: verdict.daily,
+        monthlyCount: verdict.monthly,
+        updatedAt: FieldValue.serverTimestamp()
+      }, { merge: true });
+      throw new HttpsError("internal", "코치 응답을 받지 못했습니다. 잠시 후 다시 시도해 주세요.");
     }
   }
 );
