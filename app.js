@@ -2872,14 +2872,42 @@ class AppController {
     document.getElementById("t-xp-val").textContent = `${this.tamagotchi.xp} / ${xpReq} XP`;
     document.getElementById("t-xp-bar").style.width = `${xpPct}%`;
 
-    document.getElementById("t-hunger-val").textContent = `${this.tamagotchi.hunger}%`;
-    document.getElementById("t-hunger-bar").style.width = `${this.tamagotchi.hunger}%`;
+    const hVal = this.tamagotchi.hunger;
+    const eVal = this.tamagotchi.energy;
+    const hpVal = this.tamagotchi.happiness;
 
-    document.getElementById("t-happy-val").textContent = `${this.tamagotchi.happiness}%`;
-    document.getElementById("t-happy-bar").style.width = `${this.tamagotchi.happiness}%`;
+    const hungerValEl = document.getElementById("t-hunger-val");
+    const hungerBarEl = document.getElementById("t-hunger-bar");
+    if (hungerValEl) {
+      hungerValEl.textContent = `${hVal}%` + (hVal <= 35 ? " (배고파요 꼬르륵!)" : "");
+      hungerValEl.style.color = hVal <= 35 ? "#FF5252" : "inherit";
+    }
+    if (hungerBarEl) {
+      hungerBarEl.style.width = `${hVal}%`;
+      hungerBarEl.style.background = hVal <= 35 ? "#FF5252" : (hVal <= 60 ? "#FF9800" : "var(--primary-volt, #00E676)");
+    }
 
-    document.getElementById("t-energy-val").textContent = `${this.tamagotchi.energy}%`;
-    document.getElementById("t-energy-bar").style.width = `${this.tamagotchi.energy}%`;
+    const happyValEl = document.getElementById("t-happy-val");
+    const happyBarEl = document.getElementById("t-happy-bar");
+    if (happyValEl) {
+      happyValEl.textContent = `${hpVal}%`;
+      happyValEl.style.color = hpVal <= 35 ? "#FF5252" : "inherit";
+    }
+    if (happyBarEl) {
+      happyBarEl.style.width = `${hpVal}%`;
+      happyBarEl.style.background = hpVal <= 35 ? "#FF5252" : "#2979FF";
+    }
+
+    const energyValEl = document.getElementById("t-energy-val");
+    const energyBarEl = document.getElementById("t-energy-bar");
+    if (energyValEl) {
+      energyValEl.textContent = `${eVal}%` + (eVal <= 30 ? " (피곤해요 💤)" : "");
+      energyValEl.style.color = eVal <= 30 ? "#FF5252" : "inherit";
+    }
+    if (energyBarEl) {
+      energyBarEl.style.width = `${eVal}%`;
+      energyBarEl.style.background = eVal <= 30 ? "#FF5252" : "#00E676";
+    }
 
     // 10단계 마일스톤 타임라인 & 5대 종족 바 동기화
     if (this.tamagotchi && this.tamagotchi.getStageProgress) {
