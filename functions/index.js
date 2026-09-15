@@ -21,9 +21,10 @@ const PAYPAL_ENV = defineString("PAYPAL_ENV", { default: "sandbox" }); // 'sandb
 
 // VIP 전용 서버 AI 코치용 키. 배포 전 firebase functions:secrets:set 으로 등록합니다.
 const GEMINI_API_KEY = defineSecret("GEMINI_API_KEY");
-// 모델명은 수시로 바뀌므로 파라미터로 둡니다. 배포 시점에 사용 가능한 Flash 계열을
-// 지정하세요. (2026-09 기준 Flash-Lite는 10월 16일 지원 종료 예정입니다)
-const GEMINI_MODEL = defineString("GEMINI_MODEL", { default: "gemini-flash-latest" });
+// 모델명은 수시로 바뀌므로 파라미터로 둡니다. 코드 배포 없이 교체할 수 있습니다.
+// 기본값은 별칭이 아니라 버전 고정입니다(aiCoach.DEFAULT_MODEL 주석 참조).
+// 바꿀 때는 aiCoach.MODEL_PRICE_USD_PER_1M도 같이 맞춰야 마진 계산이 유지됩니다.
+const GEMINI_MODEL = defineString("GEMINI_MODEL", { default: aiCoach.DEFAULT_MODEL });
 
 const REGION = "asia-northeast3"; // Firestore와 같은 리전
 

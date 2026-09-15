@@ -88,7 +88,10 @@ const past = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
 // VIP 매출: ₩24,900 → 결제 수수료 차감 후 약 $17.80
 // 2027년 단가 2배 인상까지 감안해도 마진이 남아야 합니다.
 {
-  const perCall = (200 / 1e6) * 0.75 + (250 / 1e6) * 3.75;
+  // 단가는 모델 정의에서 가져옵니다. 숫자를 여기 박아 두면 모델을 바꿔도
+  // 테스트가 옛 단가로 계속 통과해 마진이 틀어진 걸 놓칩니다.
+  const price = ai.MODEL_PRICE_USD_PER_1M;
+  const perCall = (200 / 1e6) * price.input + (250 / 1e6) * price.output;
   const perCall2027 = perCall * 2;
   const revenue = (24900 / 1350) * (1 - 0.035);
 

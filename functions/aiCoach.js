@@ -5,7 +5,17 @@
 //   1) 구독 여부를 서버에서 직접 확인한다 (클라이언트 주장 불신)
 //   2) 사용량 상한을 서버에서 강제한다 (역마진 방지)
 //
-// 단가 근거 (2026-09 기준, Gemini Flash $0.75/$3.75 per 1M tokens)
+// 모델은 별칭(gemini-flash-latest)이 아니라 버전을 고정합니다.
+// 별칭은 가리키는 대상이 예고 없이 바뀌는데, 모델마다 단가가 달라서
+// 아래 마진 계산이 조용히 무너집니다. 실제로 별칭이 gemini-3.5-flash
+// ($1.50/$9.00)를 가리키고 있어 예상 단가의 2.3배가 나갈 뻔했습니다.
+const DEFAULT_MODEL = "gemini-3.8-flash";
+
+// 위 모델의 공시 단가(USD per 1M tokens). 모델을 바꾸면 이 값도 같이 바꿔야
+// 합니다. tests/aiCoach.test.mjs가 이 값으로 마진을 다시 계산합니다.
+const MODEL_PRICE_USD_PER_1M = { input: 0.75, output: 3.75 };
+
+// 단가 근거 (2026-09 기준, gemini-3.8-flash $0.75/$3.75 per 1M tokens)
 //   1회 호출 ≈ 입력 200토큰 + 출력 250토큰 ≈ $0.00109
 //   VIP 월 매출 ₩24,900 → 결제 수수료 차감 후 약 $17.80
 //   손익분기 16,366회/월(약 545회/일)
@@ -63,7 +73,7 @@ function evaluateUsage(usage, now = new Date()) {
 }
 
 // Gemini 호출. 모델명은 배포 시점에 사용 가능한 값으로 설정해야 합니다.
-async function callGemini({ apiKey, model, systemPrompt, userText }) {
+async function callGemini({ apiKey, model = DEFAULT_MODEL, systemPrompt, userText }) {
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
   const res = await fetch(endpoint, {
@@ -91,6 +101,8 @@ async function callGemini({ apiKey, model, systemPrompt, userText }) {
 }
 
 module.exports = {
+  DEFAULT_MODEL,
+  MODEL_PRICE_USD_PER_1M,
   DAILY_CALL_LIMIT,
   MONTHLY_CALL_LIMIT,
   MAX_PROMPT_CHARS,

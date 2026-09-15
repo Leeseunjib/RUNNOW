@@ -107,17 +107,20 @@ PRO는 사용자 본인의 구글 AI 키(BYOK)를 씁니다. VIP만 서버가 �
 firebase functions:secrets:set GEMINI_API_KEY
 ```
 
-모델명은 수시로 바뀌므로 파라미터로 분리했습니다. **배포 시점에 실제 사용 가능한
-Flash 계열 모델명을 확인한 뒤** 지정하세요.
+모델명은 `aiCoach.DEFAULT_MODEL`(현재 `gemini-3.8-flash`)이 기본값이고, 코드 배포
+없이 파라미터로 교체할 수 있습니다. **별칭(`gemini-flash-latest`)은 쓰지 마세요.**
+가리키는 모델이 예고 없이 바뀌는데 모델마다 단가가 달라 아래 마진표가 조용히
+무너집니다. 실제로 별칭이 `gemini-3.5-flash`($1.50/$9.00)를 가리키고 있어
+예상 단가의 2.3배가 나갈 뻔했습니다.
 
 ```bash
 firebase deploy --only functions:chatWithCoach
 ```
 
 > 2026-09 기준 참고
-> - `gemini-2.5-flash-lite`는 2026년 10월 16일 지원 종료 예정입니다. 쓰지 마세요.
-> - 클라이언트 BYOK 경로가 아직 `gemini-1.5-flash`를 호출합니다. 현행 모델인지
->   확인이 필요합니다(`careTeam.js`).
+> - 모델을 바꾸면 `aiCoach.MODEL_PRICE_USD_PER_1M`의 공시 단가도 함께 고치세요.
+>   `tests/geminiModel.test.mjs`가 그 값으로 마진을 다시 계산합니다.
+> - 종료된 모델은 같은 테스트의 denylist에 추가하면 다음 사고를 CI에서 잡습니다.
 
 ### 비용과 상한
 

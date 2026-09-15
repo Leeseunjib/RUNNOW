@@ -13,6 +13,28 @@
   const CHAT_STORAGE_KEY_PREFIX = "RUNNOW_CHAT_";
   const GEMINI_API_KEY_STORAGE = "RUNNOW_USER_GEMINI_KEY";
 
+  // BYOK 경로가 호출할 모델. 서버(functions/aiCoach.js DEFAULT_MODEL)와 같은 값을
+  // 써야 PRO와 VIP의 코치 답변 품질이 갈리지 않습니다.
+  // 지난 모델(gemini-1.5-flash)은 2025-09-29에 종료돼 404만 떨어지고 있었습니다.
+  const GEMINI_MODEL = "gemini-3.8-flash";
+
+  // BYOK 호출 실패 원인별 안내. 상태 코드마다 사용자가 할 수 있는 조치가 달라서
+  // "잠시 후 다시 시도해 주세요" 하나로 뭉뚱그리지 않습니다.
+  function byokFailureNotice(err) {
+    const status = err && err.status;
+    if (status === 400 || status === 401 || status === 403) {
+      return "⚠️ 연동하신 구글 AI 키가 유효하지 않아 기본 답변으로 대신합니다. 설정에서 키를 다시 확인해 주세요.";
+    }
+    if (status === 429) {
+      return "⚠️ 구글 AI 무료 사용량을 초과해 기본 답변으로 대신합니다. 잠시 후 다시 시도해 주세요.";
+    }
+    if (status === 404) {
+      // 우리 쪽 모델명이 죽은 경우입니다. 사용자 잘못이 아니므로 그렇게 씁니다.
+      return "⚠️ AI 모델을 일시적으로 사용할 수 없어 기본 답변으로 대신합니다. 앱을 최신 버전으로 업데이트해 주세요.";
+    }
+    return "⚠️ AI 코치 연결에 실패해 기본 답변으로 대신합니다. 네트워크 상태를 확인해 주세요.";
+  }
+
   const COACH_PROFILES = {
     leo: {
       id: "leo",
@@ -212,6 +234,7 @@
       }
 
       // 2. BYOK Google Gemini 무료 연동 또는 룰 기반 스마트 엔진 분기
+      let byokNotice = null;
       if (geminiKey && geminiKey.trim().length > 10) {
         try {
           const aiReply = await this.callGeminiApi(text, profile, geminiKey.trim());
@@ -222,13 +245,18 @@
           }
         } catch (err) {
           console.warn("[CareTeam] BYOK Gemini 호출 실패, 로컬 스마트 템플릿으로 폴백:", err);
+          // 키를 연동해 둔 사용자에게 조용히 템플릿 답변을 돌려주면, 본인은 AI가
+          // 답한 줄 알고 "AI가 왜 이렇게 엉성하냐"고 오해합니다. 실패 사실과
+          // 원인별 조치를 알려야 키를 점검하거나 문의할 수 있습니다.
+          byokNotice = byokFailureNotice(err);
         }
       }
 
       // 로컬 스마트 템플릿 엔진 (비용 완전 $0원, 0.01초 응답)
       setTimeout(() => {
         const response = this.generateResponse(text);
-        this.handleCoachReply(response.reply, response.mood, response.newSchedules || response.newSchedule);
+        const reply = byokNotice ? `${byokNotice}\n\n${response.reply}` : response.reply;
+        this.handleCoachReply(reply, byokNotice ? "warning" : response.mood, response.newSchedules || response.newSchedule);
       }, 400);
     }
 
@@ -312,7 +340,7 @@
      * [소비자 심리학 & 비용 $0원 방패] 소비자 본인의 구글 무료 API Key 직접 호출
      */
     async callGeminiApi(userPrompt, profile, apiKey) {
-      const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
       const payload = {
         contents: [{
           role: "user",
@@ -333,7 +361,13 @@
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) throw new Error("Gemini API Error: " + res.status);
+      // 상태 코드를 그대로 붙여 둡니다. 호출한 쪽이 원인별로 다른 안내를 하려면
+      // "실패했다"만으로는 부족하기 때문입니다.
+      if (!res.ok) {
+        const err = new Error("Gemini API Error: " + res.status);
+        err.status = res.status;
+        throw err;
+      }
       const data = await res.json();
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!text) throw new Error("Empty Gemini response");
