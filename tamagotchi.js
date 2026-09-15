@@ -478,10 +478,16 @@ export const STAGES = DOG_STAGES;
 
 export class TamagotchiEngine {
   constructor(initialData = {}) {
-    let savedType = initialData.petType || localStorage.getItem("RUNNOW_PET_SPECIES") || "dog";
+    let savedType = initialData.petType;
+    if (!savedType && typeof localStorage !== "undefined") {
+      savedType = localStorage.getItem("RUNNOW_PET_SPECIES");
+    }
+    savedType = savedType || "dog";
     if (savedType === "boltmon") {
       savedType = "dog";
-      localStorage.setItem("RUNNOW_PET_SPECIES", "dog");
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem("RUNNOW_PET_SPECIES", "dog");
+      }
     }
     this.petType = savedType;
     this.petChosen = initialData.petChosen === true;
@@ -593,7 +599,9 @@ export class TamagotchiEngine {
     if (!valid.includes(type)) return;
     this.petType = type;
     this.name = this.getDefaultName(type);
-    localStorage.setItem("RUNNOW_PET_SPECIES", type);
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("RUNNOW_PET_SPECIES", type);
+    }
     this.render();
   }
 
