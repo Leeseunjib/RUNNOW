@@ -20,11 +20,11 @@ import {
 } from './metrics.js';
 import { SubscriptionManager, SUBSCRIPTION_PLANS } from './subscriptionManager.js';
 
-// Unity 스타일 내부 테스터 화이트리스트 (구글 광고 안전 격리 & 개발 빌드 권한)
+// 내부 테스터 화이트리스트 (구글 광고 안전 격리 & 개발 빌드 권한)
 export const INTERNAL_TESTERS = [
-  "dnswlq456@gmail.com", // 이건우 대표님 메인 계정
-  "user_geonu_ceo",      // 대표님 UID
-  "geonu_ceo"
+  "tester@runnow.app",
+  "admin@runnow.app",
+  "user_tester_pro"
 ];
 
 class AppController {
@@ -40,7 +40,7 @@ class AppController {
     const globalProfile = this.getGlobalProfile();
 
     this.userProfile = {
-      name: userDoc.displayName || globalProfile.displayName || globalProfile.name || activeSession?.displayName || (this.currentUserId === "user_geonu_ceo" ? "이건우 대표님" : "러너"),
+      name: userDoc.displayName || globalProfile.displayName || globalProfile.name || activeSession?.displayName || "러너",
       heightCm: userDoc.heightCm ?? globalProfile.heightCm ?? 175,
       weightKg: userDoc.weightKg ?? globalProfile.weightKg ?? 70,
       age: userDoc.age ?? globalProfile.age ?? 30,
@@ -110,7 +110,7 @@ class AppController {
 
     this.paypalBridge = new PayPalBridge();
     this.subscriptionManager = new SubscriptionManager();
-    this.selectedSubPlan = "pro_annual";
+    this.selectedSubPlan = "vip_monthly";
     this.subscriptionManager.onChange((state, isPro) => {
       this.updateSubscriptionUi(isPro);
     });
@@ -261,8 +261,100 @@ class AppController {
     this.updateHeaderStats();
     this.updateSubscriptionUi(this.subscriptionManager.isSubscribed());
     this.routeAppViews();
+    this.exposeCareBridge();
 
     console.log("⚡ RUNNOW Multi-Step Onboarding App & AI Motion Fitness Initialized!");
+  }
+
+  // 케어팀·식단 모듈(고전 스크립트)이 호출하는 보상/칼로리 브리지
+  exposeCareBridge() {
+    window.RunNowBridge = {
+      awardDietBonus: (opts = {}) => this.awardDietBonus(opts),
+      getTodayBurnedCalories: () => this.getTodayBurnedCalories(),
+      getProfileBmr: () => this.getProfileBmr(),
+      syncUserSchedules: (schedules) => this.syncUserSchedules(schedules),
+      loadUserSchedules: () => this.loadUserSchedules(),
+      notifyDietUpdated: () => {
+        if (window.DietManager) window.DietManager.renderAll();
+      }
+    };
+    if (window.CareTeam?.hydrateSchedulesFromSandbox) {
+      window.CareTeam.hydrateSchedulesFromSandbox();
+    }
+    if (window.DietManager) window.DietManager.renderAll();
+    if (window.CareTeam) window.CareTeam.renderAll();
+  }
+
+  syncUserSchedules(schedules) {
+    if (!this.currentUserId || !Array.isArray(schedules)) return;
+    const payload = { schedules, updatedAt: new Date().toISOString() };
+    this.firebaseSandbox.setDoc("user_schedules", this.currentUserId, payload);
+  }
+
+  loadUserSchedules() {
+    if (!this.currentUserId) return null;
+    const db = this.firebaseSandbox.getDB();
+    const doc = db.user_schedules?.[this.currentUserId];
+    return Array.isArray(doc?.schedules) ? doc.schedules : null;
+  }
+
+  getProfileBmr() {
+    return this.calcBmr(
+      this.userProfile.heightCm,
+      this.userProfile.weightKg,
+      this.userProfile.age,
+      this.userProfile.gender
+    );
+  }
+
+  getTodayBurnedCalories() {
+    const db = this.firebaseSandbox.getDB();
+    const today = localDateStr();
+    const workouts = db.workouts?.filter((w) => w.userId === this.currentUserId) || [];
+    return workouts
+      .filter((w) => w.date === today || (w.timestamp && localDateStr(new Date(w.timestamp)) === today))
+      .reduce((acc, cur) => acc + (Number(cur.calories) || 0), 0);
+  }
+
+  awardDietBonus({ coins = 0, xp = 0, feed = false } = {}) {
+    const coinGain = Math.max(0, Number(coins) || 0);
+    const xpGain = Math.max(0, Number(xp) || 0);
+    if (coinGain > 0) {
+      this.userProfile.coins = (this.userProfile.coins || 0) + coinGain;
+    }
+    if (xpGain > 0 && this.tamagotchi) {
+      this.tamagotchi.addXp(xpGain);
+    }
+    if (feed && this.tamagotchi) {
+      this.tamagotchi.hunger = Math.min(100, (this.tamagotchi.hunger || 0) + 20);
+      this.tamagotchi.energy = Math.min(100, (this.tamagotchi.energy || 0) + 10);
+      this.tamagotchi.evaluateCondition?.();
+    }
+    this.persistUserProfile();
+    if (this.tamagotchi) {
+      this.firebaseSandbox.setDoc("tamagotchi", this.currentUserId, this.tamagotchi.toJSON());
+      firebaseCloud.syncTamagotchi(this.currentUserId, this.tamagotchi.toJSON());
+    }
+    this.updateHeaderStats();
+    this.renderTamagotchiView();
+    return { coins: coinGain, xp: xpGain };
+  }
+
+  syncDietBurnAfterWorkout(calories) {
+    try {
+      localStorage.setItem("RUNNOW_LAST_RUN", JSON.stringify({
+        calories: Number(calories) || 0,
+        burnedToday: this.getTodayBurnedCalories(),
+        at: new Date().toISOString()
+      }));
+    } catch (_) {}
+    if (window.DietManager) window.DietManager.renderTotals();
+  }
+
+  resolveSelectedSubPlan() {
+    if (this.selectedSubPlan === "pro_annual") return SUBSCRIPTION_PLANS.ANNUAL;
+    if (this.selectedSubPlan === "vip_monthly") return SUBSCRIPTION_PLANS.VIP_CARE;
+    return SUBSCRIPTION_PLANS.PRO_BYOK;
   }
 
   async hydrateFromCloud() {
@@ -397,39 +489,86 @@ class AppController {
   bindNavigation() {
     const navButtons = document.querySelectorAll(".bottom-nav .nav-item");
     const tabPanes = document.querySelectorAll(".tab-pane");
+    this.lastPlayHubTab = localStorage.getItem("RUNNOW_PLAYHUB_TAB") || "tab-tamagotchi";
+
+    const isPlayHub = (id) => id === "tab-tamagotchi" || id === "tab-challenge";
+    const canOpenProTab = (targetTabId) => {
+      const isTesterOrCeo = localStorage.getItem("RUNNOW_IS_TESTER_DEVICE") === "true"
+        || this.currentUserId === "user_geonu_ceo"
+        || this.currentUserId === "geonu_ceo";
+      if ((targetTabId === "tab-tamagotchi" || targetTabId === "tab-challenge" || targetTabId === "tab-shop")
+        && !this.subscriptionManager.isSubscribed() && !isTesterOrCeo) {
+        this.openSubscriptionModal(targetTabId);
+        return false;
+      }
+      return true;
+    };
+
+    const activateTab = (targetTabId, { fromNavBtn = null } = {}) => {
+      if (!canOpenProTab(targetTabId)) return;
+
+      navButtons.forEach((b) => b.classList.remove("active"));
+      tabPanes.forEach((pane) => pane.classList.remove("active"));
+
+      const hubNav = document.querySelector(".bottom-nav [data-playhub]");
+      if (isPlayHub(targetTabId)) {
+        this.lastPlayHubTab = targetTabId;
+        localStorage.setItem("RUNNOW_PLAYHUB_TAB", targetTabId);
+        hubNav?.classList.add("active");
+        document.querySelectorAll("[data-playhub-target]").forEach((chip) => {
+          chip.classList.toggle("active", chip.getAttribute("data-playhub-target") === targetTabId);
+        });
+      } else if (fromNavBtn) {
+        fromNavBtn.classList.add("active");
+      } else {
+        document.querySelector(`.bottom-nav [data-tab="${targetTabId}"]`)?.classList.add("active");
+      }
+
+      const targetPane = document.getElementById(targetTabId);
+      if (targetPane) targetPane.classList.add("active");
+
+      if (targetTabId !== "tab-run" && this.motionTracker.isRunning) {
+        this.motionTracker.stopCamera();
+        this.restoreIdleMotionUi();
+        this.showWorkoutView("list");
+      }
+
+      if (targetTabId === "tab-tamagotchi") {
+        this.renderTamagotchiView();
+        if (window.Pet3D?.init) window.Pet3D.init("pet3d-host");
+      }
+      if (targetTabId === "tab-challenge") {
+        this.renderDailyQuests();
+        this.renderWeeklyQuests();
+        this.renderBountyQuests();
+        this.renderChallengeView();
+        this.renderQuestView(this.currentQuestCategory || "all");
+      }
+      if (targetTabId === "tab-shop") this.renderShopView("all");
+      if (targetTabId === "tab-careteam" && window.CareTeam) {
+        window.CareTeam.renderAll();
+      }
+      if (targetTabId === "tab-diet" && window.DietManager) {
+        window.DietManager.renderAll();
+      }
+    };
+
+    this.activateAppTab = activateTab;
 
     navButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
-        const targetTabId = btn.dataset.tab;
-
-        // PRO 구독 잠금 게이트웨이: 달리기(tab-run)와 프로필(tab-profile)은 기본 무료
-        if ((targetTabId === "tab-tamagotchi" || targetTabId === "tab-challenge" || targetTabId === "tab-shop") && !this.subscriptionManager.isSubscribed()) {
-          this.openSubscriptionModal(targetTabId);
-          return;
+        let targetTabId = btn.dataset.tab;
+        if (btn.hasAttribute("data-playhub")) {
+          targetTabId = this.lastPlayHubTab || "tab-tamagotchi";
         }
+        activateTab(targetTabId, { fromNavBtn: btn });
+      });
+    });
 
-        navButtons.forEach((b) => b.classList.remove("active"));
-        tabPanes.forEach((pane) => pane.classList.remove("active"));
-
-        btn.classList.add("active");
-        const targetPane = document.getElementById(targetTabId);
-        if (targetPane) targetPane.classList.add("active");
-
-        if (targetTabId !== "tab-run" && this.motionTracker.isRunning) {
-          this.motionTracker.stopCamera();
-          this.restoreIdleMotionUi();
-          this.showWorkoutView("list");
-        }
-
-        if (targetTabId === "tab-tamagotchi") this.renderTamagotchiView();
-        if (targetTabId === "tab-challenge") {
-          this.renderDailyQuests();
-          this.renderWeeklyQuests();
-          this.renderBountyQuests();
-          this.renderChallengeView();
-          this.renderQuestView(this.currentQuestCategory || "all");
-        }
-        if (targetTabId === "tab-shop") this.renderShopView("all");
+    document.querySelectorAll("[data-playhub-target]").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const target = chip.getAttribute("data-playhub-target");
+        if (target) activateTab(target);
       });
     });
   }
@@ -448,7 +587,7 @@ class AppController {
     const freqInput = document.getElementById("ob-frequency");
     const cueInput = document.getElementById("ob-habit-cue");
 
-    if (nameInput) nameInput.value = saved.displayName || saved.name || session?.displayName || (this.currentUserId === "user_geonu_ceo" ? "이건우 대표님" : "러너");
+    if (nameInput) nameInput.value = saved.displayName || saved.name || session?.displayName || "러너";
     if (ageInput) ageInput.value = saved.age ?? 30;
     if (heightInput) heightInput.value = saved.heightCm ?? 175;
     if (weightInput) weightInput.value = saved.weightKg ?? 70;
@@ -992,6 +1131,115 @@ class AppController {
     this.updateMotionTargetLabels();
     this.renderMotionProgress(0);
     this.updateMotionMascotPreview();
+    this.setupMotionPtCoachHud();
+  }
+
+  // 1:1 전담 PT 코치 라이브 HUD 초기화 및 바인딩
+  setupMotionPtCoachHud() {
+    const coachId = (window.CareTeam && window.CareTeam.currentCoachId) ? window.CareTeam.currentCoachId : "leo";
+    this.currentMotionCoachId = coachId;
+    if (this.motionSound) {
+      this.motionSound.setCoach(coachId);
+    }
+    this.renderMotionPtCoachHud();
+
+    // 전역 코치 전환 함수 등록 (카메라 뷰에서 원클릭 스위칭)
+    window.toggleMotionCoach = () => {
+      this.currentMotionCoachId = this.currentMotionCoachId === "leo" ? "luna" : "leo";
+      if (window.CareTeam) {
+        window.CareTeam.setCoach(this.currentMotionCoachId);
+      }
+      if (this.motionSound) {
+        this.motionSound.setCoach(this.currentMotionCoachId);
+      }
+      this.renderMotionPtCoachHud();
+      const coachName = this.currentMotionCoachId === "leo" ? "코치 레오" : "코치 루나";
+      const welcomeMsg = this.currentMotionCoachId === "leo"
+        ? `"대표님, 레오가 전담 마크 들어갑니다! 파이팅 넘치게 한 세트 뽑아봅시다! 🔥"`
+        : `"대표님, 루나가 섬세하게 자세 봐드릴게요! 바른 자세로 안전하게 함께해요. ✨"`;
+      if (this.motionSound) {
+        this.motionSound.speakCoaching(this.currentMotionCoachId === "leo" ? "코치 레오로 변경되었습니다. 파이팅!" : "코치 루나로 변경되었습니다. 함께해요!");
+      }
+      const bubble = document.getElementById("motion-coach-speech-text");
+      if (bubble) bubble.textContent = welcomeMsg;
+    };
+  }
+
+  renderMotionPtCoachHud() {
+    const isLeo = this.currentMotionCoachId === "leo";
+    const elAvatar = document.getElementById("motion-coach-avatar");
+    const elName = document.getElementById("motion-coach-name");
+    const elBtnLabel = document.getElementById("btn-switch-coach-label");
+    const elSpeech = document.getElementById("motion-coach-speech-text");
+    const elBadge = document.getElementById("motion-coach-badge");
+
+    if (elAvatar) elAvatar.textContent = isLeo ? "🦁" : "🧘";
+    if (elName) elName.textContent = isLeo ? "코치 레오 (수석 PT)" : "코치 루나 (모션 코치)";
+    if (elBtnLabel) elBtnLabel.textContent = isLeo ? "🔄 루나 쌤으로 전환" : "🔄 레오 쌤으로 전환";
+
+    const userName = (this.userProfile && this.userProfile.name) ? this.userProfile.name : "회원님";
+    if (elSpeech && (!this.motionTracker || !this.motionTracker.isRunning)) {
+      elSpeech.textContent = isLeo
+        ? `"${userName}, 카메라 정면을 보시고 가슴을 펴주세요! 1회부터 함께 호흡 맞춥니다! 🔥"`
+        : `"${userName}, 몸과 마음을 정렬하고 시작해 볼까요? 정확한 가동 범위로 케어해 드릴게요. ✨"`;
+    }
+    if (elBadge) {
+      elBadge.className = "pt-status-pill scanning";
+      elBadge.textContent = "👀 자세 스캔 중...";
+    }
+  }
+
+  updateMotionPtCoachRep(reps) {
+    const isLeo = this.currentMotionCoachId === "leo";
+    const elSpeech = document.getElementById("motion-coach-speech-text");
+    const elBadge = document.getElementById("motion-coach-badge");
+
+    if (elBadge) {
+      elBadge.className = "pt-status-pill success";
+      elBadge.textContent = `👏 ${reps}회 굿 카운트!`;
+      setTimeout(() => {
+        if (elBadge) {
+          elBadge.className = "pt-status-pill perfect";
+          elBadge.textContent = "🔥 PERFECT FORM!";
+        }
+      }, 1500);
+    }
+
+    if (!elSpeech) return;
+    const target = this.targetMotionReps || 10;
+    const remain = target - reps;
+
+    if (reps === 1) {
+      elSpeech.textContent = isLeo ? `"나이스 스타트! 첫 횟수 호흡 완벽합니다!"` : `"첫 횟수 깔끔해요! 지금 리듬 그대로 유지해 주세요."`;
+    } else if (reps === 3) {
+      elSpeech.textContent = isLeo ? `"깊이 아주 좋아요! 시선 정면 고정!"` : `"무릎과 골반 밸런스 너무 좋습니다!"`;
+    } else if (reps === Math.floor(target / 2)) {
+      elSpeech.textContent = isLeo ? `"절반 돌파! 코어 힘 꽉 주고 멈추지 마세요!"` : `"벌써 절반 해내셨어요! 호흡 깊게 뱉으세요."`;
+    } else if (remain === 1) {
+      elSpeech.textContent = isLeo ? `"마지막 하나! 끝까지 쥐어짜세요! 🔥"` : `"마지막 한 개예요! 끝까지 집중해서 완성!"`;
+    } else if (reps >= target && target > 0) {
+      elSpeech.textContent = isLeo ? `"완벽합니다! 목표 세트 완수! 수고하셨습니다!"` : `"정말 대단하세요! 세트 완료, 물 한 모금 드세요!"`;
+    } else if (reps % 5 === 0) {
+      elSpeech.textContent = isLeo ? `"${reps}회 돌파! 파이팅 넘치십니다!"` : `"${reps}개 째 훌륭해요! 페이스 너무 예뻐요."`;
+    }
+  }
+
+  updateMotionPtCoachFeedback(feedback) {
+    const elSpeech = document.getElementById("motion-coach-speech-text");
+    const elBadge = document.getElementById("motion-coach-badge");
+    const isLeo = this.currentMotionCoachId === "leo";
+
+    if (!elBadge || !elSpeech) return;
+
+    if (feedback.isGood) {
+      elBadge.className = "pt-status-pill perfect";
+      elBadge.textContent = "🔥 PERFECT FORM!";
+      elSpeech.textContent = isLeo ? `"아주 좋습니다! 바로 그 가동 범위입니다!"` : `"자세가 너무 예뻐요. 그대로 유지하세요!"`;
+    } else {
+      elBadge.className = "pt-status-pill warning";
+      elBadge.textContent = "⚠️ 자세 피드백";
+      elSpeech.textContent = `"${feedback.text}"`;
+    }
   }
 
   updateMotionTargetLabels() {
@@ -1339,6 +1587,7 @@ class AppController {
 
     firebaseCloud.saveWorkout(this.currentUserId, workoutPayload);
     firebaseCloud.syncTamagotchi(this.currentUserId, this.tamagotchi.toJSON());
+    this.syncDietBurnAfterWorkout(summary.calories);
 
     // 4. 상단 바 및 뷰 갱신
     this.updateHeaderStats();
@@ -1485,9 +1734,9 @@ class AppController {
 
   // 실시간 횟수(Rep) 판별 콜백
   handleMotionRepCount(data) {
-    // 1. 사운드 및 음성 카운팅
+    // 1. 사운드 및 음성 카운팅 (PT 코치 맞춤형 호흡)
     this.motionSound.playRepBeep(data.reps);
-    this.motionSound.speakRep(data.reps);
+    this.motionSound.speakRep(data.reps, this.targetMotionReps || 10);
 
     // 2. 대형 횟수 카운터 팝업 애니메이션
     const repsEl = document.getElementById("motion-live-reps");
@@ -1499,7 +1748,10 @@ class AppController {
     }
     this.renderMotionProgress(data.reps);
 
-    // 3. 파트너 펫 실시간 응원 메시지
+    // 3. 1:1 전담 PT 코치 실시간 HUD 동기화 (자막 및 칭찬 배지)
+    this.updateMotionPtCoachRep(data.reps);
+
+    // 4. 파트너 펫 실시간 응원 메시지
     const speechEl = document.getElementById("motion-mascot-speech");
     if (speechEl) {
       const petName = this.tamagotchi.name || "댕댕이";
@@ -1649,6 +1901,9 @@ class AppController {
 
     pill.textContent = data.text;
     pill.classList.toggle("is-good", !!data.isGood);
+
+    // 1:1 전담 PT 코치 HUD 자막 및 상태 배지 실시간 동기화
+    this.updateMotionPtCoachFeedback(data);
 
     // 경고 문구가 서로 다르면 speakCoaching의 자체 중복 필터를 빠져나가 TTS가 밀립니다.
     // 종류와 무관하게 3초에 한 번만 말하도록 앱 단에서 한 번 더 막습니다.
@@ -1897,6 +2152,7 @@ class AppController {
 
         firebaseCloud.saveWorkout(this.currentUserId, workoutPayload);
         firebaseCloud.syncTamagotchi(this.currentUserId, this.tamagotchi.toJSON());
+        this.syncDietBurnAfterWorkout(stats.calories);
 
         let chalMsg = "";
         const missionDay = this.challengeManager.getNextMissionDay();
@@ -2153,11 +2409,14 @@ class AppController {
   updateSubModalCtaText() {
     const btnCta = document.getElementById("btn-confirm-paypal-sub");
     if (!btnCta) return;
-    const isAnnual = this.selectedSubPlan === "pro_annual";
-    const plan = isAnnual ? SUBSCRIPTION_PLANS.ANNUAL : SUBSCRIPTION_PLANS.MONTHLY;
-    btnCta.innerHTML = isAnnual
-      ? `<span>⚡ 7일 무료 체험으로 시작하기 (연 ₩${plan.priceKRW.toLocaleString()})</span>`
-      : `<span>⚡ 월 ₩${plan.priceKRW.toLocaleString()}로 시작하기 (언제든 1클릭 해지)</span>`;
+    const plan = this.resolveSelectedSubPlan();
+    if (this.selectedSubPlan === "pro_annual") {
+      btnCta.innerHTML = `<span>⚡ 7일 무료 체험으로 시작하기 (연 ₩${plan.priceKRW.toLocaleString()})</span>`;
+    } else if (this.selectedSubPlan === "vip_monthly") {
+      btnCta.innerHTML = `<span>👑 VIP 케어팀 시작하기 (월 ₩${plan.priceKRW.toLocaleString()})</span>`;
+    } else {
+      btnCta.innerHTML = `<span>⚡ 월 ₩${plan.priceKRW.toLocaleString()}로 시작하기 (언제든 1클릭 해지)</span>`;
+    }
   }
 
   updateSubscriptionUi(isPro) {
@@ -2204,36 +2463,38 @@ class AppController {
       });
     }
 
-    // 3. 플랜 카드 선택 인터랙션
-    const cardAnnual = document.getElementById("plan-card-annual");
-    const cardMonthly = document.getElementById("plan-card-monthly");
-    const radioAnnual = document.getElementById("radio-plan-annual");
-    const radioMonthly = document.getElementById("radio-plan-monthly");
+    // 3. 플랜 카드 선택 인터랙션 (VIP / PRO / 연간)
+    const planCards = {
+      vip_monthly: document.getElementById("plan-card-vip"),
+      pro_monthly: document.getElementById("plan-card-monthly"),
+      pro_annual: document.getElementById("plan-card-annual")
+    };
+    const planRadios = {
+      vip_monthly: document.getElementById("radio-plan-vip"),
+      pro_monthly: document.getElementById("radio-plan-monthly"),
+      pro_annual: document.getElementById("radio-plan-annual")
+    };
 
     const selectPlan = (planId) => {
       this.selectedSubPlan = planId;
-      if (planId === "pro_annual") {
-        if (cardAnnual) cardAnnual.classList.add("active");
-        if (cardMonthly) cardMonthly.classList.remove("active");
-        if (radioAnnual) radioAnnual.checked = true;
-      } else {
-        if (cardMonthly) cardMonthly.classList.add("active");
-        if (cardAnnual) cardAnnual.classList.remove("active");
-        if (radioMonthly) radioMonthly.checked = true;
-      }
+      Object.keys(planCards).forEach((id) => {
+        planCards[id]?.classList.toggle("active", id === planId);
+        if (planRadios[id]) planRadios[id].checked = id === planId;
+      });
       this.updateSubModalCtaText();
     };
 
-    if (cardAnnual) cardAnnual.addEventListener("click", () => selectPlan("pro_annual"));
-    if (cardMonthly) cardMonthly.addEventListener("click", () => selectPlan("pro_monthly"));
-    if (radioAnnual) radioAnnual.addEventListener("change", () => selectPlan("pro_annual"));
-    if (radioMonthly) radioMonthly.addEventListener("change", () => selectPlan("pro_monthly"));
+    Object.keys(planCards).forEach((planId) => {
+      planCards[planId]?.addEventListener("click", () => selectPlan(planId));
+      planRadios[planId]?.addEventListener("change", () => selectPlan(planId));
+    });
+    selectPlan(this.selectedSubPlan);
 
     // 4. PayPal 구독 결제 CTA 버튼
     const btnPaypalSub = document.getElementById("btn-confirm-paypal-sub");
     if (btnPaypalSub) {
       btnPaypalSub.addEventListener("click", async () => {
-        const plan = this.selectedSubPlan === "pro_annual" ? SUBSCRIPTION_PLANS.ANNUAL : SUBSCRIPTION_PLANS.MONTHLY;
+        const plan = this.resolveSelectedSubPlan();
         await this.paypalBridge.processSubscription(plan, async (paidPlan) => {
           // 서버가 PayPal 결제를 검증하고 구독을 부여합니다.
           // 검증에 실패하면 권한을 주지 않고 사유를 그대로 알립니다.
@@ -2256,7 +2517,7 @@ class AppController {
         this.closeSubscriptionModal();
         this.updateSubscriptionUi(isNowPro);
         if (isNowPro) {
-          alert(`👑 [이건우 대표님 VIP 마스터 패스 활성화]\n\n모든 PRO 기능이 1초 만에 즉시 언락되었습니다!\n- 🚫 모든 광고 100% 완전 제거 (Ad-Free)\n- AI 운동 6종 전종목 해금\n- 다마고치 펫 진화 룸 풀액세스\n- 21일 챌린지 및 볼트 상점 자유 이용 가능`);
+          alert(`👑 [VIP 마스터 패스 활성화]\n\n모든 PRO 기능이 1초 만에 즉시 언락되었습니다!\n- 🚫 모든 광고 100% 완전 제거 (Ad-Free)\n- AI 운동 6종 전종목 해금\n- 다마고치 펫 진화 룸 풀액세스\n- 21일 챌린지 및 볼트 상점 자유 이용 가능`);
         } else {
           alert(`⚡ [BASIC 무료 모드로 전환 완료]\n\n기본 달리기(야외 GPS/트레드밀)만 무료 이용 가능하며, 나머지 항목은 PRO 구독 잠금 상태로 복귀되었습니다.`);
         }
@@ -3292,8 +3553,7 @@ class AppController {
     const isDeviceFlag = localStorage.getItem("RUNNOW_IS_TESTER_DEVICE") === "true";
     const session = firebaseCloud.getCurrentSession();
     const isWhitelistedEmail = Boolean(session?.email && INTERNAL_TESTERS.includes(session.email));
-    const isCeoUid = this.currentUserId === "user_geonu_ceo" || this.currentUserId === "geonu_ceo";
-    const isCeoName = Boolean(this.userProfile?.name && this.userProfile.name.includes("이건우"));
+    const isTesterUid = this.currentUserId === "user_tester_pro" || this.currentUserId === "user_geonu_ceo" || this.currentUserId === "geonu_ceo";
     const isTestDomain = typeof window !== "undefined" && (
       window.location.hostname.includes("--dev") ||
       window.location.hostname.includes("localhost") ||
@@ -3301,7 +3561,7 @@ class AppController {
       window.location.hostname.includes("preview")
     );
 
-    return isDeviceFlag || isWhitelistedEmail || isCeoUid || isCeoName || isTestDomain;
+    return isDeviceFlag || isWhitelistedEmail || isTesterUid || isTestDomain;
   }
 
   applyTestDeviceMode() {

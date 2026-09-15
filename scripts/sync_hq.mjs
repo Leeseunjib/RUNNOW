@@ -73,7 +73,7 @@ export function syncToHq() {
       if (geonu) {
         geonu.status = 'branch_active';
         geonu.statusLabel = '🛠️ Branch_Active';
-        geonu.location = 'proj_01';
+        geonu.location = 'Runnow';
         geonu.lastActive = new Date().toISOString();
         fs.writeFileSync(HQ_STATUS_FILE, JSON.stringify(data, null, 2), 'utf8');
       }

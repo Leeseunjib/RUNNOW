@@ -28,8 +28,8 @@ export class FirebaseSandbox {
       users: {
         "user_geonu_ceo": {
           uid: "user_geonu_ceo",
-          displayName: "이건우 대표님",
-          email: "dnswlq456@gmail.com",
+          displayName: "러너",
+          email: "runner@runnow.app",
           heightCm: 175,
           weightKg: 70,
           age: 30,

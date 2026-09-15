@@ -363,13 +363,13 @@
     class StudioApp {
       constructor() {
         this.firebaseSandbox = new FirebaseSandbox();
-        this.currentUserId = localStorage.getItem("RUNNOW_CURRENT_USER_ID") || "user_geonu_ceo";
+        this.currentUserId = localStorage.getItem("RUNNOW_CURRENT_USER_ID") || "user_runner_default";
         const db = this.firebaseSandbox.getDB();
         const userDoc = db.users?.[this.currentUserId] || {};
         const petDoc = db.tamagotchi?.[this.currentUserId] || { name: "댕댕이", petType: "dog", level: 1 };
 
         this.userProfile = {
-          name: userDoc.displayName || "이건우 대표님",
+          name: userDoc.displayName || "러너",
           weightKg: userDoc.weightKg || 70,
           coins: userDoc.coins || 0
         };

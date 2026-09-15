@@ -1,29 +1,46 @@
 // RUNNOW PRO 구독 멤버십 상태 및 라이프사이클 관리 모듈 (SubscriptionManager)
 
 export const SUBSCRIPTION_PLANS = {
-  MONTHLY: {
+  PRO_BYOK: {
     id: "pro_monthly",
-    name: "RUNNOW PRO 월간 멤버십",
-    badge: "부담 없는 시작",
+    name: "RUNNOW PRO 스마트 (구글 AI 연동)",
+    badge: "스마트 러너를 위한 알뜰 선택",
     priceKRW: 9900,
     priceUSD: 7.99,
     periodName: "/ 월",
     durationDays: 30,
-    discountTag: null,
-    desc: "매월 자동 갱신 • 언제든지 위약금 없이 1클릭 해지 가능"
+    discountTag: "BYOK FREE AI",
+    desc: "광고 100% 제거 • 펫 무제한 진화 • 내 구글 계정 무료 AI 무제한 연동"
+  },
+  VIP_CARE: {
+    id: "vip_monthly",
+    name: "RUNNOW 1:1 전담 VIP 케어팀",
+    badge: "👑 Best Value · 1:1 케어",
+    priceKRW: 24900,
+    priceUSD: 19.99,
+    periodName: "/ 월 (정가 ₩49,000)",
+    durationDays: 30,
+    discountTag: "오프라인 PT 대비 합리적 선택",
+    desc: "설정 없이 즉시 4대 코치 무제한 대화 • 실시간 음성(TTS) • 맞춤 식단/운동 가이드"
   },
   ANNUAL: {
     id: "pro_annual",
-    name: "RUNNOW PRO 연간 멤버십",
-    badge: "러너 84%의 선택",
+    name: "RUNNOW PRO 연간 패스",
+    badge: "최대 절약 플랜",
     priceKRW: 79000,
     priceUSD: 59.99,
-    periodName: "/ 연 (월 ₩6,580)",
+    periodName: "/ 연 (월 ₩6,580꼴)",
     durationDays: 365,
     discountTag: "BEST VALUE -35%",
     desc: "연간 ₩39,800 절약 • 7일 무료 체험 후 시작"
   }
 };
+// 하위 호환성 매핑 (enumerable: false로 Object.values 오염 방지)
+Object.defineProperty(SUBSCRIPTION_PLANS, "MONTHLY", {
+  get() { return SUBSCRIPTION_PLANS.PRO_BYOK; },
+  enumerable: false,
+  configurable: true
+});
 
 // 주의: localStorage는 서버 응답을 잠깐 담아두는 캐시일 뿐, 권한의 근거가 아닙니다.
 // 실제 구독 여부는 Cloud Functions가 결제를 검증해 Firestore에 기록한 값이 정본입니다.
@@ -122,16 +139,20 @@ export class SubscriptionManager {
 
   // 구독 활성화 (결제 완료 시 호출)
   activate(planId = "pro_monthly", customDays = null) {
-    const plan = planId === "pro_annual" ? SUBSCRIPTION_PLANS.ANNUAL : SUBSCRIPTION_PLANS.MONTHLY;
-    const days = customDays || plan.durationDays;
+    let plan = SUBSCRIPTION_PLANS.PRO_BYOK;
+    if (planId === "pro_annual") plan = SUBSCRIPTION_PLANS.ANNUAL;
+    else if (planId === "vip_monthly") plan = SUBSCRIPTION_PLANS.VIP_CARE;
+    else if (SUBSCRIPTION_PLANS.MONTHLY) plan = SUBSCRIPTION_PLANS.MONTHLY;
+
+    const days = customDays || (plan ? plan.durationDays : 30);
     const now = new Date();
     const expires = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
 
     this.state = {
       status: "active",
-      tier: plan.id,
-      planId: plan.id,
-      planName: plan.name,
+      tier: plan ? plan.id : planId,
+      planId: plan ? plan.id : planId,
+      planName: plan ? plan.name : "RUNNOW PRO",
       startedAt: now.toISOString(),
       expiresAt: expires.toISOString(),
       isCeoPass: false,
@@ -163,7 +184,7 @@ export class SubscriptionManager {
         status: "active",
         tier: "pro_ceo_vip",
         planId: "pro_ceo_vip",
-        planName: "이건우 대표님 VIP 마스터 패스",
+        planName: "VIP 마스터 패스 (테스트 전용)",
         startedAt: now.toISOString(),
         expiresAt: expires.toISOString(),
         isCeoPass: true,

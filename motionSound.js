@@ -13,6 +13,19 @@ export class MotionSound {
 
     this.initAudioContext();
     this.initTTS();
+    this.currentCoachId = "leo"; // 기본 코치: 레오
+  }
+
+  setCoach(coachId) {
+    this.currentCoachId = coachId === "luna" ? "luna" : "leo";
+  }
+
+  getCoachPitch() {
+    return this.currentCoachId === "luna" ? 1.08 : 0.94;
+  }
+
+  getCoachRate() {
+    return this.currentCoachId === "luna" ? 1.03 : 1.05;
   }
 
   initAudioContext() {
@@ -166,44 +179,48 @@ export class MotionSound {
     } catch (e) {}
   }
 
-  // 한국어 음성 횟수 카운팅
-  speakRep(repCount) {
+  // 한국어 음성 횟수 카운팅 (PT 코치 현장감 극대화)
+  speakRep(repCount, targetReps = 10) {
     if (!this.ttsEnabled || !this.synth) return;
 
     const koreanNumbers = [
       "", "하나", "둘", "셋", "넷", "다섯", "여섯", "일곱", "여덟", "아홉", "열",
-      "열하나", "열둘", "열셋", "열넷", "열다섯", "열여섯", "열일곱", "열여덟", "열아홉", "스물",
-      "스물하나", "스물둘", "스물셋", "스물넷", "스물다섯", "스물여섯", "스물일곱", "스물여덟", "스물아홉", "서른",
-      "서른하나", "서른둘", "서른셋", "서른넷", "서른다섯", "서른여섯", "서른일곱", "서른여덟", "서른아홉", "마흔",
-      "마흔하나", "마흔둘", "마흔셋", "마흔넷", "마흔다섯", "마흔여섯", "마흔일곱", "마흔여덟", "마흔아홉", "쉰"
+      "열하나", "열둘", "열셋", "열넷", "열다섯", "열여섯", "열일곱", "열여덟", "열아홉", "스물"
     ];
 
-    let phrase = "";
-    if (repCount <= 50) {
-      phrase = koreanNumbers[repCount] || `${repCount}개`;
-    } else {
-      phrase = `${repCount}회`;
+    const isLeo = this.currentCoachId === "leo";
+    let numStr = repCount <= 20 ? (koreanNumbers[repCount] || `${repCount}개`) : `${repCount}회`;
+    let phrase = numStr;
+
+    // 코치 쌤의 실시간 감정 반응 (소비자 심리학: 동반자 효과 & 사회적 촉진)
+    if (repCount === 1) {
+      phrase += isLeo ? "! 좋습니다, 나이스 스타트!" : "! 호흡 뱉으면서 나이스 스타트!";
+    } else if (repCount === 3) {
+      phrase += isLeo ? "! 깊이 완벽합니다!" : "! 무릎 정렬 너무 좋아요!";
+    } else if (repCount === 5) {
+      phrase += isLeo ? "! 절반 돌파! 코어 힘!" : "! 절반 왔어요, 페이스 유지!";
+    } else if (targetReps > 0 && repCount === targetReps - 1) {
+      phrase += isLeo ? "! 마지막 하나 더!" : "! 끝까지 집중, 하나 더!";
+    } else if (targetReps > 0 && repCount >= targetReps) {
+      phrase += isLeo ? "! 완벽합니다, 세트 종료!" : "! 참 잘하셨어요, 완벽해요!";
+    } else if (repCount % 5 === 0) {
+      phrase += isLeo ? "! 나이스!" : "! 힘내세요!";
     }
 
-    if (repCount % 5 === 0 && repCount > 0) {
-      phrase += "! 나이스!";
-    }
-
-    // 자연스러운 인간의 발화 속도(1.02)와 안정된 톤(1.0)으로 도파민 카운팅
-    this.speak(phrase, 1.02, 1.0, true);
+    this.speak(phrase, this.getCoachRate(), this.getCoachPitch(), true);
   }
 
   // 실시간 코칭 음성 피드백
   speakCoaching(text) {
     if (!this.ttsEnabled || !this.synth) return;
     const now = Date.now();
-    // 동일한 코칭은 최소 3.5초 간격으로 말하기
-    if (this.lastSpokenText === text && now - this.lastSpokenTime < 3500) {
+    // 동일한 코칭은 최소 3초 간격으로 말하기
+    if (this.lastSpokenText === text && now - this.lastSpokenTime < 3000) {
       return;
     }
     this.lastSpokenText = text;
     this.lastSpokenTime = now;
-    this.speak(text, 1.0, 1.0, false);
+    this.speak(text, this.getCoachRate(), this.getCoachPitch(), false);
   }
 
   speak(text, rate = 1.02, pitch = 1.0, cancelPrevious = false) {

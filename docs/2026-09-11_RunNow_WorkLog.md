@@ -3,7 +3,7 @@
 - **작업 일자**: 2026-09-11
 - **수행자**: BSC 기술연구팀 CTO 거누
 - **책임자**: 이건우 대표님 (CEO)
-- **대상 워크스페이스**: `c:\BeausCreators\03.Research\바이브코딩 연구\Test_proj\proj_01` (Git Branch: `develop`)
+- **대상 워크스페이스**: `c:\BeausCreators\03.Research\바이브코딩 연구\Test_proj\Runnow` (Git Branch: `develop`)
 
 ---
 

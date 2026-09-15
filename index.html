@@ -161,8 +161,8 @@
           <a href="/privacy.html" style="color:var(--text-sub); text-decoration:none; transition:opacity 0.2s;">개인정보처리방침</a>
         </div>
         <div style="font-size:11px; color:var(--text-muted); line-height:1.6; opacity:0.8;">
-          주식회사 비우스 크리에이터스 · 대표자: 이건우 (CEO)<br>
-          문의: dnswlq456@gmail.com · 호스팅: Google Cloud Firebase<br>
+          주식회사 비우스 크리에이터스 (BeausCreators Co., Ltd.)<br>
+          문의: support@beauscreators.com · 호스팅: Google Cloud Firebase<br>
           &copy; 2026 BeausCreators Co., Ltd. All rights reserved.
         </div>
       </footer>
@@ -228,28 +228,16 @@
         </div>
 
         <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">
-          RUNNOW에 로그인할 Google 계정을 선택해 주세요.
+          RUNNOW에 연동할 Google 계정 정보를 입력해 주세요.
         </p>
 
-        <!-- CEO Account -->
-        <button type="button" id="btn-google-account-ceo" style="width:100%; display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--surface-elevated); border:1px solid rgba(0,240,255,0.3); border-radius:12px; margin-bottom:10px; cursor:pointer; text-align:left; transition:background 0.2s;">
-          <div style="width:36px; height:36px; border-radius:50%; background:#4285F4; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px;">
-            G
-          </div>
-          <div style="flex:1;">
-            <div style="font-size:13px; font-weight:800; color:var(--text-main);">이건우 대표님</div>
-            <div style="font-size:11px; color:var(--cyber-cyan);">dnswlq456@gmail.com</div>
-          </div>
-          <span style="color:var(--primary-volt); font-size:18px;">➔</span>
-        </button>
-
-        <!-- Custom Google Account -->
-        <div style="background:var(--surface-elevated); border:1px solid var(--border-glass); border-radius:12px; padding:12px 14px; margin-bottom:14px;">
-          <div style="font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:8px;">➕ 다른 Google 계정으로 로그인</div>
-          <input type="email" id="google-custom-email" placeholder="google_account@gmail.com" class="form-input" style="width:100%; padding:9px; font-size:12px; margin-bottom:8px;">
-          <input type="text" id="google-custom-name" placeholder="이름 (예: 홍길동)" class="form-input" style="width:100%; padding:9px; font-size:12px; margin-bottom:8px;">
-          <button type="button" class="btn-primary-volt" id="btn-google-custom-submit" style="width:100%; padding:10px; font-size:12px;">
-            <span>이 계정으로 로그인</span>
+        <!-- Standard Google Account Form -->
+        <div style="background:var(--surface-elevated); border:1px solid var(--border-glass); border-radius:14px; padding:16px 14px; margin-bottom:14px;">
+          <div style="font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:10px;">🔑 Google 계정 정보 입력</div>
+          <input type="email" id="google-custom-email" placeholder="이메일 주소 (예: user@gmail.com)" class="form-input" style="width:100%; padding:10px; font-size:12px; margin-bottom:8px;">
+          <input type="text" id="google-custom-name" placeholder="닉네임 또는 이름 (예: 러너)" class="form-input" style="width:100%; padding:10px; font-size:12px; margin-bottom:12px;">
+          <button type="button" class="btn-primary-volt" id="btn-google-custom-submit" style="width:100%; padding:12px; font-size:13px; font-weight:800;">
+            <span>Google 계정으로 시작하기 ➔</span>
           </button>
         </div>
       </div>
@@ -432,7 +420,7 @@
           <!-- Mobile Phone Connection Modal Button -->
           <button id="btn-open-login" style="background:var(--surface-elevated); border:1px solid var(--border-card); color:var(--text-main); font-size:11px; font-weight:700; padding:4px 8px; border-radius:14px; display:flex; align-items:center; gap:4px; cursor:pointer; white-space:nowrap; flex-shrink:0;">
             <span id="header-user-icon">👤</span>
-            <span id="header-user-name">이건우</span>
+            <span id="header-user-name">러너</span>
           </button>
           <div class="coin-badge" id="header-coins">⚡ 0P</div>
           <div class="coin-badge" id="header-level" style="color:var(--primary-accent); border-color:var(--border-card);">Lv. 1</div>
@@ -446,6 +434,87 @@
         <section id="tab-run" class="tab-pane active">
 
           <div id="workout-view-list">
+
+            <!-- 🌤️ 기상청 & 에어코리아 공공데이터 실시간 러닝 기상캐스터 위젯 -->
+            <div id="weather-running-widget" class="glow-card" style="background:linear-gradient(135deg, rgba(18,22,31,0.95), rgba(10,14,20,0.98)); border:1.5px solid rgba(0,240,255,0.4); border-radius:20px; padding:18px 16px; margin-bottom:16px; box-shadow:0 8px 30px rgba(0,240,255,0.12);">
+              <!-- Top Row: 공공데이터 타이틀 & 위치 선택기 -->
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:10px;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#00F0FF; box-shadow:0 0 8px #00F0FF; animation:pulse 2s infinite;"></span>
+                  <strong style="font-size:12px; font-weight:800; color:var(--cyber-cyan); letter-spacing:0.5px;">🌤️ 기상청 공공데이터 실시간 러닝 기상</strong>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <select id="weather-city-select" onchange="onWeatherCityChange(this.value)" style="background:var(--surface-elevated, #1A1F2C); border:1px solid rgba(255,255,255,0.15); color:var(--text-main); font-size:11px; font-weight:700; padding:4px 8px; border-radius:10px; cursor:pointer; outline:none;">
+                    <option value="seoul">서울</option>
+                    <option value="gyeonggi">경기/수원</option>
+                    <option value="incheon">인천</option>
+                    <option value="busan">부산</option>
+                    <option value="daegu">대구</option>
+                    <option value="daejeon">대전</option>
+                    <option value="gwangju">광주</option>
+                    <option value="ulsan">울산</option>
+                    <option value="gangwon">강원</option>
+                    <option value="jeju">제주</option>
+                  </select>
+                  <button type="button" onclick="refreshWeatherWithGps()" title="GPS 위치 갱신" style="background:var(--surface-elevated, #1A1F2C); border:1px solid rgba(0,240,255,0.4); color:var(--cyber-cyan); font-size:11px; font-weight:800; padding:4px 8px; border-radius:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
+                    <span>📍 GPS</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Main Grid: 3열 날씨 지표 (현재기온 / 러닝쾌적지수 / 미세먼지) -->
+              <div style="display:grid; grid-template-columns:1fr 1.2fr 1fr; gap:8px; align-items:center; text-align:center;">
+                <!-- 1열: 기온 & 날씨 -->
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:14px; padding:10px 6px;">
+                  <div id="weather-icon" style="font-size:26px; line-height:1; margin-bottom:4px;">☀️</div>
+                  <div style="display:flex; align-items:baseline; justify-content:center; gap:2px;">
+                    <span id="weather-temp" style="font-size:18px; font-weight:900; color:var(--text-main);">20.5</span>
+                    <span style="font-size:11px; color:var(--text-muted);">℃</span>
+                  </div>
+                  <div id="weather-label" style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">맑음</div>
+                  <div id="weather-apparent" style="font-size:9.5px; color:var(--cyber-cyan); margin-top:1px;">체감 20.0℃</div>
+                </div>
+
+                <!-- 2열: 러닝 쾌적 지수 (핵심 지표) -->
+                <div style="background:linear-gradient(135deg, rgba(0,240,255,0.08), rgba(204,255,0,0.08)); border:1.5px solid rgba(0,240,255,0.3); border-radius:14px; padding:10px 6px; box-shadow:inset 0 0 12px rgba(0,240,255,0.05);">
+                  <div style="font-size:9.5px; font-weight:800; color:var(--text-muted); margin-bottom:2px;">RUNNING INDEX</div>
+                  <div id="weather-running-score" style="font-size:24px; font-weight:900; color:var(--primary-volt); text-shadow:0 0 10px rgba(204,255,0,0.4); line-height:1.1;">95<span style="font-size:12px; font-weight:700;">점</span></div>
+                  <div id="weather-running-status" style="font-size:10px; font-weight:800; color:var(--cyber-cyan); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">👑 골든 러닝 타임</div>
+                </div>
+
+                <!-- 3열: 에어코리아 공공 대기질 / 미세먼지 -->
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:14px; padding:10px 6px;">
+                  <div style="font-size:9.5px; font-weight:800; color:var(--text-muted); margin-bottom:4px;">대기질 (에어코리아)</div>
+                  <div id="weather-air-badge" style="display:inline-block; background:rgba(0,255,136,0.15); border:1px solid #00FF88; color:#00FF88; padding:3px 7px; border-radius:10px; font-size:10.5px; font-weight:800;">
+                    좋음 🟢
+                  </div>
+                  <div id="weather-air-details" style="font-size:9.5px; color:var(--text-muted); margin-top:4px;">
+                    PM10 22 • PM2.5 11
+                  </div>
+                </div>
+              </div>
+
+              <!-- AI 코치 날씨 반응형 브리핑 (소비자 심리학 핑계 격파) -->
+              <div id="weather-coach-box" style="background:rgba(0,240,255,0.05); border:1px dashed rgba(0,240,255,0.25); border-radius:14px; padding:10px 12px; margin-top:12px; display:flex; align-items:flex-start; gap:10px;">
+                <span id="weather-coach-avatar" style="font-size:22px; flex-shrink:0;">🦁</span>
+                <div style="flex:1;">
+                  <div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;">
+                    <strong id="weather-coach-title" style="font-size:11.5px; font-weight:800; color:var(--primary-volt);">🦁 레오 수석 코치의 러닝 기상 브리핑</strong>
+                    <span id="weather-coach-badge" style="font-size:9.5px; background:rgba(204,255,0,0.15); color:var(--primary-volt); padding:1px 5px; border-radius:4px; font-weight:700;">골든 아워</span>
+                  </div>
+                  <p id="weather-coach-msg" style="font-size:11px; color:var(--text-main); margin:0; line-height:1.45;">
+                    기온 20.5℃, 미세먼지 '좋음' 청정 구역! 달리기 딱 좋은 골든 아워입니다. 지금 15분만 달려도 하루 도파민이 폭발합니다! 🔥
+                  </p>
+                </div>
+              </div>
+
+              <!-- 하단 안내 & 최근 갱신 시각 -->
+              <div style="display:flex; justify-content:space-between; align-items:center; font-size:9.5px; color:var(--text-muted); margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.05);">
+                <span id="weather-location-name">📍 서울 (기상청 표준관측소)</span>
+                <span>최근 갱신: <span id="weather-updated-time">방금 전</span> • 15분 자동 동기화</span>
+              </div>
+            </div>
+
             <div class="nrc-card">
               <div class="card-label">EXERCISE</div>
               <h2 class="ex-list-title">오늘의 트레이닝 루틴</h2>
@@ -644,6 +713,35 @@
                 <video id="motion-video" playsinline muted autoplay></video>
                 <canvas id="motion-canvas"></canvas>
 
+                <!-- ⚡ 1:1 전담 PT 에이전트 라이브 HUD 오버레이 -->
+                <div id="motion-pt-coach-hud" class="pt-coach-live-hud">
+                  <div class="pt-coach-header-row">
+                    <div class="pt-coach-profile">
+                      <div class="pt-coach-avatar-wrap">
+                        <span id="motion-coach-avatar">🦁</span>
+                        <span id="motion-coach-pulse" class="pt-pulse-dot"></span>
+                      </div>
+                      <div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                          <strong id="motion-coach-name" style="font-size:13px; font-weight:900; color:var(--text-main);">코치 레오</strong>
+                          <span id="motion-coach-badge" class="pt-status-pill scanning">👀 자세 스캔 중...</span>
+                        </div>
+                        <div style="font-size:9.5px; color:var(--cyber-cyan); font-weight:700; margin-top:1px;">전담 1:1 실시간 밀착 코칭 ON</div>
+                      </div>
+                    </div>
+                    <!-- 코치 퀵 스위처 버튼 -->
+                    <button type="button" id="btn-switch-motion-coach" onclick="toggleMotionCoach()" class="btn-pt-switch" title="코치 변경">
+                      <span id="btn-switch-coach-label">🔄 루나 쌤으로 전환</span>
+                    </button>
+                  </div>
+
+                  <!-- 코치 쌤의 실시간 말풍선 자막 -->
+                  <div id="motion-coach-speech-bubble" class="pt-speech-bubble">
+                    <span class="pt-quote-icon">💬</span>
+                    <span id="motion-coach-speech-text">"회원님, 카메라 정면을 보시고 가슴을 펴주세요! 1회부터 함께 호흡 맞춥니다!"</span>
+                  </div>
+                </div>
+
                 <div id="motion-standby-overlay" class="pose-standby">
                   <img id="motion-cover-img" class="pose-cover-img" alt="" src="./assets/exercises/squat.jpg">
                   <div class="pose-standby-icon">📹</div>
@@ -742,9 +840,20 @@
         <!-- Tab 2: Tamagotchi Evolution -->
         <section id="tab-tamagotchi" class="tab-pane">
           <div class="nrc-card tamagotchi-stage">
+            <div class="playhub-switch" role="tablist" aria-label="펫과 퀘스트 전환">
+              <button type="button" class="playhub-chip active" data-playhub-target="tab-tamagotchi">🐣 펫</button>
+              <button type="button" class="playhub-chip" data-playhub-target="tab-challenge">📜 퀘스트</button>
+            </div>
             
-            <div class="card-label">🐾 웹툰 펫 키우기 & 성장 다이어리</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <div class="card-label" style="margin:0;">🐾 웹툰 펫 키우기 &amp; 성장 다이어리</div>
+              <button type="button" class="btn-shimmer" style="padding:6px 14px; font-size:11.5px;" onclick="triggerMakeReels()">
+                🎬 15초 릴스 만들기
+              </button>
+            </div>
+            <div id="pet3d-host" class="pet3d-host" aria-hidden="true"></div>
 
+            <!-- Authentic 2D Webtoon Pet Avatar -->
             <div class="t-avatar-box" id="t-avatar-container">
               <img src="./assets/pets/dog_stage_1.jpg" alt="아기 댕댕이" class="t-img-avatar bounce-anim">
             </div>
@@ -837,6 +946,10 @@
         <!-- Tab 3: Dynamic RPG Quests & 21-Day Habit Challenge -->
         <section id="tab-challenge" class="tab-pane">
           <div class="nrc-card glow-volt">
+            <div class="playhub-switch" role="tablist" aria-label="펫과 퀘스트 전환">
+              <button type="button" class="playhub-chip" data-playhub-target="tab-tamagotchi">🐣 펫</button>
+              <button type="button" class="playhub-chip active" data-playhub-target="tab-challenge">📜 퀘스트</button>
+            </div>
             <div class="card-label">RUNNOW DAILY CHALLENGE &amp; HABIT ECOSYSTEM</div>
 
             <!-- 5-Way Sub-View Master Switcher -->
@@ -1155,6 +1268,181 @@
           </div>
         </section>
 
+        <!-- Tab 6: 1:1 Care Team & Interactive Calendar -->
+        <section id="tab-careteam" class="tab-pane">
+          <div class="nrc-card">
+            <div class="card-label">1:1 AI CARE TEAM &amp; SMART CALENDAR</div>
+            
+            <!-- Coach Selector Chips -->
+            <div class="coach-selector-bar">
+              <button type="button" class="coach-chip active" data-coach="leo" onclick="window.CareTeam.switchCoach('leo')">
+                <span>🦁</span>
+                <span>코치 레오 (남성 PT)</span>
+              </button>
+              <button type="button" class="coach-chip" data-coach="luna" onclick="window.CareTeam.switchCoach('luna')">
+                <span>🌙</span>
+                <span>코치 루나 (여성 PT)</span>
+              </button>
+              <button type="button" class="coach-chip" data-coach="ellie" onclick="window.CareTeam.switchCoach('ellie')">
+                <span>🥗</span>
+                <span>영양사 엘리 (식단)</span>
+              </button>
+              <button type="button" class="coach-chip" data-coach="drkay" onclick="window.CareTeam.switchCoach('drkay')">
+                <span>🩺</span>
+                <span>닥터 케이 (건강)</span>
+              </button>
+            </div>
+
+            <!-- Active Coach Profile Header -->
+            <div class="active-coach-banner">
+              <div class="coach-avatar-circle" id="coach-active-avatar">🦁</div>
+              <div class="coach-banner-info">
+                <div class="coach-name-row">
+                  <strong id="coach-active-name">코치 레오</strong>
+                  <span class="coach-role-pill" id="coach-active-role">남성 전담 PT</span>
+                </div>
+                <div class="coach-badge-text" id="coach-active-badge">파워 &amp; 에너지 코치</div>
+              </div>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <button type="button" class="btn-tts-toggle" id="btn-open-gemini-key-modal" onclick="openGeminiKeyModal()" style="background:rgba(66,133,244,0.15); border:1px solid #4285F4; color:#fff; font-size:11px; padding:4px 8px; border-radius:8px; cursor:pointer;">
+                  🔑 구글 AI 연동 ($0원)
+                </button>
+                <button type="button" class="btn-tts-toggle active" id="btn-toggle-tts" onclick="window.CareTeam.toggleTTS()">
+                  🔊 음성 켜짐
+                </button>
+              </div>
+            </div>
+
+            <!-- 1:1 Chat Container -->
+            <div class="coach-chat-wrap">
+              <div class="coach-chat-box" id="coach-chat-box">
+                <!-- Populated by JS -->
+              </div>
+              
+              <!-- Consumer Psychology: Emotional Catharsis Quick Bubbles -->
+              <div class="coach-quick-prompts" style="margin-bottom:8px; display:flex; gap:6px; overflow-x:auto; padding-bottom:4px;">
+                <button type="button" class="prompt-chip" onclick="window.CareTeam.sendQuickBubble('오늘 삼겹살/피자 폭식했어요 ㅠㅠ 죄책감 들어요')">🍕 삼겹살/피자 폭식 고백 (No-Guilt)</button>
+                <button type="button" class="prompt-chip" onclick="window.CareTeam.sendQuickBubble('오늘 퇴근하고 너무 지치고 귀찮아요... 위로해줘요')">😫 지치고 귀찮을 때 (정서적 공감)</button>
+                <button type="button" class="prompt-chip" onclick="window.CareTeam.sendQuickBubble('달리다가 무릎이 살짝 시큰거리는데 뛰어도 될까요?')">🦵 무릎 시큰거림 체크 (닥터)</button>
+                <button type="button" class="prompt-chip" onclick="window.CareTeam.sendQuickBubble('이번 주 뱃살 빼는 월/수/금 3일 30분 루틴 짜줘!')">📅 3일 30분 뱃살 루틴 생성</button>
+                <button type="button" class="prompt-chip" onclick="window.CareTeam.sendQuickBubble('야식 유혹이 너무 심해요! 지금 라면 끓일까 고민돼요')">🍜 야식 유혹 방어 SOS</button>
+              </div>
+
+              <div class="coach-input-row">
+                <input type="text" id="coach-chat-input" class="form-input" placeholder="코치에게 털어놓기 (예: '오늘 회식 과식했어요', '루틴 짜줘')" onkeydown="if(event.key==='Enter') document.getElementById('btn-coach-send').click()">
+                <button type="button" class="btn-primary-volt" id="btn-coach-send" onclick="const el = document.getElementById('coach-chat-input'); window.CareTeam.sendMessage(el.value); el.value = '';">
+                  <span>전송</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Smart Weekly Workout Calendar -->
+            <div class="calendar-section" style="margin-top:20px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <div>
+                  <h4 style="font-size:15px; font-weight:800; color:var(--text-main); margin:0;">📅 나만의 주간 운동 캘린더</h4>
+                  <p style="font-size:11px; color:var(--text-muted); margin:2px 0 0;">코치와 나눈 대화로 일정이 자동 등록됩니다 · 건강 팁은 참고용이며 의료 진단이 아닙니다</p>
+                </div>
+                <span style="font-size:11px; color:var(--primary-volt); font-weight:700;">체크 시 완료 처리 ✓</span>
+              </div>
+              <div class="coach-schedule-list" id="coach-schedule-list">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Tab 7: Diet Management & Dynamic Rescue System -->
+        <section id="tab-diet" class="tab-pane">
+          <div class="nrc-card">
+            <div class="card-label">식약처·농진청 공공영양 DB 기반 캐시 · 식단 관리 &amp; 만회 시스템</div>
+            
+            <!-- Diet Checklist Header -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <div>
+                <h3 style="font-size:18px; font-weight:800; margin:0;">🥗 오늘의 식단 미션 체크리스트</h3>
+                <p style="font-size:11.5px; color:var(--text-muted); margin:2px 0 0;">실천 가능한 4대 식습관을 체크하여 자책감 없이 관리하세요</p>
+              </div>
+              <div style="text-align:right;">
+                <span id="diet-progress-text" style="font-size:13px; font-weight:800; color:var(--primary-volt);">0 / 5 완료 (0%)</span>
+              </div>
+            </div>
+
+            <!-- Progress Track -->
+            <div class="stat-bar" style="margin-bottom:16px; height:8px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden;">
+              <div class="bar-fill volt" id="diet-progress-bar" style="width:0%; height:100%; transition:width 0.3s;"></div>
+            </div>
+
+            <!-- Checklist Items -->
+            <div class="diet-checklist-container" id="diet-checklist-container">
+              <!-- Populated by JS -->
+            </div>
+
+            <!-- SOLCHIK GOBEAK: Cheat Rescue Card -->
+            <div class="diet-cheat-card" style="margin:20px 0 16px;">
+              <div class="cheat-card-left">
+                <span style="font-size:24px;">🚨</span>
+                <div>
+                  <strong>오늘 치팅이나 과식을 하셨나요?</strong>
+                  <p>자책감은 No! 솔직하게 누르시면 즉시 저녁 식단과 운동으로 만회해 드립니다.</p>
+                </div>
+              </div>
+              <button type="button" class="btn-cheat-rescue" onclick="document.getElementById('diet-cheat-choice-modal').style.display='flex'">
+                솔직히 고백하기 ➔
+              </button>
+            </div>
+
+            <!-- Calorie & Macro Balance Dashboard -->
+            <div class="diet-balance-card" style="background:var(--surface-elevated); border:1px solid var(--border-card); border-radius:16px; padding:16px; margin-bottom:18px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <strong style="font-size:14px; color:var(--text-main);">📊 오늘 칼로리 수지 &amp; 3대 영양소</strong>
+                <span id="diet-calorie-balance" style="font-size:12px; font-weight:800;">계산 중...</span>
+              </div>
+              
+              <div class="macro-grid" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:6px; text-align:center; margin-bottom:12px;">
+                <div class="macro-box">
+                  <div class="macro-val" id="diet-total-calories" style="color:var(--primary-volt);">0</div>
+                  <div class="macro-lbl">섭취 열량(kcal)</div>
+                </div>
+                <div class="macro-box">
+                  <div class="macro-val" id="diet-total-carbs">0g</div>
+                  <div class="macro-lbl">탄수화물</div>
+                </div>
+                <div class="macro-box">
+                  <div class="macro-val" id="diet-total-protein">0g</div>
+                  <div class="macro-lbl">단백질</div>
+                </div>
+                <div class="macro-box">
+                  <div class="macro-val" id="diet-total-fat">0g</div>
+                  <div class="macro-lbl">지방</div>
+                </div>
+                <div class="macro-box">
+                  <div class="macro-val" id="diet-total-sodium">0mg</div>
+                  <div class="macro-lbl">나트륨</div>
+                </div>
+              </div>
+
+              <div style="font-size:11px; color:var(--text-muted); display:flex; justify-content:space-between;">
+                <span>기초대사량(BMR) <strong id="diet-bmr-value">1,720</strong> kcal + 오늘 운동 소모 <strong id="diet-burned-calories" style="color:var(--cyber-cyan);">0</strong> kcal</span>
+                <span>공공영양 DB 로컬 캐시</span>
+              </div>
+            </div>
+
+            <!-- Today's Logged Meals & Add Button -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <strong style="font-size:14px; color:var(--text-main);">🍱 오늘 먹은 식단 목록</strong>
+              <button type="button" class="btn-add-food" onclick="openDietSearchModal()">
+                ➕ 음식 검색 / 추가
+              </button>
+            </div>
+            <div class="diet-meals-list" id="diet-meals-list">
+              <!-- Populated by JS -->
+            </div>
+
+          </div>
+        </section>
+
       </main>
 
       <!-- Bottom Global Navigation -->
@@ -1163,19 +1451,17 @@
           <span class="nav-icon">🏋️</span>
           <span>운동</span>
         </button>
-        <button class="nav-item has-lock" data-tab="tab-tamagotchi" data-sub-locked="true">
+        <button class="nav-item" data-tab="tab-careteam">
+          <span class="nav-icon">🎯</span>
+          <span>1:1케어</span>
+        </button>
+        <button class="nav-item" data-tab="tab-diet">
+          <span class="nav-icon">🥗</span>
+          <span>식단관리</span>
+        </button>
+        <button class="nav-item has-lock" data-tab="tab-tamagotchi" data-playhub="1" data-sub-locked="true">
           <span class="nav-icon">🐣</span>
-          <span>펫</span>
-          <span class="nav-lock-badge" title="PRO 구독 전용">🔒</span>
-        </button>
-        <button class="nav-item has-lock" data-tab="tab-challenge" data-sub-locked="true">
-          <span class="nav-icon">📜</span>
-          <span>퀘스트</span>
-          <span class="nav-lock-badge" title="PRO 구독 전용">🔒</span>
-        </button>
-        <button class="nav-item has-lock" data-tab="tab-shop" data-sub-locked="true">
-          <span class="nav-icon">🛍️</span>
-          <span>상점(20)</span>
+          <span>펫·퀘스트</span>
           <span class="nav-lock-badge" title="PRO 구독 전용">🔒</span>
         </button>
         <button class="nav-item" data-tab="tab-profile">
@@ -1270,6 +1556,10 @@
           </div>
           <div style="margin-top:10px; font-size:11px; color:#00F0FF;" id="modal-stat-breakdown">민첩성 +18 | 근력 +7 | 정신력 +5</div>
         </div>
+
+        <button type="button" class="btn-shimmer" style="width:100%; padding:13px; font-size:14px; margin-bottom:8px;" onclick="triggerMakeReels()">
+          <span>🎬 15초 인스타 릴스 만들기 (Remotion AI)</span>
+        </button>
 
         <button class="btn-primary-volt" id="btn-close-modal" style="width:100%; padding:14px; font-size:15px;">
           <span>멋지게 보상 수령하기</span>
@@ -1478,34 +1768,52 @@
           </div>
         </div>
 
-        <!-- Plan Selectors (Monthly vs Annual) -->
+        <!-- Plan Selectors (Psychology Decoy 3-Tier Framing) -->
         <div class="sub-plans-container">
-          <div class="sub-plan-card active" data-plan="pro_annual" id="plan-card-annual">
-            <div class="sub-plan-badge">러너 84%의 선택 | BEST VALUE -35%</div>
+          <!-- Tier 1 (Anchor & Most Popular): 1:1 VIP All-Inclusive Care Team -->
+          <div class="sub-plan-card active" data-plan="vip_monthly" id="plan-card-vip" style="border-color:var(--primary-volt); background:rgba(204,255,0,0.06);">
+            <div class="sub-plan-badge" style="background:var(--primary-volt); color:#000; font-weight:900;">👑 Best Value · 오프라인 PT 대비 합리적 선택</div>
             <div class="sub-plan-header">
-              <input type="radio" name="sub-plan-choice" id="radio-plan-annual" value="pro_annual" checked>
+              <input type="radio" name="sub-plan-choice" id="radio-plan-vip" value="vip_monthly" checked>
               <div>
-                <strong>연간 멤버십</strong>
-                <span class="sub-plan-tag">7일 무료 체험</span>
+                <strong>1:1 전담 VIP 케어팀 멤버십</strong>
+                <span class="sub-plan-tag" style="background:rgba(204,255,0,0.2); color:var(--primary-volt);">설정 0% 즉시 무제한</span>
               </div>
             </div>
             <div class="sub-plan-price-row">
-              <div class="sub-plan-price">₩79,000<span>/년</span></div>
-              <div class="sub-plan-subprice">월 ₩6,580꼴 (연 ₩39,800 절약) • 7일 체험 후 시작</div>
+              <div class="sub-plan-price" style="color:var(--primary-volt);">₩24,900<span>/월</span> <span style="font-size:12px; text-decoration:line-through; color:var(--text-muted); font-weight:normal;">₩49,000</span></div>
+              <div class="sub-plan-subprice">4대 코치 감정 이미지 반응 • 실시간 음성(TTS) • 맞춤 식단/운동 정밀 처방</div>
             </div>
           </div>
 
+          <!-- Tier 2: Smart BYOK (Google Free AI Account Linked) -->
           <div class="sub-plan-card" data-plan="pro_monthly" id="plan-card-monthly">
+            <div class="sub-plan-badge" style="background:#4285F4; color:#fff;">스마트 얼리어답터 | BYOK FREE AI</div>
             <div class="sub-plan-header">
               <input type="radio" name="sub-plan-choice" id="radio-plan-monthly" value="pro_monthly">
               <div>
-                <strong>월간 멤버십</strong>
-                <span class="sub-plan-tag">언제든 1클릭 해지</span>
+                <strong>PRO 스마트 (구글 AI 연동)</strong>
+                <span class="sub-plan-tag">알뜰 실속 플랜</span>
               </div>
             </div>
             <div class="sub-plan-price-row">
               <div class="sub-plan-price">₩9,900<span>/월</span></div>
-              <div class="sub-plan-subprice">부담 없는 시작 • 매월 자동 갱신</div>
+              <div class="sub-plan-subprice">모든 광고 100% 제거 • 펫 무제한 진화 • 내 구글 계정 무료 AI 연동</div>
+            </div>
+          </div>
+
+          <!-- Tier 3: Annual Pass (Maximum Savings) -->
+          <div class="sub-plan-card" data-plan="pro_annual" id="plan-card-annual">
+            <div class="sub-plan-header">
+              <input type="radio" name="sub-plan-choice" id="radio-plan-annual" value="pro_annual">
+              <div>
+                <strong>연간 올패스</strong>
+                <span class="sub-plan-tag">월 ₩6,580꼴 (-35%)</span>
+              </div>
+            </div>
+            <div class="sub-plan-price-row">
+              <div class="sub-plan-price">₩79,000<span>/년</span></div>
+              <div class="sub-plan-subprice">연간 ₩39,800 절약 • 1년 내내 광고 없는 완전한 러닝 파트너십</div>
             </div>
           </div>
         </div>
@@ -1579,6 +1887,368 @@
       </button>
     </div>
   </div>
+
+  <!-- Diet Food Search Modal (식약처 공공데이터 검색) -->
+  <div id="diet-search-modal" class="modal-overlay" style="display:none; z-index:99999;">
+    <div class="modal-card glow-volt" style="max-width:400px; text-align:left; padding:22px 18px; background:var(--surface-card, #12161F); border:1.5px solid var(--primary-volt); border-radius:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border-card); padding-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:20px;">🥗</span>
+          <strong style="font-size:16px; color:var(--text-main);">식약처 공공 DB 음식 검색</strong>
+        </div>
+        <button type="button" onclick="document.getElementById('diet-search-modal').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      
+      <p style="font-size:11.5px; color:var(--text-muted); margin-bottom:12px;">
+        식약처 통합영양성분 표준 DB에서 열량과 탄단지를 0초 즉시 조회합니다.
+      </p>
+
+      <div style="margin-bottom:12px;">
+        <input type="text" id="diet-search-input" placeholder="음식명 검색 (예: 닭가슴살, 서브웨이, 김치찌개)" class="form-input" style="width:100%; padding:10px 12px; font-size:13px;" oninput="filterDietFoods(this.value)">
+      </div>
+
+      <div id="diet-search-results" style="max-height:260px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Diet Cheat Choice Modal (치팅 음식 선택) -->
+  <div id="diet-cheat-choice-modal" class="modal-overlay" style="display:none; z-index:99999;">
+    <div class="modal-card" style="max-width:380px; text-align:left; padding:22px 18px; background:var(--surface-card, #12161F); border:1.5px solid #FF7043; border-radius:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border-card); padding-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:22px;">🍖</span>
+          <strong style="font-size:16px; color:#FF7043;">솔직 고백: 무엇을 드셨나요?</strong>
+        </div>
+        <button type="button" onclick="document.getElementById('diet-cheat-choice-modal').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;">✕</button>
+      </div>
+
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px; line-height:1.4;">
+        솔직하게 고백하셔도 괜찮습니다! 펫에게 정직 보너스(+15P)가 주어지며, 저녁 식단과 운동 일정으로 완벽히 만회해 드립니다.
+      </p>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
+        <button type="button" class="btn-cheat-pick" onclick="submitCheat('삼겹살 구이 & 볶음밥', 750)">🥩 삼겹살/회식 (750kcal)</button>
+        <button type="button" class="btn-cheat-pick" onclick="submitCheat('치킨 & 맥주', 980)">🍗 치킨/맥주 (980kcal)</button>
+        <button type="button" class="btn-cheat-pick" onclick="submitCheat('짜장면 & 짬뽕', 780)">🍜 중국집/면류 (780kcal)</button>
+        <button type="button" class="btn-cheat-pick" onclick="submitCheat('피자 & 떡볶이', 680)">🍕 피자/분식 (680kcal)</button>
+        <button type="button" class="btn-cheat-pick" onclick="submitCheat('라면 & 밥말아먹기', 620)">🍲 라면/야식 (620kcal)</button>
+        <button type="button" class="btn-cheat-pick" onclick="submitCheat('달콤한 디저트/빵', 450)">🍰 디저트/빵 (450kcal)</button>
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="custom-cheat-input" placeholder="직접 입력 (예: 햄버거 세트)" class="form-input" style="flex:1; padding:8px 10px; font-size:12px;">
+        <button type="button" class="btn-primary-volt" style="padding:8px 14px; font-size:12px;" onclick="const val = document.getElementById('custom-cheat-input').value; if(val) submitCheat(val, 600);">고백</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Diet Rescue Encouragement Modal -->
+  <div id="diet-rescue-modal" class="modal-overlay" style="display:none; z-index:999999;">
+    <div class="modal-card glow-volt" style="max-width:360px; text-align:center; padding:24px 20px; background:var(--surface-card, #12161F); border:2px solid var(--primary-volt); border-radius:22px;">
+      <div style="font-size:42px; margin-bottom:10px;">🛡️💖</div>
+      <h3 style="font-size:18px; font-weight:900; color:var(--primary-volt); margin-bottom:6px;">맛있게 드셨으면 0kcal!</h3>
+      <p style="font-size:13px; font-weight:800; color:var(--text-main); margin-bottom:10px;">
+        [<span id="rescue-modal-food" style="color:var(--cyber-cyan);">치팅</span>] <span id="rescue-modal-bonus-note">솔직 고백 완료 (+15P 적립)</span>
+      </p>
+      <p style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:16px;">
+        죄책감 갖지 마세요! 즐겁게 먹은 에너지는 내일의 파워가 됩니다.<br><br>
+        1. <strong>저녁 식단</strong>이 나트륨 배출 채소 위주로 자동 리셋되었습니다.<br>
+        2. PT 코치 레오가 <strong>오늘 저녁 15분 만회 조깅</strong>을 캘린더에 예약했습니다.
+      </p>
+      <button type="button" class="btn-primary-volt" onclick="document.getElementById('diet-rescue-modal').style.display='none'; if(window.CareTeam) window.CareTeam.renderAll();" style="width:100%; padding:12px; font-size:14px; font-weight:800;">
+        <span>만회 플랜 확인하러 가기 ➔</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Google Gemini AI Key (BYOK) Modal -->
+  <div id="gemini-key-modal" class="modal-overlay" style="display:none; z-index:999999;">
+    <div class="modal-card glow-volt" style="max-width:380px; text-align:left; padding:22px 18px; background:var(--surface-card, #12161F); border:1.5px solid #4285F4; border-radius:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border-card); padding-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:20px;">🔑</span>
+          <strong style="font-size:16px; color:var(--text-main);">Google AI 무료 연동 (BYOK)</strong>
+        </div>
+        <button type="button" onclick="document.getElementById('gemini-key-modal').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;">✕</button>
+      </div>
+
+      <p style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:14px;">
+        Google AI Studio의 <strong style="color:var(--primary-volt);">무료 API 키</strong>를 등록하시면, 하루 1,500회까지 4대 코치와 실시간 자유 대화를 나누실 수 있습니다.<br>
+        <span style="font-size:11px; color:#4285F4;">🔒 키는 본인 기기에만 로컬 저장되며 서버로 전송되지 않습니다 ($0원 비용 안심).</span>
+      </p>
+
+      <div style="margin-bottom:14px;">
+        <input type="password" id="gemini-key-input" placeholder="AIzaSy... (Gemini API Key)" class="form-input" style="width:100%; padding:10px 12px; font-size:13px; margin-bottom:6px;">
+        <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size:11px; color:var(--cyber-cyan); text-decoration:underline;">Google AI Studio에서 무료 키 발급받기 ➔</a>
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <button type="button" class="btn-secondary" onclick="saveGeminiKey(true)" style="padding:10px 14px; font-size:12px; color:#FF7043; border-color:rgba(255,112,67,0.4);">
+          해제
+        </button>
+        <button type="button" class="btn-primary-volt" onclick="saveGeminiKey(false)" style="flex:1; padding:10px; font-size:13px; background:#4285F4; border-color:#4285F4; color:#fff;">
+          <span>연동 완료 (무료 대화 시작)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Modules -->
+  <script src="dietData.js"></script>
+  <script src="dietManager.js"></script>
+  <script src="careTeam.js"></script>
+  <script src="weatherService.js"></script>
+  <script src="publicApiService.js"></script>
+
+  <script>
+    // 🌤️ 실시간 기상청 날씨 위젯 UI 렌더러
+    function renderWeatherUI(data) {
+      if (!data) return;
+      
+      const elIcon = document.getElementById('weather-icon');
+      const elTemp = document.getElementById('weather-temp');
+      const elLabel = document.getElementById('weather-label');
+      const elApparent = document.getElementById('weather-apparent');
+      const elScore = document.getElementById('weather-running-score');
+      const elStatus = document.getElementById('weather-running-status');
+      const elAirBadge = document.getElementById('weather-air-badge');
+      const elAirDetails = document.getElementById('weather-air-details');
+      const elCoachAvatar = document.getElementById('weather-coach-avatar');
+      const elCoachTitle = document.getElementById('weather-coach-title');
+      const elCoachBadge = document.getElementById('weather-coach-badge');
+      const elCoachMsg = document.getElementById('weather-coach-msg');
+      const elLocation = document.getElementById('weather-location-name');
+      const elUpdated = document.getElementById('weather-updated-time');
+
+      if (elIcon) elIcon.innerText = data.weatherIcon || "☀️";
+      if (elTemp) elTemp.innerText = data.temp;
+      if (elLabel) elLabel.innerText = data.weatherLabel || "맑음";
+      if (elApparent) elApparent.innerText = `체감 ${data.apparentTemp}℃ • 습도 ${data.humidity}%`;
+
+      if (elScore && data.runningIndex) {
+        elScore.innerHTML = `${data.runningIndex.score}<span style="font-size:12px; font-weight:700;">점</span>`;
+        elScore.style.color = data.runningIndex.color || "var(--primary-volt)";
+      }
+      if (elStatus && data.runningIndex) {
+        elStatus.innerText = data.runningIndex.status;
+        elStatus.style.color = data.runningIndex.color || "var(--cyber-cyan)";
+      }
+
+      if (elAirBadge && data.airQuality) {
+        elAirBadge.innerText = data.airQuality.label;
+        if (data.airQuality.grade === 'good') {
+          elAirBadge.style.background = 'rgba(0,255,136,0.15)';
+          elAirBadge.style.borderColor = '#00FF88';
+          elAirBadge.style.color = '#00FF88';
+        } else if (data.airQuality.grade === 'normal') {
+          elAirBadge.style.background = 'rgba(255,215,0,0.15)';
+          elAirBadge.style.borderColor = '#FFD700';
+          elAirBadge.style.color = '#FFD700';
+        } else {
+          elAirBadge.style.background = 'rgba(255,112,67,0.15)';
+          elAirBadge.style.borderColor = '#FF7043';
+          elAirBadge.style.color = '#FF7043';
+        }
+      }
+
+      if (elAirDetails && data.airQuality) {
+        elAirDetails.innerText = `PM10 ${data.airQuality.pm10} • PM2.5 ${data.airQuality.pm2_5}`;
+      }
+
+      if (data.coachingBriefing) {
+        const cb = data.coachingBriefing;
+        if (elCoachAvatar) elCoachAvatar.innerText = cb.coach === '루나' ? '🧘' : (cb.coach === '닥터케이' ? '🩺' : '🦁');
+        if (elCoachTitle) elCoachTitle.innerText = `${cb.coach === '루나' ? '🧘' : (cb.coach === '닥터케이' ? '🩺' : '🦁')} ${cb.coach}의 기상 브리핑`;
+        if (elCoachBadge) elCoachBadge.innerText = cb.badge || "데일리 가이드";
+        if (elCoachMsg) elCoachMsg.innerText = cb.message;
+      }
+
+      if (elLocation) elLocation.innerText = `📍 ${data.locationName} (기상청 표준관측소)`;
+      if (elUpdated) elUpdated.innerText = data.updatedAt || "방금 전";
+    }
+
+    async function onWeatherCityChange(cityKey) {
+      if (window.WeatherService) {
+        const data = await window.WeatherService.setCity(cityKey);
+        renderWeatherUI(data);
+      }
+    }
+
+    async function refreshWeatherWithGps() {
+      if (window.WeatherService) {
+        const btn = event?.currentTarget;
+        if (btn) btn.innerHTML = '<span>⏳ GPS...</span>';
+        await window.WeatherService.detectLocation();
+        const data = await window.WeatherService.fetchRealTimeWeather(true);
+        renderWeatherUI(data);
+        if (btn) btn.innerHTML = '<span>📍 GPS</span>';
+      }
+    }
+
+    // 초기 날씨 바인딩 & 실시간 GPS 자동 감지
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.WeatherService) {
+        window.WeatherService.subscribe(renderWeatherUI);
+        // 1. 즉시 렌더링 (캐시 또는 기본값으로 0ms 즉각 표시)
+        window.WeatherService.fetchRealTimeWeather(false).then(renderWeatherUI);
+
+        // 2. 유저 실제 현재 위치(GPS) 백그라운드 실시간 자동 감지 및 전환
+        if (navigator.geolocation) {
+          window.WeatherService.detectLocation().then(() => {
+            window.WeatherService.fetchRealTimeWeather(true).then(renderWeatherUI);
+          }).catch(e => console.log('GPS 자동 감지 대기'));
+        }
+      }
+    });
+
+    function openDietSearchModal() {
+      const modal = document.getElementById('diet-search-modal');
+      if (modal) {
+        modal.style.display = 'flex';
+        filterDietFoods('');
+        setTimeout(() => {
+          const inp = document.getElementById('diet-search-input');
+          if (inp) inp.focus();
+        }, 100);
+      }
+    }
+
+    async function filterDietFoods(query) {
+      const resultsEl = document.getElementById('diet-search-results');
+      if (!resultsEl) return;
+
+      const q = (query || '').toLowerCase().trim();
+
+      // PublicApiService를 통한 로컬+공공데이터 하이브리드 실시간 검색
+      let foods = [];
+      if (window.PublicApiService) {
+        foods = await window.PublicApiService.searchFood(q);
+      } else if (window.DIET_FOOD_DATABASE) {
+        foods = window.DIET_FOOD_DATABASE.filter(f => !q || f.name.toLowerCase().includes(q) || f.category.includes(q));
+      }
+
+      if (foods.length === 0) {
+        resultsEl.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:12px;">일치하는 음식이 없습니다. 다른 단어로 검색해 보세요.</div>';
+        return;
+      }
+
+      let html = '';
+      foods.slice(0, 15).forEach(f => {
+        const isGov = f.source === '식약처 공공데이터포털';
+        const sourceBadge = isGov 
+          ? `<span style="font-size:9px; background:rgba(0,240,255,0.15); color:var(--cyber-cyan); padding:1px 5px; border-radius:4px; border:1px solid rgba(0,240,255,0.3); font-weight:700;">🏛️ 식약처 공공DB</span>`
+          : `<span style="font-size:9px; background:rgba(204,255,0,0.1); color:var(--primary-volt); padding:1px 5px; border-radius:4px; font-weight:700;">식약처 표준</span>`;
+
+        html += `
+          <div class="diet-search-item" onclick="selectFoodAndAdd('${f.id}')">
+            <div style="flex:1;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="font-size:13px; font-weight:800; color:var(--text-main);">${f.name}</span>
+                ${sourceBadge}
+              </div>
+              <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">${f.portion} • 탄 ${f.carbs}g | 단 ${f.protein}g | 지 ${f.fat}g</div>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-size:13px; font-weight:900; color:var(--primary-volt);">${f.calories} kcal</span>
+              <span style="display:block; font-size:10px; color:var(--cyber-cyan);">+ 추가</span>
+            </div>
+          </div>
+        `;
+      });
+      resultsEl.innerHTML = html;
+    }
+
+    function selectFoodAndAdd(foodId) {
+      const food = window.DIET_FOOD_DATABASE.find(f => f.id === foodId);
+      if (food && window.DietManager) {
+        window.DietManager.addMeal(food);
+        document.getElementById('diet-search-modal').style.display = 'none';
+        alert(`✅ [${food.name}] 오늘 식단에 추가되었습니다! (${food.calories} kcal)`);
+      }
+    }
+
+    function submitCheat(foodName, calories) {
+      document.getElementById('diet-cheat-choice-modal').style.display = 'none';
+      if (window.DietManager) {
+        window.DietManager.triggerCheatRescue(foodName, calories);
+      }
+    }
+
+    function triggerMakeReels() {
+      if (!window.ReelsGenerator) return;
+      let runStats = { distance: "3.42 km", pace: "5'18\"", calories: "245 kcal" };
+      try {
+        const last = localStorage.getItem("RUNNOW_LAST_RUN");
+        if (last) {
+          const r = JSON.parse(last);
+          if (r.distance) runStats.distance = (r.distance / 1000).toFixed(2) + " km";
+          if (r.pace) runStats.pace = r.pace;
+          if (r.calories) runStats.calories = r.calories + " kcal";
+        }
+      } catch(e) {}
+
+      let dietProtein = "48g";
+      if (window.DietManager && window.DietManager.data && window.DietManager.data.totalIntake) {
+        dietProtein = (window.DietManager.data.totalIntake.protein || 48) + "g";
+      }
+
+      const activeCoach = window.CareTeam ? (window.CareTeam.currentCoachId === "leo" ? "코치 레오 (남)" : "코치 루나 (여)") : "코치 루나";
+      window.ReelsGenerator.generateReelsVideo(runStats, activeCoach, { protein: dietProtein });
+    }
+
+    function openGeminiKeyModal() {
+      const modal = document.getElementById('gemini-key-modal');
+      const input = document.getElementById('gemini-key-input');
+      if (modal && window.CareTeam) {
+        if (input) input.value = window.CareTeam.getGeminiApiKey();
+        modal.style.display = 'flex';
+      }
+    }
+
+    function saveGeminiKey(isClear) {
+      const modal = document.getElementById('gemini-key-modal');
+      const input = document.getElementById('gemini-key-input');
+      if (window.CareTeam) {
+        const val = isClear ? '' : (input ? input.value : '');
+        window.CareTeam.setGeminiApiKey(val);
+      }
+      if (modal) modal.style.display = 'none';
+    }
+  </script>
+
+  <!-- 15-Second Instagram Reels Video Modal (Warehouse Remotion Skill) -->
+  <div id="reels-preview-modal" class="modal-overlay" style="display:none; z-index:999999;">
+    <div class="modal-card reels-modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:22px;">🎬</span>
+          <strong style="font-size:16px; color:var(--primary-volt);">15초 인스타그램 릴스 생성기</strong>
+        </div>
+        <button type="button" onclick="document.getElementById('reels-preview-modal').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer;">✕</button>
+      </div>
+
+      <div id="reels-render-progress" style="font-size:13px; font-weight:800; color:var(--cyber-cyan); margin-bottom:10px;">
+        15초 릴스 비디오 렌더링 중...
+      </div>
+
+      <video id="reels-rendered-video" class="reels-video-screen" controls autoplay loop playsinline style="display:none;"></video>
+
+      <div style="display:flex; gap:10px; justify-content:center;">
+        <button type="button" class="btn-primary-volt" id="btn-download-reels" style="display:none; padding:12px 20px; font-size:14px; font-weight:800;">
+          <span>💾 비디오 저장하기 (.webm)</span>
+        </button>
+        <button type="button" class="btn-secondary" onclick="document.getElementById('reels-preview-modal').style.display='none'" style="padding:12px 16px; font-size:13px;">
+          <span>닫기</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Warehouse Skill Scripts -->
+  <script src="reelsGenerator.js"></script>
+  <script src="pet3d.js"></script>
 
   <script type="module" src="app.js?v=6.3"></script>
   <script>

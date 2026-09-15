@@ -28,8 +28,8 @@ export class PayPalBridge {
             <div class="pp-account-info">
               <div class="pp-avatar">🏃</div>
               <div>
-                <strong>이건우 대표님 (BSC CEO)</strong>
-                <p>dnswlq456@gmail.com</p>
+                <strong>러너 (RUNNOW 회원)</strong>
+                <p>runner@runnow.app</p>
               </div>
             </div>
 
@@ -112,8 +112,8 @@ export class PayPalBridge {
             <div class="pp-account-info">
               <div class="pp-avatar">⭐</div>
               <div>
-                <strong>이건우 대표님 (BSC CEO)</strong>
-                <p>dnswlq456@gmail.com</p>
+                <strong>러너 (RUNNOW VIP 회원)</strong>
+                <p>runner@runnow.app</p>
               </div>
             </div>
 

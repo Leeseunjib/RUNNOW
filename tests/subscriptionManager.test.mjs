@@ -37,6 +37,12 @@ check("연간 활성화 후 isSubscribed", sm.isSubscribed(), true);
 check("연간 티어 확인", sm.getTier(), "pro_annual");
 check("365일 잔여일 계산", sm.getRemainingDays() >= 364, true);
 
+// 3b. VIP 케어팀 월간
+sm.activate("vip_monthly");
+check("VIP 활성화 후 isSubscribed", sm.isSubscribed(), true);
+check("VIP 티어 확인", sm.getTier(), "vip_monthly");
+check("VIP 플랜 가격", SUBSCRIPTION_PLANS.VIP_CARE.priceKRW, 24900);
+
 // 4. 구독 해지
 sm.cancel();
 check("해지 후 isSubscribed", sm.isSubscribed(), false);

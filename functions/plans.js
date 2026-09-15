@@ -9,6 +9,13 @@ const PLANS = {
     currency: "USD",
     durationDays: 30
   },
+  vip_monthly: {
+    id: "vip_monthly",
+    name: "RUNNOW 1:1 전담 VIP 케어팀",
+    priceUSD: "19.99",
+    currency: "USD",
+    durationDays: 30
+  },
   pro_annual: {
     id: "pro_annual",
     name: "RUNNOW PRO 연간 멤버십",
