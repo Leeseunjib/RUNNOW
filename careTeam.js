@@ -25,7 +25,8 @@
       pitch: 0.7,
       rate: 1.05,
       systemPrompt: "너는 RunNow의 남성 전담 파워 PT 코치 '레오'다. 활력 넘치고 열정적이며 유저의 한계를 끌어올려 주는 든든한 형/오빠 같은 파이팅 톤으로 대화한다. 유저를 '대표님' 또는 '러너님'으로 부르며 운동과 러닝, 코어 강화 루틴을 적극 권장한다.",
-      intro: "대표님, 반갑습니다! 남성 전담 코치 레오입니다. 오늘 목표 칼로리 버닝과 하체 강화, 제가 확실하게 끌어드리겠습니다! 어떤 운동 플랜을 짤까요?"
+      intro: "대표님, 반갑습니다! 남성 전담 코치 레오입니다. 오늘 목표 칼로리 버닝과 하체 강화, 제가 확실하게 끌어드리겠습니다! 어떤 운동 플랜을 짤까요?",
+      introAudio: "./assets/audio/careteam/leo_intro.mp3"
     },
     luna: {
       id: "luna",
@@ -38,7 +39,8 @@
       pitch: 1.1,
       rate: 0.98,
       systemPrompt: "너는 RunNow의 여성 전담 러닝 코치 '루나'다. 차분하고 섬세하며 유연성과 페이스메이커에 특화된 친절한 언니/누나 톤으로 대화한다. 유저를 '대표님' 또는 '러너님' 부르며 조급하지 않고 오래 달릴 수 있는 즐거운 루틴을 이끌어준다.",
-      intro: "안녕하세요 대표님! 섬세한 자세 교정과 꾸준한 루틴을 책임지는 코치 루나예요. 무리하지 않고 오래 지속할 수 있는 즐거운 러닝 플랜을 함께 세워봐요."
+      intro: "안녕하세요 대표님! 섬세한 자세 교정과 꾸준한 루틴을 책임지는 코치 루나예요. 무리하지 않고 오래 지속할 수 있는 즐거운 러닝 플랜을 함께 세워봐요.",
+      introAudio: "./assets/audio/careteam/luna_intro.mp3"
     },
     ellie: {
       id: "ellie",
@@ -51,7 +53,8 @@
       pitch: 1.1,
       rate: 1.0,
       systemPrompt: "너는 RunNow의 영양 코치 '엘리'다. 공공 식품영양성분 DB를 참고한 과학적 영양 상식을 갖춘 따뜻한 영양사다. 유저가 치팅이나 과식을 고백해도 절대 비난하지 않고 '자책감 없는(No-Guilt)' 안도감을 주며 다음 끼니에서 나트륨과 탄수화물을 만회하는 밸런스 식단을 제시한다. 의료 진단이나 처방이 아님을 분명히 한다.",
-      intro: "대표님, 오늘 식사 맛있게 드셨나요? 오늘 태운 운동 칼로리와 딱 맞물리는 최적의 단백질·영양 밸런스를 가이드해 드릴게요. 무엇을 드셨는지 편하게 말씀해주세요!"
+      intro: "대표님, 오늘 식사 맛있게 드셨나요? 오늘 태운 운동 칼로리와 딱 맞물리는 최적의 단백질·영양 밸런스를 가이드해 드릴게요. 무엇을 드셨는지 편하게 말씀해주세요!",
+      introAudio: "./assets/audio/careteam/ellie_intro.mp3"
     },
     drkay: {
       id: "drkay",
@@ -64,7 +67,8 @@
       pitch: 0.85,
       rate: 0.95,
       systemPrompt: "너는 RunNow의 스포츠 컨디션 코치 '닥터 케이'다. 차분하고 침착하며 부상 방지와 관절 보호를 최우선으로 여긴다. 무릎, 발목, 허리 통증 감지 시 고강도 운동을 쉬고 스트레칭·휴식을 권한다. 너는 의사가 아니며 의료 진단/처방을 하지 않고, 심한 통증은 전문의 상담을 권한다.",
-      intro: "안녕하십니까, 대표님의 안전을 책임지는 닥터 케이입니다. 운동 전후 관절이나 근육에 뻐근한 곳은 없으신가요? 통증이 있다면 언제든 말씀해주십시오. (참고용 가이드이며 의료 진단이 아닙니다)"
+      intro: "안녕하십니까, 대표님의 안전을 책임지는 닥터 케이입니다. 운동 전후 관절이나 근육에 뻐근한 곳은 없으신가요? 통증이 있다면 언제든 말씀해주십시오. (참고용 가이드이며 의료 진단이 아닙니다)",
+      introAudio: "./assets/audio/careteam/drkay_intro.mp3"
     }
   };
 
@@ -131,9 +135,9 @@
       this.renderCoachHeader();
       this.renderChats();
       
-      // 코치 변경 시 인사말 음성 재생
+      // 코치 변경 시 스튜디오급 뉴럴 성우 인사말 즉시 재생!
       const profile = COACH_PROFILES[coachId];
-      this.speak(profile.intro);
+      this.speak(profile.intro, profile.introAudio);
     }
 
     toggleTTS() {
@@ -154,34 +158,75 @@
       alert(COACH_PROFILES[this.currentCoachId].name + " 코치가 1:1 전담 코치로 지정되었습니다!\\n운동 시작 시 해당 코치가 우선적으로 배정됩니다.");
     }
 
-    speak(text) {
-      if (!this.ttsEnabled || !window.speechSynthesis) return;
-      window.speechSynthesis.cancel(); // 이전 재생 중단
+    // 진짜 사람 같은 성우 오디오 및 고음질 자연어 음성 재생 엔진
+    speak(text, specificAudioUrl = null) {
+      if (!this.ttsEnabled) return;
 
+      // 이전 오디오 재생 정지
+      if (this.currentAudio) {
+        this.currentAudio.pause();
+        this.currentAudio = null;
+      }
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+
+      // 1. 지정된 뉴럴 성우 오디오 파일이 있으면 최우선으로 즉시 재생 (0ms 지연, 100% 실사 성우)
+      if (specificAudioUrl) {
+        try {
+          const audio = new Audio(specificAudioUrl);
+          audio.volume = 1.0;
+          this.currentAudio = audio;
+          audio.play().catch(() => {
+            // 자동 재생 정책 차단 시 폴백
+            this.speakFallbackSpeech(text);
+          });
+          return;
+        } catch (_) {}
+      }
+
+      // 2. 고품질 구글 자연어 스트림 오디오 재생 시도 (기계 로봇음 차단)
+      if (text && text.length <= 150) {
+        try {
+          const cleanText = encodeURIComponent(text.replace(/[#*~_`]/g, '').trim());
+          const streamUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ko&client=tw-ob&q=${cleanText}`;
+          const audio = new Audio(streamUrl);
+          audio.volume = 1.0;
+          this.currentAudio = audio;
+          audio.play().catch(() => {
+            this.speakFallbackSpeech(text);
+          });
+          return;
+        } catch (_) {}
+      }
+
+      // 3. 로컬 Web Speech API 폴백
+      this.speakFallbackSpeech(text);
+    }
+
+    speakFallbackSpeech(text) {
+      if (!window.speechSynthesis) return;
       const profile = COACH_PROFILES[this.currentCoachId];
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = "ko-KR";
       utter.pitch = profile.pitch;
       utter.rate = profile.rate;
 
-      // 가능한 경우 한국어 음성 탐색
       const voices = window.speechSynthesis.getVoices();
       const koVoices = voices.filter(v => v.lang.includes("ko"));
       if (koVoices.length > 0) {
-        // 남/여 힌트가 있는 음성 우선 매칭
-        if (profile.voiceGender === "F" && koVoices.find(v => v.name.toLowerCase().includes("female") || v.name.toLowerCase().includes("yuna") || v.name.toLowerCase().includes("sunhi") || v.name.includes("여성"))) {
-          utter.voice = koVoices.find(v => v.name.toLowerCase().includes("female") || v.name.toLowerCase().includes("yuna") || v.name.toLowerCase().includes("sunhi") || v.name.includes("여성"));
-        } else if (profile.voiceGender === "M" && koVoices.find(v => v.name.toLowerCase().includes("male") || v.name.toLowerCase().includes("injoon") || v.name.includes("남성"))) {
-          utter.voice = koVoices.find(v => v.name.toLowerCase().includes("male") || v.name.toLowerCase().includes("injoon") || v.name.includes("남성"));
+        if (profile.voiceGender === "F") {
+          const fVoice = koVoices.find(v => v.name.toLowerCase().includes("sunhi") || v.name.toLowerCase().includes("yuna") || v.name.toLowerCase().includes("female"));
+          utter.voice = fVoice || koVoices[0];
         } else {
-          utter.voice = koVoices[0];
+          const mVoice = koVoices.find(v => v.name.toLowerCase().includes("injoon") || v.name.toLowerCase().includes("male"));
+          utter.voice = mVoice || koVoices[0];
         }
       }
-
       window.speechSynthesis.speak(utter);
     }
 
-    async sendMessage(userText) {
+    async sendMessage(userText, matchedAudioUrl = null) {
       if (!userText || !userText.trim()) return;
       const text = userText.trim();
 
@@ -256,7 +301,7 @@
         this.saveSchedules();
       }
 
-      this.speak(replyText);
+      this.speak(replyText, matchedAudioUrl);
     }
 
     escapeHtml(str) {
