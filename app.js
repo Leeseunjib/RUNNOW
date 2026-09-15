@@ -179,6 +179,7 @@ class AppController {
     const payload = {
       uid: this.currentUserId,
       displayName: this.userProfile.name,
+      name: this.userProfile.name,
       age: this.userProfile.age,
       gender: this.userProfile.gender,
       heightCm: this.userProfile.heightCm,
@@ -186,9 +187,11 @@ class AppController {
       targetWeightKg: this.userProfile.targetWeightKg,
       frequency: this.userProfile.frequency,
       goalType: this.userProfile.goalType,
+      habitCue: this.challengeManager?.habitCue,
       bmi,
       coins: this.userProfile.coins,
-      onboarded: true
+      onboarded: true,
+      updatedAt: new Date().toISOString()
     };
     this.firebaseSandbox.setDoc("users", this.currentUserId, payload);
     firebaseCloud.syncUser(this.currentUserId, payload);
@@ -378,7 +381,7 @@ class AppController {
       this.firebaseSandbox.setDoc("users", session.uid, user);
       this.userProfile = {
         ...this.userProfile,
-        name: user.displayName || this.userProfile.name,
+        name: user.displayName || user.name || this.userProfile.name,
         heightCm: user.heightCm ?? this.userProfile.heightCm,
         weightKg: user.weightKg ?? this.userProfile.weightKg,
         age: user.age ?? this.userProfile.age,
@@ -388,6 +391,9 @@ class AppController {
         goalType: user.goalType || this.userProfile.goalType,
         coins: user.coins ?? this.userProfile.coins
       };
+      this.saveGlobalProfile(this.userProfile);
+      this.updateHeaderStats();
+      this.updateProfileFormInputs();
     }
 
     const pet = await firebaseCloud.getTamagotchi(session.uid);
@@ -559,6 +565,7 @@ class AppController {
         this.renderQuestView(this.currentQuestCategory || "all");
       }
       if (targetTabId === "tab-shop") this.renderShopView("all");
+      if (targetTabId === "tab-settings") this.updateProfileFormInputs();
       if (targetTabId === "tab-careteam" && window.CareTeam) {
         window.CareTeam.renderAll();
       }
@@ -3596,11 +3603,9 @@ class AppController {
     });
   }
 
-  // 프로필 설정 폼
-  bindProfileForm() {
-    const form = document.getElementById("profile-form");
-    if (!form) return;
 
+  // 프로필 설정 폼 입력값 자동 복원 및 최신화 (로그인/세션 변경 시 영구 유지)
+  updateProfileFormInputs() {
     const nameInput = document.getElementById("prof-name");
     const heightInput = document.getElementById("prof-height");
     const weightInput = document.getElementById("prof-weight");
@@ -3608,12 +3613,45 @@ class AppController {
     const targetInput = document.getElementById("prof-target-weight");
     const cueInput = document.getElementById("prof-cue");
 
-    if (nameInput) nameInput.value = this.userProfile.name || "";
-    if (heightInput) heightInput.value = this.userProfile.heightCm;
-    if (weightInput) weightInput.value = this.userProfile.weightKg;
-    if (ageInput) ageInput.value = this.userProfile.age;
-    if (targetInput) targetInput.value = this.userProfile.targetWeightKg;
-    if (cueInput) cueInput.value = this.challengeManager.habitCue;
+    const profile = this.userProfile || {};
+    const globalProf = this.getGlobalProfile() || {};
+
+    const name = (profile.name && profile.name !== "러너") ? profile.name : (globalProf.displayName || globalProf.name || profile.name || "러너");
+    const height = profile.heightCm ?? globalProf.heightCm ?? 175;
+    const weight = profile.weightKg ?? globalProf.weightKg ?? 70;
+    const age = profile.age ?? globalProf.age ?? 30;
+    const targetWeight = profile.targetWeightKg ?? globalProf.targetWeightKg ?? 65;
+    const gender = profile.gender || globalProf.gender || "M";
+    const cue = this.challengeManager?.habitCue || globalProf.habitCue || "퇴근 후 현관에서 러닝화 신고 바로 출발";
+
+    if (nameInput) nameInput.value = name;
+    if (heightInput) heightInput.value = height;
+    if (weightInput) weightInput.value = weight;
+    if (ageInput) ageInput.value = age;
+    if (targetInput) targetInput.value = targetWeight;
+    if (cueInput) cueInput.value = cue;
+
+    document.querySelectorAll(".prof-gender-btn").forEach((btn) => {
+      const on = btn.dataset.gender === gender;
+      btn.classList.toggle("active", on);
+      btn.style.borderColor = on ? "var(--primary-accent)" : "var(--border-card)";
+      btn.style.color = on ? "var(--primary-accent)" : "var(--text-muted)";
+    });
+
+    const bmi = this.calcBmi(height, weight);
+    const bmr = this.calcBmr(height, weight, age, gender);
+    const bmiEl = document.getElementById("calc-bmi");
+    const bmrEl = document.getElementById("calc-bmr");
+    if (bmiEl) bmiEl.textContent = `${bmi} (${this.bmiLabel(bmi)})`;
+    if (bmrEl) bmrEl.textContent = `${bmr.toLocaleString()} kcal`;
+  }
+
+  // 프로필 설정 폼
+  bindProfileForm() {
+    const form = document.getElementById("profile-form");
+    if (!form) return;
+
+    this.updateProfileFormInputs();
 
     const paintGender = (gender) => {
       document.querySelectorAll(".prof-gender-btn").forEach((btn) => {

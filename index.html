@@ -1,6 +1,35 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+  <script>
+    // [CRITICAL] 서비스워커 구버전 캐시 강제 무효화 및 클리어
+    (function() {
+      const CURRENT_APP_VERSION = 'v8.4_laps_pet_force_clean';
+      const storedVer = localStorage.getItem('RUNNOW_APP_VERSION');
+      if (storedVer !== CURRENT_APP_VERSION) {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for (let reg of registrations) {
+              reg.unregister();
+            }
+          });
+        }
+        if ('caches' in window) {
+          caches.keys().then(function(names) {
+            for (let name of names) {
+              caches.delete(name);
+            }
+          });
+        }
+        localStorage.setItem('RUNNOW_APP_VERSION', CURRENT_APP_VERSION);
+        // 캐시 날리고 깨끗한 최신 리소스로 1회 강제 리로드
+        if (storedVer) {
+          window.location.reload(true);
+        }
+      }
+    })();
+  </script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>RUNNOW | Nike Run Club x Tamagotchi GPS Runner</title>
@@ -2317,7 +2346,7 @@
   <script src="reelsGenerator.js"></script>
   <script src="pet3d.js"></script>
 
-  <script type="module" src="app.js?v=8.4_laps_pet"></script>
+  <script type="module" src="app.js?v=8.5_profile_persistence"></script>
   <script>
     // 즉시 등록 감지 시 팝업 띄우기
     if (window.__TESTER_JUST_REGISTERED__) {
@@ -2331,7 +2360,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js?v=4.0')
+        navigator.serviceWorker.register('/sw.js?v=5.0_laps_pet')
           .then((reg) => console.log('⚡ PWA Service Worker Active:', reg.scope))
           .catch((err) => console.warn('PWA Service Worker registration failed:', err));
       });
