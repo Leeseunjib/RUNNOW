@@ -5283,3 +5283,6 @@ body {
   border-color: #00F0FF !important;
   color: #00F0FF !important;
 }
+
+/* 3D 요소 전면 비활성화 */
+.pet3d-host, #pet3d-host, .pet-3d-box, .pet-3d-hint { display: none !important; height: 0 !important; width: 0 !important; overflow: hidden !important; visibility: hidden !important; }

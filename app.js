@@ -555,7 +555,6 @@ class AppController {
 
       if (targetTabId === "tab-tamagotchi") {
         this.renderTamagotchiView();
-        if (window.Pet3D?.init) window.Pet3D.init("pet3d-host");
       }
       if (targetTabId === "tab-challenge") {
         this.renderDailyQuests();
