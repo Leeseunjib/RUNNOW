@@ -75,7 +75,7 @@
   <link rel="apple-touch-icon" href="assets/hero_mascot.jpg">
   <link rel="icon" type="image/jpeg" href="assets/hero_mascot.jpg">
 
-  <link rel="stylesheet" href="styles.css?v=8.4_laps_pet">
+  <link rel="stylesheet" href="styles.css?v=8.5_wide_coach">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
@@ -1424,11 +1424,15 @@
                 <button type="button" class="prompt-chip" onclick="window.CareTeam.sendQuickBubble('야식 유혹이 너무 심해요! 지금 라면 끓일까 고민돼요')">🍜 야식 유혹 방어 SOS</button>
               </div>
 
-              <div class="coach-input-row">
-                <input type="text" id="coach-chat-input" class="form-input" placeholder="코치에게 털어놓기 (예: '오늘 회식 과식했어요', '루틴 짜줘')" onkeydown="if(event.key==='Enter') document.getElementById('btn-coach-send').click()">
-                <button type="button" class="btn-primary-volt" id="btn-coach-send" onclick="const el = document.getElementById('coach-chat-input'); window.CareTeam.sendMessage(el.value); el.value = '';">
-                  <span>전송</span>
-                </button>
+              <!-- 와이드 코치 입력창 + 하단 전송 바 레이아웃 -->
+              <div class="coach-chat-input-wrapper">
+                <input type="text" id="coach-chat-input" class="form-input coach-wide-input" placeholder="코치에게 털어놓기 (예: '오늘 회식 과식했어요', '루틴 짜줘')" onkeydown="if(event.key==='Enter') document.getElementById('btn-coach-send').click()">
+                <div class="coach-send-bar">
+                  <span class="coach-input-subtext">💬 Enter를 누르면 코치에게 즉시 전송됩니다</span>
+                  <button type="button" class="btn-primary-volt btn-coach-send-bottom" id="btn-coach-send" onclick="const el = document.getElementById('coach-chat-input'); window.CareTeam.sendMessage(el.value); el.value = '';">
+                    <span>전송 🚀</span>
+                  </button>
+                </div>
               </div>
             </div>
 
