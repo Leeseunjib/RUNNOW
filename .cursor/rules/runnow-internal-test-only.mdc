@@ -1,0 +1,27 @@
+---
+description: RUNNOW는 Cursor에서 내부 테스트 채널만 작업·배포한다. 상용 배포 금지.
+alwaysApply: true
+---
+
+# RUNNOW 내부 테스트 전용 (Cursor 기본)
+
+이건우 대표님 지침. Cursor 세션은 내부 테스트만 다룬다.
+
+## 작업 주소
+- 내부 테스트. `https://runnow-37af9--dev-irl7g2ve.web.app`
+- 상용(손대지 않음). `https://runnow.beauscreators.com`
+- 상용 원본. `https://runnow-37af9.web.app` (공식 도메인과 동일 라이브)
+
+## 배포
+- 기본. `npm run deploy:dev`
+- 금지. `firebase deploy --only hosting`, `npm run promote:live`, live 채널 배포
+- 상용 승급은 대표님이 "상용으로 올려"라고 직접 말한 뒤에만 `npm run promote:live`
+
+## 광고·테스터
+- 가족·팀원에게는 테스트 주소만 준다. 공식 주소를 테스트용으로 보내지 않는다.
+- QR·복사 링크는 현재 열린 origin을 쓴다. 상용 `web.app`을 하드코딩하지 않는다.
+- `--dev` / localhost에서는 AdSense 스크립트를 로드하지 않는다.
+
+## 잘못된 예 / 올바른 예
+- 잘못. 작업 후 바로 공식 도메인에 배포
+- 올바름. `npm run deploy:dev` 후 테스트 URL에서만 확인

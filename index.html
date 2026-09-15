@@ -46,7 +46,7 @@
   <link rel="apple-touch-icon" href="assets/hero_mascot.jpg">
   <link rel="icon" type="image/jpeg" href="assets/hero_mascot.jpg">
 
-  <link rel="stylesheet" href="styles.css?v=7.0">
+  <link rel="stylesheet" href="styles.css?v=8.2_premium_hud">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
@@ -713,7 +713,7 @@
                 <video id="motion-video" playsinline muted autoplay></video>
                 <canvas id="motion-canvas"></canvas>
 
-                <!-- ⚡ 1:1 전담 PT 에이전트 라이브 HUD 오버레이 -->
+                <!-- ⚡ 1:1 전담 PT 에이전트 프리미엄 라이브 HUD (나이키 x 애플 스타일) -->
                 <div id="motion-pt-coach-hud" class="pt-coach-live-hud">
                   <div class="pt-coach-header-row">
                     <div class="pt-coach-profile">
@@ -721,34 +721,42 @@
                         <span id="motion-coach-avatar">🦁</span>
                         <span id="motion-coach-pulse" class="pt-pulse-dot"></span>
                       </div>
-                      <div>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                          <strong id="motion-coach-name" style="font-size:13px; font-weight:900; color:var(--text-main);">코치 레오</strong>
-                          <span id="motion-coach-badge" class="pt-status-pill scanning">👀 자세 스캔 중...</span>
+                      <div class="pt-coach-info-col">
+                        <div class="pt-coach-title-line">
+                          <strong id="motion-coach-name">코치 레오</strong>
+                          <span class="pt-vip-badge">⚡ VIP 1:1</span>
+                          <span id="motion-coach-badge" class="pt-status-pill scanning">LIVE 스캔 중</span>
                         </div>
-                        <div style="font-size:9.5px; color:var(--cyber-cyan); font-weight:700; margin-top:1px;">전담 1:1 실시간 밀착 코칭 ON</div>
+                        <div class="pt-coach-sub-indicator">
+                          <span class="pt-live-dot"></span>
+                          <span>실시간 모션 바이오 피드백 ON</span>
+                        </div>
                       </div>
                     </div>
-                    <!-- 코치 퀵 스위처 버튼 -->
+                    <!-- 코치 원클릭 전환 캡슐 버튼 -->
                     <button type="button" id="btn-switch-motion-coach" onclick="toggleMotionCoach()" class="btn-pt-switch" title="코치 변경">
-                      <span id="btn-switch-coach-label">🔄 루나 쌤으로 전환</span>
+                      <span id="btn-switch-coach-label">🔄 코치 루나</span>
                     </button>
                   </div>
 
-                  <!-- 코치 쌤의 실시간 말풍선 자막 -->
+                  <!-- 코치 실시간 음성 자막 말풍선 (글래스모피즘) -->
                   <div id="motion-coach-speech-bubble" class="pt-speech-bubble">
                     <span class="pt-quote-icon">💬</span>
-                    <span id="motion-coach-speech-text">"회원님, 카메라 정면을 보시고 가슴을 펴주세요! 1회부터 함께 호흡 맞춥니다!"</span>
+                    <span id="motion-coach-speech-text">"대표님, 카메라 앞 2m에 서주세요! 레오가 전담 마크 들어갑니다! 🔥"</span>
                   </div>
                 </div>
 
                 <div id="motion-standby-overlay" class="pose-standby">
                   <img id="motion-cover-img" class="pose-cover-img" alt="" src="./assets/exercises/squat.jpg">
-                  <div class="pose-standby-icon">📹</div>
-                  <strong id="motion-standby-title">AI 스쿼트 트레이닝</strong>
-                  <p id="motion-standby-desc">전신이 화면에 들어오도록 선 후 시작하면, 온디바이스 AI가 실시간 모션을 정밀 분석합니다.</p>
+                  <div class="pose-standby-badge">⚡ AI REALTIME TRACKING</div>
+                  <strong id="motion-standby-title">스쿼트 트레이닝</strong>
+                  <p id="motion-standby-desc">카메라 앞 2m에 서면 AI가 전신을 스캔하여 자동 시작합니다.</p>
+                  <div class="pose-standby-guide-pills">
+                    <span>⚡ 3초 카운트다운</span>
+                    <span>📐 관절 각도 정밀 분석</span>
+                  </div>
                   <button type="button" class="btn-primary-volt" id="btn-start-camera">
-                    <span>AI 모션 코칭 시작하기</span>
+                    <span>⚡ AI 모션 코칭 시작하기</span>
                   </button>
                 </div>
 
@@ -782,10 +790,10 @@
                 </div>
               </div>
 
-              <div id="motion-coaching-pill" class="pose-feedback">자세를 준비해 주세요</div>
+              <div id="motion-coaching-pill" class="pose-feedback">카메라를 향해 바르게 서주세요 🧍</div>
 
               <button type="button" class="btn-secondary pose-relax-btn" id="btn-relax-tracking" hidden>
-                <span>🔧 인식이 계속 안 되나요? 완화 모드로 시작 (판정 정확도 낮음)</span>
+                <span>📐 조명/거리 자동 보정 모드 켜기</span>
               </button>
 
               <div class="pose-progress-card">
@@ -1304,6 +1312,9 @@
                 <div class="coach-badge-text" id="coach-active-badge">파워 &amp; 에너지 코치</div>
               </div>
               <div style="display:flex; gap:6px; align-items:center;">
+                <button type="button" class="btn-tts-toggle" id="btn-set-assigned-coach" onclick="window.CareTeam.setAssignedCoach()" style="background:var(--primary-volt); color:#000; font-weight:800; border:none; font-size:11px; padding:4px 8px; border-radius:8px; cursor:pointer;">
+                  ⭐ 전담 지정
+                </button>
                 <button type="button" class="btn-tts-toggle" id="btn-open-gemini-key-modal" onclick="openGeminiKeyModal()" style="background:rgba(66,133,244,0.15); border:1px solid #4285F4; color:#fff; font-size:11px; padding:4px 8px; border-radius:8px; cursor:pointer;">
                   🔑 구글 AI 연동 ($0원)
                 </button>
@@ -1781,7 +1792,7 @@
               </div>
             </div>
             <div class="sub-plan-price-row">
-              <div class="sub-plan-price" style="color:var(--primary-volt);">₩24,900<span>/월</span></div>
+              <div class="sub-plan-price" style="color:var(--primary-volt);">₩24,900<span>/월</span> <span style="font-size:12px; text-decoration:line-through; color:var(--text-muted); font-weight:normal;">₩49,000</span></div>
               <div class="sub-plan-subprice">4대 코치 감정 이미지 반응 • 실시간 음성(TTS) • 맞춤 식단/운동 정밀 처방<br><span style="font-size:11px; color:var(--text-muted);">※ 별도 키 설정 없이 바로 이용 (하루 100회, 초과 시 다음 날 초기화)</span></div>
             </div>
           </div>
@@ -2250,7 +2261,7 @@
   <script src="reelsGenerator.js"></script>
   <script src="pet3d.js"></script>
 
-  <script type="module" src="app.js?v=6.3"></script>
+  <script type="module" src="app.js?v=8.2_premium_hud"></script>
   <script>
     // 즉시 등록 감지 시 팝업 띄우기
     if (window.__TESTER_JUST_REGISTERED__) {

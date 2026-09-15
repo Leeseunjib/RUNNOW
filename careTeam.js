@@ -13,28 +13,6 @@
   const CHAT_STORAGE_KEY_PREFIX = "RUNNOW_CHAT_";
   const GEMINI_API_KEY_STORAGE = "RUNNOW_USER_GEMINI_KEY";
 
-  // BYOK 경로가 호출할 모델. 서버(functions/aiCoach.js DEFAULT_MODEL)와 같은 값을
-  // 써야 PRO와 VIP의 코치 답변 품질이 갈리지 않습니다.
-  // 지난 모델(gemini-1.5-flash)은 2025-09-29에 종료돼 404만 떨어지고 있었습니다.
-  const GEMINI_MODEL = "gemini-3.8-flash";
-
-  // BYOK 호출 실패 원인별 안내. 상태 코드마다 사용자가 할 수 있는 조치가 달라서
-  // "잠시 후 다시 시도해 주세요" 하나로 뭉뚱그리지 않습니다.
-  function byokFailureNotice(err) {
-    const status = err && err.status;
-    if (status === 400 || status === 401 || status === 403) {
-      return "⚠️ 연동하신 구글 AI 키가 유효하지 않아 기본 답변으로 대신합니다. 설정에서 키를 다시 확인해 주세요.";
-    }
-    if (status === 429) {
-      return "⚠️ 구글 AI 무료 사용량을 초과해 기본 답변으로 대신합니다. 잠시 후 다시 시도해 주세요.";
-    }
-    if (status === 404) {
-      // 우리 쪽 모델명이 죽은 경우입니다. 사용자 잘못이 아니므로 그렇게 씁니다.
-      return "⚠️ AI 모델을 일시적으로 사용할 수 없어 기본 답변으로 대신합니다. 앱을 최신 버전으로 업데이트해 주세요.";
-    }
-    return "⚠️ AI 코치 연결에 실패해 기본 답변으로 대신합니다. 네트워크 상태를 확인해 주세요.";
-  }
-
   const COACH_PROFILES = {
     leo: {
       id: "leo",
@@ -44,7 +22,7 @@
       avatarImg: "./assets/careteam/leo_coach.png",
       badge: "파워 & 에너지 코치",
       voiceGender: "M",
-      pitch: 0.9,
+      pitch: 0.7,
       rate: 1.05,
       systemPrompt: "너는 RunNow의 남성 전담 파워 PT 코치 '레오'다. 활력 넘치고 열정적이며 유저의 한계를 끌어올려 주는 든든한 형/오빠 같은 파이팅 톤으로 대화한다. 유저를 '대표님' 또는 '러너님'으로 부르며 운동과 러닝, 코어 강화 루틴을 적극 권장한다.",
       intro: "대표님, 반갑습니다! 남성 전담 코치 레오입니다. 오늘 목표 칼로리 버닝과 하체 강화, 제가 확실하게 끌어드리겠습니다! 어떤 운동 플랜을 짤까요?"
@@ -57,9 +35,9 @@
       avatarImg: "./assets/careteam/luna_coach.png",
       badge: "디테일 & 페이스 코치",
       voiceGender: "F",
-      pitch: 1.15,
+      pitch: 1.1,
       rate: 0.98,
-      systemPrompt: "너는 RunNow의 여성 전담 러닝 코치 '루나'다. 차분하고 섬세하며 유연성과 페이스메이커에 특화된 친절한 언니/누나 톤으로 대화한다. 유저를 '대표님' 또는 '러너님'으로 부르며 조급하지 않고 오래 달릴 수 있는 즐거운 루틴을 이끌어준다.",
+      systemPrompt: "너는 RunNow의 여성 전담 러닝 코치 '루나'다. 차분하고 섬세하며 유연성과 페이스메이커에 특화된 친절한 언니/누나 톤으로 대화한다. 유저를 '대표님' 또는 '러너님' 부르며 조급하지 않고 오래 달릴 수 있는 즐거운 루틴을 이끌어준다.",
       intro: "안녕하세요 대표님! 섬세한 자세 교정과 꾸준한 루틴을 책임지는 코치 루나예요. 무리하지 않고 오래 지속할 수 있는 즐거운 러닝 플랜을 함께 세워봐요."
     },
     ellie: {
@@ -168,6 +146,14 @@
       }
     }
 
+    setAssignedCoach() {
+      localStorage.setItem("RUNNOW_ASSIGNED_COACH", this.currentCoachId);
+      if (window.RunNowBridge && window.RunNowBridge.syncAssignedCoach) {
+         window.RunNowBridge.syncAssignedCoach(this.currentCoachId);
+      }
+      alert(COACH_PROFILES[this.currentCoachId].name + " 코치가 1:1 전담 코치로 지정되었습니다!\\n운동 시작 시 해당 코치가 우선적으로 배정됩니다.");
+    }
+
     speak(text) {
       if (!this.ttsEnabled || !window.speechSynthesis) return;
       window.speechSynthesis.cancel(); // 이전 재생 중단
@@ -183,10 +169,10 @@
       const koVoices = voices.filter(v => v.lang.includes("ko"));
       if (koVoices.length > 0) {
         // 남/여 힌트가 있는 음성 우선 매칭
-        if (profile.voiceGender === "F" && koVoices.find(v => v.name.includes("Female") || v.name.includes("Yuna") || v.name.includes("SunHi"))) {
-          utter.voice = koVoices.find(v => v.name.includes("Female") || v.name.includes("Yuna") || v.name.includes("SunHi"));
-        } else if (profile.voiceGender === "M" && koVoices.find(v => v.name.includes("Male") || v.name.includes("InJoon"))) {
-          utter.voice = koVoices.find(v => v.name.includes("Male") || v.name.includes("InJoon"));
+        if (profile.voiceGender === "F" && koVoices.find(v => v.name.toLowerCase().includes("female") || v.name.toLowerCase().includes("yuna") || v.name.toLowerCase().includes("sunhi") || v.name.includes("여성"))) {
+          utter.voice = koVoices.find(v => v.name.toLowerCase().includes("female") || v.name.toLowerCase().includes("yuna") || v.name.toLowerCase().includes("sunhi") || v.name.includes("여성"));
+        } else if (profile.voiceGender === "M" && koVoices.find(v => v.name.toLowerCase().includes("male") || v.name.toLowerCase().includes("injoon") || v.name.includes("남성"))) {
+          utter.voice = koVoices.find(v => v.name.toLowerCase().includes("male") || v.name.toLowerCase().includes("injoon") || v.name.includes("남성"));
         } else {
           utter.voice = koVoices[0];
         }
@@ -234,7 +220,6 @@
       }
 
       // 2. BYOK Google Gemini 무료 연동 또는 룰 기반 스마트 엔진 분기
-      let byokNotice = null;
       if (geminiKey && geminiKey.trim().length > 10) {
         try {
           const aiReply = await this.callGeminiApi(text, profile, geminiKey.trim());
@@ -245,18 +230,13 @@
           }
         } catch (err) {
           console.warn("[CareTeam] BYOK Gemini 호출 실패, 로컬 스마트 템플릿으로 폴백:", err);
-          // 키를 연동해 둔 사용자에게 조용히 템플릿 답변을 돌려주면, 본인은 AI가
-          // 답한 줄 알고 "AI가 왜 이렇게 엉성하냐"고 오해합니다. 실패 사실과
-          // 원인별 조치를 알려야 키를 점검하거나 문의할 수 있습니다.
-          byokNotice = byokFailureNotice(err);
         }
       }
 
       // 로컬 스마트 템플릿 엔진 (비용 완전 $0원, 0.01초 응답)
       setTimeout(() => {
         const response = this.generateResponse(text);
-        const reply = byokNotice ? `${byokNotice}\n\n${response.reply}` : response.reply;
-        this.handleCoachReply(reply, byokNotice ? "warning" : response.mood, response.newSchedules || response.newSchedule);
+        this.handleCoachReply(response.reply, response.mood, response.newSchedules || response.newSchedule);
       }, 400);
     }
 
@@ -340,7 +320,7 @@
      * [소비자 심리학 & 비용 $0원 방패] 소비자 본인의 구글 무료 API Key 직접 호출
      */
     async callGeminiApi(userPrompt, profile, apiKey) {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+      const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
       const payload = {
         contents: [{
           role: "user",
@@ -361,13 +341,7 @@
         body: JSON.stringify(payload)
       });
 
-      // 상태 코드를 그대로 붙여 둡니다. 호출한 쪽이 원인별로 다른 안내를 하려면
-      // "실패했다"만으로는 부족하기 때문입니다.
-      if (!res.ok) {
-        const err = new Error("Gemini API Error: " + res.status);
-        err.status = res.status;
-        throw err;
-      }
+      if (!res.ok) throw new Error("Gemini API Error: " + res.status);
       const data = await res.json();
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!text) throw new Error("Empty Gemini response");

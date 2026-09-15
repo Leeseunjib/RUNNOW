@@ -1119,7 +1119,7 @@ class AppController {
     };
 
     setText("motion-standby-title", `${curEx.name} 트레이닝`);
-    setText("motion-standby-desc", "전신이 나오게 시작 자세를 잡으면 AI가 준비 상태를 확인한 뒤, 3초 카운트다운이 끝나야 횟수를 셉니다.");
+    setText("motion-standby-desc", "카메라 앞 2m에 서면 AI가 전신을 스캔하여 자동 시작합니다.");
     setText("motion-page-title", title);
     setText("motion-hud-icon", curEx.icon);
     setText("motion-rep-unit", curEx.shortName || title.toUpperCase());
@@ -1149,7 +1149,12 @@ class AppController {
 
   // 1:1 전담 PT 코치 라이브 HUD 초기화 및 바인딩
   setupMotionPtCoachHud() {
-    const coachId = (window.CareTeam && window.CareTeam.currentCoachId) ? window.CareTeam.currentCoachId : "leo";
+    const assignedCoach = localStorage.getItem("RUNNOW_ASSIGNED_COACH");
+    let defaultCoach = "leo";
+    if (window.CareTeam && window.CareTeam.currentCoachId) {
+       defaultCoach = window.CareTeam.currentCoachId;
+    }
+    const coachId = assignedCoach || defaultCoach;
     this.currentMotionCoachId = coachId;
     if (this.motionSound) {
       this.motionSound.setCoach(coachId);
@@ -1159,8 +1164,8 @@ class AppController {
     // 전역 코치 전환 함수 등록 (카메라 뷰에서 원클릭 스위칭)
     window.toggleMotionCoach = () => {
       this.currentMotionCoachId = this.currentMotionCoachId === "leo" ? "luna" : "leo";
-      if (window.CareTeam) {
-        window.CareTeam.setCoach(this.currentMotionCoachId);
+      if (window.CareTeam && typeof window.CareTeam.switchCoach === "function") {
+        window.CareTeam.switchCoach(this.currentMotionCoachId);
       }
       if (this.motionSound) {
         this.motionSound.setCoach(this.currentMotionCoachId);
@@ -1187,18 +1192,18 @@ class AppController {
     const elBadge = document.getElementById("motion-coach-badge");
 
     if (elAvatar) elAvatar.textContent = isLeo ? "🦁" : "🧘";
-    if (elName) elName.textContent = isLeo ? "코치 레오 (수석 PT)" : "코치 루나 (모션 코치)";
-    if (elBtnLabel) elBtnLabel.textContent = isLeo ? "🔄 루나 쌤으로 전환" : "🔄 레오 쌤으로 전환";
+    if (elName) elName.textContent = isLeo ? "코치 레오" : "코치 루나";
+    if (elBtnLabel) elBtnLabel.textContent = isLeo ? "🔄 코치 루나" : "🔄 코치 레오";
 
-    const userName = (this.userProfile && this.userProfile.name) ? this.userProfile.name : "회원님";
+    const userName = (this.userProfile && this.userProfile.name) ? this.userProfile.name : "대표님";
     if (elSpeech && (!this.motionTracker || !this.motionTracker.isRunning)) {
       elSpeech.textContent = isLeo
-        ? `"${userName}, 카메라 정면을 보시고 가슴을 펴주세요! 1회부터 함께 호흡 맞춥니다! 🔥"`
-        : `"${userName}, 몸과 마음을 정렬하고 시작해 볼까요? 정확한 가동 범위로 케어해 드릴게요. ✨"`;
+        ? `"${userName}, 카메라 앞 2m에 서주세요! 레오가 전담 마크 들어갑니다! 🔥"`
+        : `"${userName}, 카메라 앞 2m에서 전신을 맞춰주세요. 정밀 코칭 준비 완료! ✨"`;
     }
     if (elBadge) {
       elBadge.className = "pt-status-pill scanning";
-      elBadge.textContent = "👀 자세 스캔 중...";
+      elBadge.textContent = "LIVE 스캔 중";
     }
   }
 
@@ -1447,7 +1452,7 @@ class AppController {
 
           this.motionSound.speakCoaching(
             `${this.motionTracker.currentExercise.name} ${this.motionTracker.getDifficulty().name} 난이도입니다.`
-            + " 전신이 나오게 시작 자세를 잡으면 3초 카운트다운 후 횟수를 셉니다."
+            + " 카메라 앞 2m에서 전신 자세를 잡으시면 3초 후 카운트가 시작됩니다."
           );
         } catch (err) {
           console.error("Camera/MediaPipe Error:", err);
@@ -1885,8 +1890,8 @@ class AppController {
     if (data.phase === "countdown") {
       if (pill) {
         pill.textContent = data.secondsLeft > 0
-          ? `${data.secondsLeft}초 후 카운트를 시작합니다`
-          : "시작합니다!";
+          ? `🔥 자세 완벽! ${data.secondsLeft}초 후 카운트 시작`
+          : "⚡ START! 지금부터 카운트 시작!";
         pill.classList.add("is-good");
       }
       if (data.secondsLeft > 0) {
@@ -1900,7 +1905,7 @@ class AppController {
 
     if (data.phase === "counting") {
       if (pill) {
-        pill.textContent = "카운트를 시작합니다. 천천히 정확하게!";
+        pill.textContent = "⚡ 카운트 진행 중! 템포를 유지하세요";
         pill.classList.add("is-good");
       }
       this.renderMotionProgress(this.motionTracker.repCount || 0);

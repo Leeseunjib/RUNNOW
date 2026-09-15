@@ -21,7 +21,7 @@ export class MotionSound {
   }
 
   getCoachPitch() {
-    return this.currentCoachId === "luna" ? 1.08 : 0.94;
+    return this.currentCoachId === "luna" ? 1.1 : 0.7;
   }
 
   getCoachRate() {
@@ -45,12 +45,23 @@ export class MotionSound {
     }
   }
 
-  pickBestKoreanVoice(voices = this.voices) {
+  pickBestKoreanVoice(voices = this.voices, coachId = this.currentCoachId) {
     if (!voices || voices.length === 0) return null;
     const koVoices = voices.filter(v => v.lang && (v.lang.includes("ko") || v.lang.includes("KO")));
     if (koVoices.length === 0) return null;
 
-    // 1순위: Google 인공신경망 고품질 음성 (Google 한국어) 또는 Natural / Neural 온라인 성우 음성
+    const isMale = coachId === "leo";
+
+    // 1순위: 지정된 성별에 맞는 음성 매칭
+    if (isMale) {
+      const maleVoice = koVoices.find(v => v.name.toLowerCase().includes("male") || v.name.toLowerCase().includes("injoon") || v.name.includes("남성"));
+      if (maleVoice) return maleVoice;
+    } else {
+      const femaleVoice = koVoices.find(v => v.name.toLowerCase().includes("female") || v.name.toLowerCase().includes("yuna") || v.name.toLowerCase().includes("sunhi") || v.name.includes("여성"));
+      if (femaleVoice) return femaleVoice;
+    }
+
+    // 2순위: Google 인공신경망 고품질 음성 (Google 한국어) 또는 Natural / Neural 온라인 성우 음성
     const neuralVoice = koVoices.find(v => 
       v.name.includes("Google") || 
       v.name.includes("Natural") || 
@@ -59,11 +70,11 @@ export class MotionSound {
     );
     if (neuralVoice) return neuralVoice;
 
-    // 2순위: 윈도우 구형 기계음(Heami)을 제외한 모바일/시스템 한국어 음성 (예: Yuna, SunHi 등)
+    // 3순위: 윈도우 구형 기계음(Heami)을 제외한 모바일/시스템 한국어 음성 (예: Yuna, SunHi 등)
     const modernVoice = koVoices.find(v => !v.name.includes("Heami"));
     if (modernVoice) return modernVoice;
 
-    // 3순위: 기본 한국어
+    // 4순위: 기본 한국어
     return koVoices[0];
   }
 
@@ -233,7 +244,10 @@ export class MotionSound {
       // 비동기로 음성이 늦게 준비된 경우 재확인
       if (!this.koreanVoice) {
         this.voices = this.synth.getVoices();
-        this.koreanVoice = this.pickBestKoreanVoice(this.voices);
+        this.koreanVoice = this.pickBestKoreanVoice(this.voices, this.currentCoachId);
+      } else {
+        // 코치가 바뀌었을 경우 재확인
+        this.koreanVoice = this.pickBestKoreanVoice(this.voices, this.currentCoachId);
       }
 
       const utter = new SpeechSynthesisUtterance(text);
