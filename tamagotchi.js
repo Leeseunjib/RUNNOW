@@ -952,11 +952,15 @@ export class TamagotchiEngine {
   }
 }
 
-// 전역 인스턴스 초기화
+// 전역 인스턴스 초기화 (브라우저 환경 안전 가드)
 let savedPetData = {};
-try {
-  const raw = localStorage.getItem("RUNNOW_TAMAGOTCHI_STATE");
-  if (raw) savedPetData = JSON.parse(raw);
-} catch (_) {}
+if (typeof localStorage !== "undefined") {
+  try {
+    const raw = localStorage.getItem("RUNNOW_TAMAGOTCHI_STATE");
+    if (raw) savedPetData = JSON.parse(raw);
+  } catch (_) {}
+}
 
-window.Tamagotchi = new TamagotchiEngine(savedPetData);
+if (typeof window !== "undefined") {
+  window.Tamagotchi = new TamagotchiEngine(savedPetData);
+}
