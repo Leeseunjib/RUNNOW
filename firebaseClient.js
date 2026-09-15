@@ -164,24 +164,26 @@ class FirebaseCloudClient {
     }
   }
 
-  // 접속 도메인/환경(localhost, preview dev channel)에 따른 컬렉션 네임스페이스 자동 분기
-  getCollectionName(baseName) {
+  // 접속 도메인에 따른 컬렉션 네임스페이스 분기 (내부테스트 데이터와 상용 데이터 격리)
+  //
+  // 'dev'를 부분 문자열로 찾으면 위험합니다. 앞으로 도메인에 그 세 글자가 들어가는
+  // 순간(예: devices, developer, dev-team) 상용 접속이 dev로 오인되어
+  // 실사용자 데이터가 dev_ 컬렉션에 기록됩니다.
+  // 내부테스트 채널은 항상 'runnow-37af9--dev-xxxx.web.app' 형태이므로
+  // '--dev-' 패턴만 인정합니다.
+  isDevMode() {
     try {
-      const host = (typeof window !== 'undefined' && window.location?.hostname) || '';
-      const isDev = host === 'localhost' || host === '127.0.0.1' || host.includes('--dev-') || host.includes('dev');
-      return isDev ? `dev_${baseName}` : baseName;
+      const host = (typeof window !== "undefined" && window.location && window.location.hostname) || "";
+      return host === "localhost"
+        || host === "127.0.0.1"
+        || host.includes("--dev-");
     } catch (e) {
-      return baseName;
+      return false;   // 판단이 불가능하면 상용으로 간주하는 편이 안전합니다
     }
   }
 
-  isDevMode() {
-    try {
-      const host = (typeof window !== 'undefined' && window.location?.hostname) || '';
-      return host === 'localhost' || host === '127.0.0.1' || host.includes('--dev-') || host.includes('dev');
-    } catch (e) {
-      return false;
-    }
+  getCollectionName(baseName) {
+    return this.isDevMode() ? `dev_${baseName}` : baseName;
   }
 
   async getUser(userId) {

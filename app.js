@@ -27,6 +27,16 @@ export const INTERNAL_TESTERS = [
   "user_tester_pro"
 ];
 
+// 구독자 전용 화면. 요금제 상품 설명과 이 목록이 어긋나면
+// 돈을 받고 파는 기능이 무료로 열리거나, 산 기능을 못 쓰게 됩니다.
+export const PRO_ONLY_TABS = [
+  "tab-tamagotchi",
+  "tab-challenge",
+  "tab-shop",
+  "tab-careteam",   // PRO·VIP 상품 설명의 "AI 코치 대화"
+  "tab-diet"        // VIP 상품 설명의 "맞춤 식단 가이드"
+];
+
 class AppController {
   constructor() {
     this.firebaseSandbox = new FirebaseSandbox();
@@ -496,7 +506,10 @@ class AppController {
       const isTesterOrCeo = localStorage.getItem("RUNNOW_IS_TESTER_DEVICE") === "true"
         || this.currentUserId === "user_geonu_ceo"
         || this.currentUserId === "geonu_ceo";
-      if ((targetTabId === "tab-tamagotchi" || targetTabId === "tab-challenge" || targetTabId === "tab-shop")
+      // 유료 구독에 포함된 화면 목록.
+      // 요금제 설명에 들어간 기능은 반드시 여기에 있어야 합니다.
+      // (케어팀과 식단이 빠져 있어 무료 사용자에게 그대로 열려 있었습니다)
+      if (PRO_ONLY_TABS.includes(targetTabId)
         && !this.subscriptionManager.isSubscribed() && !isTesterOrCeo) {
         this.openSubscriptionModal(targetTabId);
         return false;
