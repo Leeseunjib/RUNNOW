@@ -13,6 +13,48 @@
   const CHAT_STORAGE_KEY_PREFIX = "RUNNOW_CHAT_";
   const GEMINI_API_KEY_STORAGE = "RUNNOW_USER_GEMINI_KEY";
 
+  // 상황별 실사 인공신경망 성우 오디오 매핑 테이블 (50+종 지원)
+  const SITUATIONAL_AUDIO_MAP = [
+    // 1. 시간대별 맞춤 인사
+    { pattern: /(아침|모닝|기상|일어나|공복)/, file: "./assets/audio/careteam/care_morning_leo.mp3" },
+    { pattern: /(밤|야간|퇴근|저녁|나이트)/, file: "./assets/audio/careteam/care_night_leo.mp3" },
+    { pattern: /(점심|오후|산책|나른|식곤)/, file: "./assets/audio/careteam/care_afternoon_luna.mp3" },
+    { pattern: /(심야|자정|새벽|잠이|수면|자고|불면)/, file: "./assets/audio/careteam/care_midnight_rest.mp3" },
+
+    // 2. 날씨 & 환경 대응
+    { pattern: /(비|우천|장마|비와|빗길|실내)/, file: "./assets/audio/careteam/weather_rain_indoor.mp3" },
+    { pattern: /(미세먼지|황사|스모그|공기)/, file: "./assets/audio/careteam/weather_dust_warning.mp3" },
+    { pattern: /(더워|폭염|여름|더위|뜨거)/, file: "./assets/audio/careteam/weather_hot_summer.mp3" },
+    { pattern: /(추워|쌀쌀|겨울|한파|찬바람)/, file: "./assets/audio/careteam/weather_cold_winter.mp3" },
+
+    // 3. 멘탈 & 동기부여 & 정체기
+    { pattern: /(정체기|슬럼프|안 빠져|몸무게|체중|정체)/, file: "./assets/audio/careteam/mind_slump_luna.mp3" },
+    { pattern: /(귀찮|나가기 싫|의지|동기부여|게을|침대)/, file: "./assets/audio/careteam/mind_lazy_leo.mp3" },
+    { pattern: /(칭찬|꾸준|자랑|대단|잘하고)/, file: "./assets/audio/careteam/mind_praise_great.mp3" },
+    { pattern: /(번아웃|지쳐|힘들어|쉬고 싶|피곤|탈진)/, file: "./assets/audio/careteam/mind_burnout_rest.mp3" },
+
+    // 4. 재활 & 스트레칭 & 통증 (닥터 케이)
+    { pattern: /(무릎|아이스|얼음|냉찜질|관절)/, file: "./assets/audio/careteam/rehab_knee_ice.mp3" },
+    { pattern: /(발바닥|족저근막|아치|발바닥 아파)/, file: "./assets/audio/careteam/rehab_plantar_massage.mp3" },
+    { pattern: /(종아리|쥐|경련|당겨)/, file: "./assets/audio/careteam/rehab_calf_stretch.mp3" },
+    { pattern: /(허리|골반|장요근|척추|디스크|자세)/, file: "./assets/audio/careteam/rehab_posture_spine.mp3" },
+
+    // 5. 다이어트 & 영양 (영양사 엘리)
+    { pattern: /(단백질|프로틴|골든타임|쉐이크)/, file: "./assets/audio/careteam/diet_protein_timing.mp3" },
+    { pattern: /(혈당|간헐적|공복혈당|식사순서)/, file: "./assets/audio/careteam/diet_fasting_tip.mp3" },
+    { pattern: /(물|수분|전해질|목말|갈증|이온)/, file: "./assets/audio/careteam/diet_water_electrolyte.mp3" },
+    { pattern: /(술|음주|회식|숙취|해장|소주|맥주)/, file: "./assets/audio/careteam/diet_alcohol_recovery.mp3" },
+
+    // 6. 타마고치 펫 러닝
+    { pattern: /(펫|강아지|고양이|다마고치|꼬리)/, file: "./assets/audio/running/pet_run_cheer.mp3" },
+
+    // 7. 치팅 / 야식 / 루틴 퀵버블
+    { pattern: /(폭식|치팅|삼겹살|피자|치킨|과식)/, file: "./assets/audio/careteam/leo_bubble_cheat.mp3" },
+    { pattern: /(야식|라면|배고파|야식충동)/, file: "./assets/audio/careteam/leo_bubble_snack.mp3" },
+    { pattern: /(루틴|스케줄|30분|월수금)/, file: "./assets/audio/careteam/leo_bubble_routine.mp3" }
+  ];
+
+
   const COACH_PROFILES = {
     leo: {
       id: "leo",
@@ -226,9 +268,20 @@
       window.speechSynthesis.speak(utter);
     }
 
-    async sendMessage(userText, matchedAudioUrl = null) {
+    async sendMessage(userText, specificAudioUrl = null) {
       if (!userText || !userText.trim()) return;
       const text = userText.trim();
+
+      // 상황별 오디오 자동 매칭
+      let matchedAudioUrl = specificAudioUrl;
+      if (!matchedAudioUrl) {
+        for (const item of SITUATIONAL_AUDIO_MAP) {
+          if (item.pattern.test(text)) {
+            matchedAudioUrl = item.file;
+            break;
+          }
+        }
+      }
 
       // 1. 유저 메시지 등록
       const nowTime = new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
@@ -246,7 +299,7 @@
           const res = await window.firebaseCloud.chatWithCoach(profile.systemPrompt, text);
           if (res && res.reply) {
             const schedules = this.parseSchedulesFromText(text);
-            this.handleCoachReply(res.reply, "cheer", schedules);
+            this.handleCoachReply(res.reply, "cheer", schedules, matchedAudioUrl);
             this.lastServerUsage = res.usage || null;
             return;
           }
@@ -270,7 +323,7 @@
           const aiReply = await this.callGeminiApi(text, profile, geminiKey.trim());
           if (aiReply) {
             const schedules = this.parseSchedulesFromText(text);
-            this.handleCoachReply(aiReply.text, aiReply.mood || "cheer", schedules);
+            this.handleCoachReply(aiReply.text, aiReply.mood || "cheer", schedules, matchedAudioUrl);
             return;
           }
         } catch (err) {
@@ -281,11 +334,11 @@
       // 로컬 스마트 템플릿 엔진 (비용 완전 $0원, 0.01초 응답)
       setTimeout(() => {
         const response = this.generateResponse(text);
-        this.handleCoachReply(response.reply, response.mood, response.newSchedules || response.newSchedule);
+        this.handleCoachReply(response.reply, response.mood, response.newSchedules || response.newSchedule, matchedAudioUrl);
       }, 400);
     }
 
-    handleCoachReply(replyText, mood = "cheer", newSchedule = null) {
+    handleCoachReply(replyText, mood = "cheer", newSchedule = null, matchedAudioUrl = null) {
       this.chats.push({ 
         sender: "coach", 
         text: replyText, 

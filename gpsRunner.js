@@ -145,6 +145,7 @@ export class GPSRunner {
     this.smoothedAltitude = null;
     this.lastAltitude = null;
     this.elevationGainM = 0;
+    this.achievedMilestones = new Set();
     this.filter = new PositionFilter();
     this._onVisibility = null;
     this.rejectedByAccuracy = 0;
@@ -202,6 +203,39 @@ export class GPSRunner {
     }
   }
 
+  
+  playRunningAudio(filename) {
+    try {
+      const audio = new Audio(`assets/audio/running/${filename}.mp3`);
+      audio.volume = 1.0;
+      audio.play().catch(() => {});
+    } catch (_) {}
+  }
+
+  checkRunningMilestones(meters) {
+    if (!this.achievedMilestones) this.achievedMilestones = new Set();
+
+    if (meters >= 1000 && !this.achievedMilestones.has(1)) {
+      this.achievedMilestones.add(1);
+      this.playRunningAudio('run_1km_leo');
+    } else if (meters >= 2000 && !this.achievedMilestones.has(2)) {
+      this.achievedMilestones.add(2);
+      this.playRunningAudio('run_2km_luna');
+    } else if (meters >= 3000 && !this.achievedMilestones.has(3)) {
+      this.achievedMilestones.add(3);
+      this.playRunningAudio('run_3km_leo');
+    } else if (meters >= 5000 && !this.achievedMilestones.has(5)) {
+      this.achievedMilestones.add(5);
+      this.playRunningAudio('run_5km_cheer');
+    } else if (meters >= 7000 && !this.achievedMilestones.has(7)) {
+      this.achievedMilestones.add(7);
+      this.playRunningAudio('run_7km_push');
+    } else if (meters >= 10000 && !this.achievedMilestones.has(10)) {
+      this.achievedMilestones.add(10);
+      this.playRunningAudio('run_10km_finish');
+    }
+  }
+
   startRun(useSimulation = false) {
     if (this.timerId) {
       clearInterval(this.timerId);
@@ -230,6 +264,7 @@ export class GPSRunner {
     this.gpsAccuracy = useSimulation ? "시뮬레이션" : "GPS 신호 연결 중...";
     this.requestWakeLock();
     this.startVisibilityWatch();
+    this.playRunningAudio("run_start_leo");
     this.emitUpdate();
 
     this.timerId = setInterval(() => {
@@ -437,6 +472,7 @@ export class GPSRunner {
 
       if (!osSaysStopped && dMeters >= minStep && speedCheck <= MAX_SPEED_MPS) {
         this.totalMeters += dMeters;
+        this.checkRunningMilestones(this.totalMeters);
         this.lastValidPos = { lat: fLat, lng: fLng, time: now };
         this.positions.push({ lat: fLat, lng: fLng, time: now, speed: osSpeed ?? derivedSpeed, accuracy });
         // 페이스는 "달린 시간"으로 나눠야 합니다. START를 누르고 GPS가 잡히기까지의
@@ -465,6 +501,7 @@ export class GPSRunner {
     // 평균 5분 30초 페이스 시뮬레이션 (초당 약 3.03m)
     const stepMeters = 2.8 + Math.random() * 0.6;
     this.totalMeters += stepMeters;
+    this.checkRunningMilestones(this.totalMeters);
 
     const lastPos = this.positions.length > 0 ? this.positions[this.positions.length - 1] : { lat: 37.5665, lng: 126.9780 };
     const angle = (this.elapsedSeconds * 0.05);
@@ -498,6 +535,7 @@ export class GPSRunner {
   }
 
   stopRun() {
+    this.playRunningAudio("run_finish_cool");
     this.stopTracking();
     return this.getStats();
   }
