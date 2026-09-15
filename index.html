@@ -938,6 +938,28 @@
               <button type="button" class="playhub-chip" data-playhub-target="tab-challenge">📜 퀘스트</button>
             </div>
             
+            
+            <!-- 5대 펫 종족 선택 탭바 (다양화) -->
+            <div class="pet-species-bar" id="pet-species-bar">
+              <button type="button" class="species-chip active" data-species="dog" onclick="window.switchPetSpecies ? window.switchPetSpecies('dog') : window.Tamagotchi.switchPetSpecies('dog')">🐶 댕댕이</button>
+              <button type="button" class="species-chip" data-species="cat" onclick="window.switchPetSpecies ? window.switchPetSpecies('cat') : window.Tamagotchi.switchPetSpecies('cat')">🐱 냥이</button>
+              <button type="button" class="species-chip" data-species="rabbit" onclick="window.switchPetSpecies ? window.switchPetSpecies('rabbit') : window.Tamagotchi.switchPetSpecies('rabbit')">🐰 토끼</button>
+              <button type="button" class="species-chip" data-species="panda" onclick="window.switchPetSpecies ? window.switchPetSpecies('panda') : window.Tamagotchi.switchPetSpecies('panda')">🐼 판다</button>
+              <button type="button" class="species-chip" data-species="boltmon" onclick="window.switchPetSpecies ? window.switchPetSpecies('boltmon') : window.Tamagotchi.switchPetSpecies('boltmon')">⚡ 볼트몽</button>
+            </div>
+
+            <!-- 10단계 마일스톤 게이지 & 진화 타임라인 -->
+            <div class="pet-evolution-timeline" id="pet-evolution-timeline">
+              <div class="pet-evolution-header">
+                <span class="pet-curr-stage" id="pet-curr-stage-text">1단계: 응애 아기 (0km+)</span>
+                <span class="pet-next-km" id="pet-next-km-text">다음 진화까지 2.0km 남음</span>
+              </div>
+              <div class="pet-progress-track">
+                <div class="pet-progress-fill" id="pet-stage-progress-fill" style="width: 10%;"></div>
+              </div>
+              <div class="pet-stages-dots" id="pet-stages-dots"></div>
+            </div>
+
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
               <div class="card-label" style="margin:0;">🐾 웹툰 펫 키우기 &amp; 성장 다이어리</div>
               <button type="button" class="btn-shimmer" style="padding:6px 14px; font-size:11.5px;" onclick="triggerMakeReels()">
@@ -1401,7 +1423,7 @@
                   ⭐ 전담 지정
                 </button>
                 <button type="button" class="btn-coach-action ai" id="btn-open-gemini-key-modal" onclick="openGeminiKeyModal()">
-                  🔑 구글 AI 연동 ($0원)
+                  🔑 무료 AI 연동
                 </button>
                 <button type="button" class="btn-coach-action tts active" id="btn-toggle-tts" onclick="window.CareTeam.toggleTTS()">
                   🔊 음성 켜짐

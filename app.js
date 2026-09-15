@@ -2880,6 +2880,50 @@ class AppController {
 
     document.getElementById("t-energy-val").textContent = `${this.tamagotchi.energy}%`;
     document.getElementById("t-energy-bar").style.width = `${this.tamagotchi.energy}%`;
+
+    // 10단계 마일스톤 타임라인 & 5대 종족 바 동기화
+    if (this.tamagotchi && this.tamagotchi.getStageProgress) {
+      const progress = this.tamagotchi.getStageProgress();
+      const currStageText = document.getElementById("pet-curr-stage-text");
+      const nextKmText = document.getElementById("pet-next-km-text");
+      const progressFill = document.getElementById("pet-stage-progress-fill");
+      const dotsContainer = document.getElementById("pet-stages-dots");
+
+      if (currStageText) {
+        currStageText.textContent = `${stage.stage}단계: ${stage.nameKo}`;
+      }
+      if (nextKmText) {
+        nextKmText.textContent = progress.isMax ? "🏆 최종 성체 진화 완료!" : `다음 단계까지 ${progress.kmNeeded}km 남음`;
+      }
+      if (progressFill) {
+        const overallPercent = Math.min(100, Math.round(((stage.stage - 1) * 10) + (progress.percent * 0.1)));
+        progressFill.style.width = overallPercent + "%";
+      }
+      if (dotsContainer) {
+        let dotsHtml = "";
+        for (let s = 1; s <= 10; s++) {
+          const isCompleted = s < stage.stage;
+          const isCurrent = s === stage.stage;
+          const cls = isCurrent ? "pet-stage-dot current" : (isCompleted ? "pet-stage-dot completed" : "pet-stage-dot");
+          dotsHtml += `<div class="${cls}" title="${s}단계">${s}</div>`;
+        }
+        dotsContainer.innerHTML = dotsHtml;
+      }
+
+      document.querySelectorAll(".species-chip").forEach(chip => {
+        chip.classList.toggle("active", chip.getAttribute("data-species") === this.tamagotchi.petType);
+      });
+    }
+
+  }
+
+  
+  switchPetSpecies(type) {
+    if (this.tamagotchi && this.tamagotchi.switchPetSpecies) {
+      this.tamagotchi.switchPetSpecies(type);
+      this.firebaseSandbox.setDoc("tamagotchi", this.currentUserId, this.tamagotchi.toJSON());
+      this.renderTamagotchiView();
+    }
   }
 
   bindTamagotchiActions() {
@@ -3892,6 +3936,8 @@ class AppController {
 // 애플리케이션 시작
 window.addEventListener("DOMContentLoaded", () => {
   const app = new AppController();
+  window.appController = app;
+  window.switchPetSpecies = (type) => app.switchPetSpecies(type);
   app.init();
 });
 
