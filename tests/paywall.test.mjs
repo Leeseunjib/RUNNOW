@@ -70,5 +70,27 @@ function extractGatedTabs() {
   check("모든 요금제에 기간이 있음", plans.every((p) => p.durationDays > 0), true);
 }
 
+// --- 6. 상품 설명이 실제 기능과 어긋나지 않는다 ---------------------------
+// AI 코치는 사용자 본인의 구글 키 연동(BYOK)이 필요합니다. 서버가 키를 제공하는
+// 경로가 없는 동안 "설정 없이 즉시"라고 파는 것은 사실과 다릅니다.
+{
+  const careSrc = readFileSync(new URL("../careTeam.js", import.meta.url), "utf8");
+  const needsUserKey = careSrc.includes("RUNNOW_USER_GEMINI_KEY");
+  const hasServerKeyPath = /serverKey|SERVER_GEMINI|vipKey/i.test(careSrc);
+
+  check("케어팀은 사용자 키를 사용", needsUserKey, true);
+
+  if (needsUserKey && !hasServerKeyPath) {
+    const planText = Object.values(SUBSCRIPTION_PLANS)
+      .map((p) => `${p.name} ${p.badge || ""} ${p.desc || ""} ${p.discountTag || ""}`)
+      .join(" ");
+    const noSetupClaim = /설정\s*(없이|0%|불필요)|즉시\s*무제한/.test(planText);
+    check("요금제 설명에 '설정 없이' 주장 없음", noSetupClaim, false);
+
+    const uiNoSetup = /설정\s*0%|설정\s*없이/.test(htmlSrc);
+    check("판매 화면에 '설정 없이' 주장 없음", uiNoSetup, false);
+  }
+}
+
 console.log(failed === 0 ? "\n✅ ALL PASS" : `\n❌ ${failed} FAILED`);
 process.exit(failed === 0 ? 0 : 1);

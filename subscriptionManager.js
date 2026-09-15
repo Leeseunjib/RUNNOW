@@ -21,7 +21,10 @@ export const SUBSCRIPTION_PLANS = {
     periodName: "/ 월 (정가 ₩49,000)",
     durationDays: 30,
     discountTag: "오프라인 PT 대비 합리적 선택",
-    desc: "설정 없이 즉시 4대 코치 무제한 대화 • 실시간 음성(TTS) • 맞춤 식단/운동 가이드"
+    // 주의: "설정 없이 즉시"라고 적혀 있었으나, 현재 AI 코치는 PRO와 동일하게
+    // 사용자 본인의 구글 AI 키 연동(BYOK)이 필요합니다. 서버가 AI를 제공하는
+    // 경로는 아직 구현되지 않았습니다. 사실과 다른 문구를 제거했습니다.
+    desc: "4대 코치 무제한 대화 • 실시간 음성(TTS) • 맞춤 식단/운동 가이드 (구글 AI 키 연동 필요)"
   },
   ANNUAL: {
     id: "pro_annual",
