@@ -472,6 +472,8 @@ export const PANDA_STAGES = [
     "petType": "panda",
     "svg": "<img src=\"./assets/pets/panda_stage_10.jpg\" alt=\"판다멍\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FFD700;\">"
   }
+];
+
 export const STAGES = DOG_STAGES;
 
 export class TamagotchiEngine {
