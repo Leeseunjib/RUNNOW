@@ -87,10 +87,10 @@ export const DOG_STAGES = [
     "nameKo": "질주 청소년 (35km+)",
     "minKm": 35,
     "icon": "⚡",
-    "image": "./assets/pets/dog_stage_6.svg",
+    "image": "./assets/pets/dog_stage_6.jpg",
     "tagline": "골격이 단단해지고 보폭이 넓어져 장거리를 지치지 않고 달리는 청소년 댕댕이",
     "petType": "dog",
-    "svg": "<img src=\"./assets/pets/dog_stage_6.svg\" alt=\"댕댕이\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #7C4DFF;\">"
+    "svg": "<img src=\"./assets/pets/dog_stage_6.jpg\" alt=\"댕댕이\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #7C4DFF;\">"
   },
   {
     "stage": 7,
@@ -98,10 +98,10 @@ export const DOG_STAGES = [
     "nameKo": "열정 페이스메이커 (55km+)",
     "minKm": 55,
     "icon": "🎧",
-    "image": "./assets/pets/dog_stage_7.svg",
+    "image": "./assets/pets/dog_stage_7.jpg",
     "tagline": "안정된 심박수와 케이던스로 페이스메이커 역할을 톡톡히 하는 열정 러너",
     "petType": "dog",
-    "svg": "<img src=\"./assets/pets/dog_stage_7.svg\" alt=\"댕댕이\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #651FFF;\">"
+    "svg": "<img src=\"./assets/pets/dog_stage_7.jpg\" alt=\"댕댕이\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #651FFF;\">"
   },
   {
     "stage": 8,
@@ -109,10 +109,10 @@ export const DOG_STAGES = [
     "nameKo": "프로 마라토너 (80km+)",
     "minKm": 80,
     "icon": "🏅",
-    "image": "./assets/pets/dog_stage_8.svg",
+    "image": "./assets/pets/dog_stage_8.jpg",
     "tagline": "하프 마라톤을 완주하고 완주 메달을 목에 건 늠름한 마라토너 댕댕이",
     "petType": "dog",
-    "svg": "<img src=\"./assets/pets/dog_stage_8.svg\" alt=\"댕댕이\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF9100;\">"
+    "svg": "<img src=\"./assets/pets/dog_stage_8.jpg\" alt=\"댕댕이\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF9100;\">"
   },
   {
     "stage": 9,
@@ -120,10 +120,10 @@ export const DOG_STAGES = [
     "nameKo": "베테랑 챔피언 (120km+)",
     "minKm": 120,
     "icon": "🏆",
-    "image": "./assets/pets/dog_stage_9.svg",
+    "image": "./assets/pets/dog_stage_9.jpg",
     "tagline": "수많은 대회에서 입상하며 월계관을 차지한 베테랑 챔피언 댕댕이",
     "petType": "dog",
-    "svg": "<img src=\"./assets/pets/dog_stage_9.svg\" alt=\"댕댕이\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF6D00;\">"
+    "svg": "<img src=\"./assets/pets/dog_stage_9.jpg\" alt=\"댕댕이\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF6D00;\">"
   },
   {
     "stage": 10,
@@ -131,10 +131,10 @@ export const DOG_STAGES = [
     "nameKo": "초월의 성체 마스터 (180km+)",
     "minKm": 180,
     "icon": "👑",
-    "image": "./assets/pets/dog_stage_10.svg",
+    "image": "./assets/pets/dog_stage_10.jpg",
     "tagline": "황금빛 오라를 뿜어내며 어떤 코스든 압도적으로 질주하는 전설의 골든 성체 마스터",
     "petType": "dog",
-    "svg": "<img src=\"./assets/pets/dog_stage_10.svg\" alt=\"댕댕이\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FFD700;\">"
+    "svg": "<img src=\"./assets/pets/dog_stage_10.jpg\" alt=\"댕댕이\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FFD700;\">"
   }
 ];
 export const CAT_STAGES = [
@@ -199,10 +199,10 @@ export const CAT_STAGES = [
     "nameKo": "질주 청소년 (35km+)",
     "minKm": 35,
     "icon": "⚡",
-    "image": "./assets/pets/cat_stage_6.svg",
+    "image": "./assets/pets/cat_stage_6.jpg",
     "tagline": "날렵하고 유연한 몸놀림으로 코너링도 유연하게 통과하는 질주 청소년 캣",
     "petType": "cat",
-    "svg": "<img src=\"./assets/pets/cat_stage_6.svg\" alt=\"냥냥이\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #7C4DFF;\">"
+    "svg": "<img src=\"./assets/pets/cat_stage_6.jpg\" alt=\"냥냥이\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #7C4DFF;\">"
   },
   {
     "stage": 7,
@@ -210,10 +210,10 @@ export const CAT_STAGES = [
     "nameKo": "열정 페이스메이커 (55km+)",
     "minKm": 55,
     "icon": "🏃‍♀️",
-    "image": "./assets/pets/cat_stage_7.svg",
+    "image": "./assets/pets/cat_stage_7.jpg",
     "tagline": "완벽한 페이스 조절로 바람을 가르는 스타일리시 페이스메이커",
     "petType": "cat",
-    "svg": "<img src=\"./assets/pets/cat_stage_7.svg\" alt=\"냥냥이\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #651FFF;\">"
+    "svg": "<img src=\"./assets/pets/cat_stage_7.jpg\" alt=\"냥냥이\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #651FFF;\">"
   },
   {
     "stage": 8,
@@ -221,10 +221,10 @@ export const CAT_STAGES = [
     "nameKo": "프로 마라토너 (80km+)",
     "minKm": 80,
     "icon": "🏅",
-    "image": "./assets/pets/cat_stage_8.svg",
+    "image": "./assets/pets/cat_stage_8.jpg",
     "tagline": "바람을 가르는 날렵하고 우아한 폼으로 마라톤 메달을 획득한 멋진 마라토너 캣",
     "petType": "cat",
-    "svg": "<img src=\"./assets/pets/cat_stage_8.svg\" alt=\"냥냥이\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF4081;\">"
+    "svg": "<img src=\"./assets/pets/cat_stage_8.jpg\" alt=\"냥냥이\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF4081;\">"
   },
   {
     "stage": 9,
@@ -232,10 +232,10 @@ export const CAT_STAGES = [
     "nameKo": "베테랑 챔피언 (120km+)",
     "minKm": 120,
     "icon": "🏆",
-    "image": "./assets/pets/cat_stage_9.svg",
+    "image": "./assets/pets/cat_stage_9.jpg",
     "tagline": "밤하늘의 은하수처럼 반짝이는 아우라를 두른 베테랑 챔피언 냥이",
     "petType": "cat",
-    "svg": "<img src=\"./assets/pets/cat_stage_9.svg\" alt=\"냥냥이\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #E040FB;\">"
+    "svg": "<img src=\"./assets/pets/cat_stage_9.jpg\" alt=\"냥냥이\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #E040FB;\">"
   },
   {
     "stage": 10,
@@ -243,10 +243,10 @@ export const CAT_STAGES = [
     "nameKo": "초월의 성체 마스터 (180km+)",
     "minKm": 180,
     "icon": "👑",
-    "image": "./assets/pets/cat_stage_10.svg",
+    "image": "./assets/pets/cat_stage_10.jpg",
     "tagline": "보랏빛 성운과 별빛 왕관을 두른 세상에서 가장 빠르고 우아한 초월의 스타 냥신",
     "petType": "cat",
-    "svg": "<img src=\"./assets/pets/cat_stage_10.svg\" alt=\"냥냥이\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FFD700;\">"
+    "svg": "<img src=\"./assets/pets/cat_stage_10.jpg\" alt=\"냥냥이\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FFD700;\">"
   }
 ];
 export const RABBIT_STAGES = [
@@ -256,10 +256,10 @@ export const RABBIT_STAGES = [
     "nameKo": "응애 아기 (0km+)",
     "minKm": 0,
     "icon": "🐰",
-    "image": "./assets/pets/rabbit_stage_1.svg",
+    "image": "./assets/pets/rabbit_stage_1.jpg",
     "tagline": "두 귀를 쫑긋거리며 코를 킁킁거리는 부드러운 털의 아기 토끼",
     "petType": "rabbit",
-    "svg": "<img src=\"./assets/pets/rabbit_stage_1.svg\" alt=\"토순이\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF4081;\">"
+    "svg": "<img src=\"./assets/pets/rabbit_stage_1.jpg\" alt=\"토순이\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF4081;\">"
   },
   {
     "stage": 2,
@@ -267,10 +267,10 @@ export const RABBIT_STAGES = [
     "nameKo": "걸음마 유아 (2km+)",
     "minKm": 2,
     "icon": "🐇",
-    "image": "./assets/pets/rabbit_stage_2.svg",
+    "image": "./assets/pets/rabbit_stage_2.jpg",
     "tagline": "조그만 발로 깡총깡총 잔디밭을 뛰어다니는 귀여운 걸음마 토끼",
     "petType": "rabbit",
-    "svg": "<img src=\"./assets/pets/rabbit_stage_2.svg\" alt=\"토순이\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF4081;\">"
+    "svg": "<img src=\"./assets/pets/rabbit_stage_2.jpg\" alt=\"토순이\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF4081;\">"
   },
   {
     "stage": 3,
@@ -278,10 +278,10 @@ export const RABBIT_STAGES = [
     "nameKo": "장난꾸러기 유치원 (5km+)",
     "minKm": 5,
     "icon": "🥕",
-    "image": "./assets/pets/rabbit_stage_3.svg",
+    "image": "./assets/pets/rabbit_stage_3.jpg",
     "tagline": "당근 모양 헤어핀을 꽂고 신나게 들판을 질주하는 유치원 토끼",
     "petType": "rabbit",
-    "svg": "<img src=\"./assets/pets/rabbit_stage_3.svg\" alt=\"토순이\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #F50057;\">"
+    "svg": "<img src=\"./assets/pets/rabbit_stage_3.jpg\" alt=\"토순이\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #F50057;\">"
   },
   {
     "stage": 4,
@@ -289,10 +289,10 @@ export const RABBIT_STAGES = [
     "nameKo": "호기심 탐험가 (10km+)",
     "minKm": 10,
     "icon": "🌸",
-    "image": "./assets/pets/rabbit_stage_4.svg",
+    "image": "./assets/pets/rabbit_stage_4.jpg",
     "tagline": "숲속 오솔길을 호기심 가득하게 탐험하는 씩씩한 탐험 토끼",
     "petType": "rabbit",
-    "svg": "<img src=\"./assets/pets/rabbit_stage_4.svg\" alt=\"토순이\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00F0FF;\">"
+    "svg": "<img src=\"./assets/pets/rabbit_stage_4.jpg\" alt=\"토순이\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00F0FF;\">"
   },
   {
     "stage": 5,
@@ -300,10 +300,10 @@ export const RABBIT_STAGES = [
     "nameKo": "트랙 꿈나무 (20km+)",
     "minKm": 20,
     "icon": "🏃",
-    "image": "./assets/pets/rabbit_stage_5.svg",
+    "image": "./assets/pets/rabbit_stage_5.jpg",
     "tagline": "가벼운 도약력으로 오르막길도 깃털처럼 뛰어오르는 트랙 루키",
     "petType": "rabbit",
-    "svg": "<img src=\"./assets/pets/rabbit_stage_5.svg\" alt=\"토순이\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00E676;\">"
+    "svg": "<img src=\"./assets/pets/rabbit_stage_5.jpg\" alt=\"토순이\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00E676;\">"
   },
   {
     "stage": 6,
@@ -311,10 +311,10 @@ export const RABBIT_STAGES = [
     "nameKo": "질주 청소년 (35km+)",
     "minKm": 35,
     "icon": "⚡",
-    "image": "./assets/pets/rabbit_stage_6.svg",
+    "image": "./assets/pets/rabbit_stage_6.jpg",
     "tagline": "긴 다리로 탄력 넘치게 도약하며 완벽한 케이던스를 자랑하는 청소년 토끼",
     "petType": "rabbit",
-    "svg": "<img src=\"./assets/pets/rabbit_stage_6.svg\" alt=\"토순이\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #7C4DFF;\">"
+    "svg": "<img src=\"./assets/pets/rabbit_stage_6.jpg\" alt=\"토순이\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #7C4DFF;\">"
   },
   {
     "stage": 7,
@@ -322,10 +322,10 @@ export const RABBIT_STAGES = [
     "nameKo": "열정 페이스메이커 (55km+)",
     "minKm": 55,
     "icon": "🎧",
-    "image": "./assets/pets/rabbit_stage_7.svg",
+    "image": "./assets/pets/rabbit_stage_7.jpg",
     "tagline": "귀에 쏙 들어오는 리듬으로 지친 러너를 북돋아주는 활력 페이스메이커",
     "petType": "rabbit",
-    "svg": "<img src=\"./assets/pets/rabbit_stage_7.svg\" alt=\"토순이\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #651FFF;\">"
+    "svg": "<img src=\"./assets/pets/rabbit_stage_7.jpg\" alt=\"토순이\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #651FFF;\">"
   },
   {
     "stage": 8,
@@ -333,10 +333,10 @@ export const RABBIT_STAGES = [
     "nameKo": "프로 마라토너 (80km+)",
     "minKm": 80,
     "icon": "🏅",
-    "image": "./assets/pets/rabbit_stage_8.svg",
+    "image": "./assets/pets/rabbit_stage_8.jpg",
     "tagline": "장거리 크로스컨트리 코스를 정복하고 완주 메달을 거머쥔 마라토너 토끼",
     "petType": "rabbit",
-    "svg": "<img src=\"./assets/pets/rabbit_stage_8.svg\" alt=\"토순이\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF9100;\">"
+    "svg": "<img src=\"./assets/pets/rabbit_stage_8.jpg\" alt=\"토순이\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF9100;\">"
   },
   {
     "stage": 9,
@@ -344,10 +344,10 @@ export const RABBIT_STAGES = [
     "nameKo": "베테랑 챔피언 (120km+)",
     "minKm": 120,
     "icon": "🏆",
-    "image": "./assets/pets/rabbit_stage_9.svg",
+    "image": "./assets/pets/rabbit_stage_9.jpg",
     "tagline": "달빛 아래서 가장 빠르고 아름답게 질주하는 베테랑 챔피언 토순이",
     "petType": "rabbit",
-    "svg": "<img src=\"./assets/pets/rabbit_stage_9.svg\" alt=\"토순이\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF6D00;\">"
+    "svg": "<img src=\"./assets/pets/rabbit_stage_9.jpg\" alt=\"토순이\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF6D00;\">"
   },
   {
     "stage": 10,
@@ -355,10 +355,10 @@ export const RABBIT_STAGES = [
     "nameKo": "초월의 성체 마스터 (180km+)",
     "minKm": 180,
     "icon": "👑",
-    "image": "./assets/pets/rabbit_stage_10.svg",
+    "image": "./assets/pets/rabbit_stage_10.jpg",
     "tagline": "신비로운 달빛 아우라와 크리스탈 티아라를 쓴 초월의 문라이트 성체 퀸",
     "petType": "rabbit",
-    "svg": "<img src=\"./assets/pets/rabbit_stage_10.svg\" alt=\"토순이\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FFD700;\">"
+    "svg": "<img src=\"./assets/pets/rabbit_stage_10.jpg\" alt=\"토순이\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FFD700;\">"
   }
 ];
 export const PANDA_STAGES = [
@@ -368,10 +368,10 @@ export const PANDA_STAGES = [
     "nameKo": "응애 아기 (0km+)",
     "minKm": 0,
     "icon": "🐼",
-    "image": "./assets/pets/panda_stage_1.svg",
+    "image": "./assets/pets/panda_stage_1.jpg",
     "tagline": "동글동글한 몸매로 뒹굴뒹굴 구르는 귀여운 털뭉치 아기 판다",
     "petType": "panda",
-    "svg": "<img src=\"./assets/pets/panda_stage_1.svg\" alt=\"판다멍\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #43A047;\">"
+    "svg": "<img src=\"./assets/pets/panda_stage_1.jpg\" alt=\"판다멍\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #43A047;\">"
   },
   {
     "stage": 2,
@@ -379,10 +379,10 @@ export const PANDA_STAGES = [
     "nameKo": "걸음마 유아 (2km+)",
     "minKm": 2,
     "icon": "🐾",
-    "image": "./assets/pets/panda_stage_2.svg",
+    "image": "./assets/pets/panda_stage_2.jpg",
     "tagline": "아장아장 뒤뚱거리며 첫 대나무 잎을 쥐고 걷는 귀염둥이 판다",
     "petType": "panda",
-    "svg": "<img src=\"./assets/pets/panda_stage_2.svg\" alt=\"판다멍\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #43A047;\">"
+    "svg": "<img src=\"./assets/pets/panda_stage_2.jpg\" alt=\"판다멍\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #43A047;\">"
   },
   {
     "stage": 3,
@@ -390,10 +390,10 @@ export const PANDA_STAGES = [
     "nameKo": "장난꾸러기 유치원 (5km+)",
     "minKm": 5,
     "icon": "🎋",
-    "image": "./assets/pets/panda_stage_3.svg",
+    "image": "./assets/pets/panda_stage_3.jpg",
     "tagline": "대나무 숲에서 구르고 뛰놀며 튼튼한 하체를 기르는 유치원 판다",
     "petType": "panda",
-    "svg": "<img src=\"./assets/pets/panda_stage_3.svg\" alt=\"판다멍\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #2E7D32;\">"
+    "svg": "<img src=\"./assets/pets/panda_stage_3.jpg\" alt=\"판다멍\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #2E7D32;\">"
   },
   {
     "stage": 4,
@@ -401,10 +401,10 @@ export const PANDA_STAGES = [
     "nameKo": "호기심 탐험가 (10km+)",
     "minKm": 10,
     "icon": "🍃",
-    "image": "./assets/pets/panda_stage_4.svg",
+    "image": "./assets/pets/panda_stage_4.jpg",
     "tagline": "신선한 대나무 잎을 찾아 깊은 숲길을 탐험하는 호기심 판다",
     "petType": "panda",
-    "svg": "<img src=\"./assets/pets/panda_stage_4.svg\" alt=\"판다멍\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00F0FF;\">"
+    "svg": "<img src=\"./assets/pets/panda_stage_4.jpg\" alt=\"판다멍\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00F0FF;\">"
   },
   {
     "stage": 5,
@@ -412,10 +412,10 @@ export const PANDA_STAGES = [
     "nameKo": "트랙 꿈나무 (20km+)",
     "minKm": 20,
     "icon": "🏃‍♂️",
-    "image": "./assets/pets/panda_stage_5.svg",
+    "image": "./assets/pets/panda_stage_5.jpg",
     "tagline": "지치지 않는 묵직한 파워워킹으로 5km를 완주하는 파워 루키",
     "petType": "panda",
-    "svg": "<img src=\"./assets/pets/panda_stage_5.svg\" alt=\"판다멍\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00E676;\">"
+    "svg": "<img src=\"./assets/pets/panda_stage_5.jpg\" alt=\"판다멍\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00E676;\">"
   },
   {
     "stage": 6,
@@ -423,10 +423,10 @@ export const PANDA_STAGES = [
     "nameKo": "질주 청소년 (35km+)",
     "minKm": 35,
     "icon": "⚡",
-    "image": "./assets/pets/panda_stage_6.svg",
+    "image": "./assets/pets/panda_stage_6.jpg",
     "tagline": "묵직한 체구에서 뿜어져 나오는 폭발적인 추진력으로 달리는 청소년 판다",
     "petType": "panda",
-    "svg": "<img src=\"./assets/pets/panda_stage_6.svg\" alt=\"판다멍\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #7C4DFF;\">"
+    "svg": "<img src=\"./assets/pets/panda_stage_6.jpg\" alt=\"판다멍\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #7C4DFF;\">"
   },
   {
     "stage": 7,
@@ -434,10 +434,10 @@ export const PANDA_STAGES = [
     "nameKo": "열정 페이스메이커 (55km+)",
     "minKm": 55,
     "icon": "🎧",
-    "image": "./assets/pets/panda_stage_7.svg",
+    "image": "./assets/pets/panda_stage_7.jpg",
     "tagline": "흔들리지 않는 뚝심과 안정감으로 러너들의 멘탈을 지켜주는 페이스메이커",
     "petType": "panda",
-    "svg": "<img src=\"./assets/pets/panda_stage_7.svg\" alt=\"판다멍\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #651FFF;\">"
+    "svg": "<img src=\"./assets/pets/panda_stage_7.jpg\" alt=\"판다멍\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #651FFF;\">"
   },
   {
     "stage": 8,
@@ -445,10 +445,10 @@ export const PANDA_STAGES = [
     "nameKo": "프로 마라토너 (80km+)",
     "minKm": 80,
     "icon": "🏅",
-    "image": "./assets/pets/panda_stage_8.svg",
+    "image": "./assets/pets/panda_stage_8.jpg",
     "tagline": "강인한 근력과 지구력으로 극한의 울트라 코스를 완주한 마라토너 판다",
     "petType": "panda",
-    "svg": "<img src=\"./assets/pets/panda_stage_8.svg\" alt=\"판다멍\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF9100;\">"
+    "svg": "<img src=\"./assets/pets/panda_stage_8.jpg\" alt=\"판다멍\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF9100;\">"
   },
   {
     "stage": 9,
@@ -456,10 +456,10 @@ export const PANDA_STAGES = [
     "nameKo": "베테랑 챔피언 (120km+)",
     "minKm": 120,
     "icon": "🏆",
-    "image": "./assets/pets/panda_stage_9.svg",
+    "image": "./assets/pets/panda_stage_9.jpg",
     "tagline": "태산처럼 든든한 체력과 무술 실력을 겸비한 베테랑 쿵푸 챔피언",
     "petType": "panda",
-    "svg": "<img src=\"./assets/pets/panda_stage_9.svg\" alt=\"판다멍\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF6D00;\">"
+    "svg": "<img src=\"./assets/pets/panda_stage_9.jpg\" alt=\"판다멍\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF6D00;\">"
   },
   {
     "stage": 10,
@@ -467,10 +467,10 @@ export const PANDA_STAGES = [
     "nameKo": "초월의 성체 마스터 (180km+)",
     "minKm": 180,
     "icon": "👑",
-    "image": "./assets/pets/panda_stage_10.svg",
+    "image": "./assets/pets/panda_stage_10.jpg",
     "tagline": "대자연의 정기를 흡수하여 무한의 스태미나를 자랑하는 초월의 자이언트 마스터",
     "petType": "panda",
-    "svg": "<img src=\"./assets/pets/panda_stage_10.svg\" alt=\"판다멍\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FFD700;\">"
+    "svg": "<img src=\"./assets/pets/panda_stage_10.jpg\" alt=\"판다멍\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FFD700;\">"
   }
 ];
 export const BOLTMON_STAGES = [
@@ -480,10 +480,10 @@ export const BOLTMON_STAGES = [
     "nameKo": "응애 아기 (0km+)",
     "minKm": 0,
     "icon": "⚡",
-    "image": "./assets/pets/boltmon_stage_1.svg",
+    "image": "./assets/pets/boltmon_stage_1.jpg",
     "tagline": "푸른 번개 스파크를 깜빡이며 태어난 전설의 사이버 신수 아기 볼트",
     "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_1.svg\" alt=\"볼트몽\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00F0FF;\">"
+    "svg": "<img src=\"./assets/pets/boltmon_stage_1.jpg\" alt=\"볼트몽\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00F0FF;\">"
   },
   {
     "stage": 2,
@@ -491,10 +491,10 @@ export const BOLTMON_STAGES = [
     "nameKo": "걸음마 유아 (2km+)",
     "minKm": 2,
     "icon": "✨",
-    "image": "./assets/pets/boltmon_stage_2.svg",
+    "image": "./assets/pets/boltmon_stage_2.jpg",
     "tagline": "발바닥에서 찌릿찌릿 정전기를 뿜으며 아장아장 걷는 네온 볼트",
     "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_2.svg\" alt=\"볼트몽\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00F0FF;\">"
+    "svg": "<img src=\"./assets/pets/boltmon_stage_2.jpg\" alt=\"볼트몽\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00F0FF;\">"
   },
   {
     "stage": 3,
@@ -502,10 +502,10 @@ export const BOLTMON_STAGES = [
     "nameKo": "장난꾸러기 유치원 (5km+)",
     "minKm": 5,
     "icon": "🔋",
-    "image": "./assets/pets/boltmon_stage_3.svg",
+    "image": "./assets/pets/boltmon_stage_3.jpg",
     "tagline": "번개 회로를 타고 네온 트랙을 신나게 질주하는 유치원 볼트몽",
     "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_3.svg\" alt=\"볼트몽\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00E5FF;\">"
+    "svg": "<img src=\"./assets/pets/boltmon_stage_3.jpg\" alt=\"볼트몽\" class=\"t-img-avatar bounce-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00E5FF;\">"
   },
   {
     "stage": 4,
@@ -513,10 +513,10 @@ export const BOLTMON_STAGES = [
     "nameKo": "호기심 탐험가 (10km+)",
     "minKm": 10,
     "icon": "🔮",
-    "image": "./assets/pets/boltmon_stage_4.svg",
+    "image": "./assets/pets/boltmon_stage_4.jpg",
     "tagline": "사이버 시티의 디지털 그리드를 자유롭게 탐험하는 네온 탐험가",
     "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_4.svg\" alt=\"볼트몽\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00B0FF;\">"
+    "svg": "<img src=\"./assets/pets/boltmon_stage_4.jpg\" alt=\"볼트몽\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00B0FF;\">"
   },
   {
     "stage": 5,
@@ -524,10 +524,10 @@ export const BOLTMON_STAGES = [
     "nameKo": "트랙 꿈나무 (20km+)",
     "minKm": 20,
     "icon": "🚀",
-    "image": "./assets/pets/boltmon_stage_5.svg",
+    "image": "./assets/pets/boltmon_stage_5.jpg",
     "tagline": "터보 엔진을 가동하여 1초 만에 최고 속도에 도달하는 트랙 루키",
     "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_5.svg\" alt=\"볼트몽\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00C73C;\">"
+    "svg": "<img src=\"./assets/pets/boltmon_stage_5.jpg\" alt=\"볼트몽\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #00C73C;\">"
   },
   {
     "stage": 6,
@@ -535,10 +535,10 @@ export const BOLTMON_STAGES = [
     "nameKo": "질주 청소년 (35km+)",
     "minKm": 35,
     "icon": "🔥",
-    "image": "./assets/pets/boltmon_stage_6.svg",
+    "image": "./assets/pets/boltmon_stage_6.jpg",
     "tagline": "초고속 데이터 스트림을 가르며 달리는 사이버 청소년 볼트",
     "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_6.svg\" alt=\"볼트몽\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #7C4DFF;\">"
+    "svg": "<img src=\"./assets/pets/boltmon_stage_6.jpg\" alt=\"볼트몽\" class=\"t-img-avatar run-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #7C4DFF;\">"
   },
   {
     "stage": 7,
@@ -546,10 +546,10 @@ export const BOLTMON_STAGES = [
     "nameKo": "열정 페이스메이커 (55km+)",
     "minKm": 55,
     "icon": "🎧",
-    "image": "./assets/pets/boltmon_stage_7.svg",
+    "image": "./assets/pets/boltmon_stage_7.jpg",
     "tagline": "초정밀 GPS 레이더와 결합하여 1초의 오차도 없는 궁극의 페이스메이커",
     "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_7.svg\" alt=\"볼트몽\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #651FFF;\">"
+    "svg": "<img src=\"./assets/pets/boltmon_stage_7.jpg\" alt=\"볼트몽\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #651FFF;\">"
   },
   {
     "stage": 8,
@@ -557,10 +557,10 @@ export const BOLTMON_STAGES = [
     "nameKo": "프로 마라토너 (80km+)",
     "minKm": 80,
     "icon": "🏅",
-    "image": "./assets/pets/boltmon_stage_8.svg",
+    "image": "./assets/pets/boltmon_stage_8.jpg",
     "tagline": "에너지 100% 충전 상태로 마라톤 전 구간을 빛의 속도로 완주한 마라토너 볼트",
     "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_8.svg\" alt=\"볼트몽\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF9100;\">"
+    "svg": "<img src=\"./assets/pets/boltmon_stage_8.jpg\" alt=\"볼트몽\" class=\"t-img-avatar master-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF9100;\">"
   },
   {
     "stage": 9,
@@ -568,10 +568,10 @@ export const BOLTMON_STAGES = [
     "nameKo": "베테랑 챔피언 (120km+)",
     "minKm": 120,
     "icon": "🏆",
-    "image": "./assets/pets/boltmon_stage_9.svg",
+    "image": "./assets/pets/boltmon_stage_9.jpg",
     "tagline": "네온 번개 트로피를 차지한 디지털 세계의 베테랑 챔피언",
     "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_9.svg\" alt=\"볼트몽\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF6D00;\">"
+    "svg": "<img src=\"./assets/pets/boltmon_stage_9.jpg\" alt=\"볼트몽\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FF6D00;\">"
   },
   {
     "stage": 10,
@@ -579,10 +579,10 @@ export const BOLTMON_STAGES = [
     "nameKo": "초월의 성체 마스터 (180km+)",
     "minKm": 180,
     "icon": "👑",
-    "image": "./assets/pets/boltmon_stage_10.svg",
+    "image": "./assets/pets/boltmon_stage_10.jpg",
     "tagline": "천둥과 번개를 자유자재로 다루며 황금빛 사이버 아우라를 발산하는 초월의 전설 신수",
     "petType": "boltmon",
-    "svg": "<img src=\"./assets/pets/boltmon_stage_10.svg\" alt=\"볼트몽\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FFD700;\">"
+    "svg": "<img src=\"./assets/pets/boltmon_stage_10.jpg\" alt=\"볼트몽\" class=\"t-img-avatar legend-anim\" style=\"width:100%; height:100%; object-fit:cover; border-radius:50%; box-shadow:0 8px 24px var(--card-shadow); border:4px solid #FFD700;\">"
   }
 ];
 
