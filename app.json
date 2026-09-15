@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "RUNNOW",
+    "slug": "runnow",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.beauscreators.runnow"
+    },
+    "android": {
+      "package": "com.beauscreators.runnow",
+      "adaptiveIcon": {
+        "backgroundColor": "#08090C",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

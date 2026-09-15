@@ -1,19 +1,26 @@
 {
   "name": "runnow",
   "version": "1.0.0",
-  "description": "",
-  "main": "app.js",
-  "scripts": {
-    "test": "node tests/motionTracker.test.mjs && node tests/gpsRunner.test.mjs && node tests/metabolics.test.mjs && node tests/tamagotchi.test.mjs && node tests/quests.test.mjs && node tests/challenge.test.mjs && node tests/metrics.test.mjs && node tests/subscriptionManager.test.mjs && node tests/paymentSecurity.test.mjs && node tests/careTeamAndDiet.test.mjs && node tests/weatherAndPublicApi.test.mjs && node tests/paywall.test.mjs && node tests/envIsolation.test.mjs && node tests/aiCoach.test.mjs",
-    "sync:hq": "node scripts/sync_hq.mjs",
-    "deploy:dev": "node scripts/sync_hq.mjs && firebase hosting:channel:deploy dev --expires 30d",
-    "promote:live": "firebase hosting:clone runnow-37af9:dev runnow-37af9:live"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "main": "index.js",
   "dependencies": {
-    "firebase": "^12.18.0"
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-navigation/bottom-tabs": "^7.18.18",
+    "@react-navigation/native": "^7.3.18",
+    "@react-navigation/native-stack": "^7.18.10",
+    "expo": "~57.0.22",
+    "expo-status-bar": "~57.0.1",
+    "firebase": "^12.19.0",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-vector-icons": "^10.3.0"
   },
-  "type": "module"
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "private": true
 }
