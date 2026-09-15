@@ -100,7 +100,8 @@ class AppController {
 
     this.gpsRunner = new GPSRunner({
       weightKg: this.userProfile.weightKg,
-      onUpdate: (stats) => this.renderLiveRunStats(stats)
+      onUpdate: (stats) => this.renderLiveRunStats(stats),
+      onLapAchieved: (lap) => this.handleLapAchieved(lap)
     });
 
     this.motionSound = new MotionSound();
@@ -1053,6 +1054,23 @@ class AppController {
         : `현재 ${stats.currentPace || `--'--"`}`;
     }
 
+    // 실시간 속도(km/h) HUD 갱신
+    const speedEl = document.getElementById("live-speed");
+    const avgSpeedEl = document.getElementById("live-avg-speed");
+    if (speedEl) {
+      speedEl.textContent = stats.runMode === "treadmill" ? "—" : (stats.currentSpeedKmh || "0.0");
+    }
+    if (avgSpeedEl) {
+      avgSpeedEl.textContent = stats.runMode === "treadmill"
+        ? "트레드밀 속도"
+        : `평균 ${stats.avgSpeedKmh || "0.0"} km/h`;
+    }
+
+    // 과거 기록 실시간 비교, 펫 러닝 트랙 & 1km 스플릿 랩 테이블 렌더링
+    this.renderGhostComparison(stats);
+    this.renderPetRunningTrack(stats);
+    this.renderLiveLapsTable(stats);
+
     if (accuracyEl && stats.gpsAccuracy) {
       let dotClass = "ready";
       let text = stats.gpsAccuracy;
@@ -1080,6 +1098,158 @@ class AppController {
 
       accuracyEl.innerHTML = `<span class="status-dot ${dotClass}"></span><span class="status-label">${text}</span>${diagHtml}`;
       accuracyEl.style.whiteSpace = "normal";
+    }
+  }
+
+  
+  // 👻 과거 기록 실시간 비교 (고스트 러너 시스템)
+  renderGhostComparison(stats) {
+    const ghostText = document.getElementById("ghost-status-text");
+    if (!ghostText) return;
+
+    let lastRunSpeed = null;
+    try {
+      const lastRaw = localStorage.getItem("RUNNOW_LAST_RUN");
+      if (lastRaw) {
+        const lastData = JSON.parse(lastRaw);
+        if (lastData && lastData.distance && lastData.elapsedSeconds > 0) {
+          const km = lastData.distance > 100 ? lastData.distance / 1000 : lastData.distance;
+          lastRunSpeed = km / (lastData.elapsedSeconds / 3600);
+        }
+      }
+    } catch (_) {}
+
+    if (!lastRunSpeed) lastRunSpeed = 10.0;
+
+    const currentSpeed = parseFloat(stats.avgSpeedKmh) || 0;
+    if (stats.distanceKm < 0.05 || currentSpeed === 0) {
+      ghostText.className = "";
+      ghostText.textContent = `지난 기록(기준 ${lastRunSpeed.toFixed(1)} km/h)과 실시간 페이스 대조 중...`;
+      return;
+    }
+
+    const diff = currentSpeed - lastRunSpeed;
+    if (diff >= 0.1) {
+      ghostText.className = "faster";
+      ghostText.textContent = `▲ +${diff.toFixed(1)} km/h 더 빠름 (지난번보다 앞서 달리는 중! 🔥)`;
+    } else if (diff <= -0.1) {
+      ghostText.className = "slower";
+      ghostText.textContent = `▼ -${Math.abs(diff).toFixed(1)} km/h (지난번보다 뒤처짐, 페이스 업! 💨)`;
+    } else {
+      ghostText.className = "";
+      ghostText.textContent = `⚡ 지난번과 완벽하게 대등한 챔피언 페이스 유지 중!`;
+    }
+  }
+
+  // 🐾 다마고치 펫 실시간 러닝 트랙 애니메이션
+  renderPetRunningTrack(stats) {
+    const trackEl = document.getElementById("live-pet-track");
+    const emojiEl = document.getElementById("pet-runner-emoji");
+    const speedEl = document.getElementById("pet-runner-speed-tag");
+    const speechEl = document.getElementById("pet-runner-speech-text");
+    const runnerAvatar = document.getElementById("pet-runner-avatar");
+
+    if (!trackEl) return;
+
+    const petType = (this.tamagotchi && this.tamagotchi.type) ? this.tamagotchi.type : "dog";
+    if (emojiEl) emojiEl.textContent = petType === "cat" ? "🐱" : "🐶";
+
+    const isRunning = this.gpsRunner.isTracking && !this.gpsRunner.isPaused;
+    const speedNum = parseFloat(stats.currentSpeedKmh) || 0;
+
+    if (isRunning && speedNum > 0.5) {
+      trackEl.classList.add("running");
+      if (speedEl) speedEl.textContent = `${speedNum.toFixed(1)} km/h`;
+
+      if (runnerAvatar) {
+        const animSpeed = Math.max(0.18, 0.42 - speedNum * 0.015);
+        runnerAvatar.style.animationDuration = `${animSpeed}s`;
+      }
+
+      if (speechEl && Math.random() < 0.04) {
+        const petSounds = petType === "cat"
+          ? ["대표님, 지금 페이스 완벽해요! 야옹! 🐾", "가볍게 호흡하면서 끝까지 달려요! 🐱", "도파민 충전 완료! 야옹! ✨"]
+          : ["대표님, 1km 랩타임 최고예요! 멍멍! 🐾", "지치지 말고 페이스 유지해요! 파이팅! 🐶", "함께 달리니까 너무 신나요! 멍! 🔥"];
+        speechEl.textContent = `"${petSounds[Math.floor(Math.random() * petSounds.length)]}"`;
+      }
+    } else {
+      trackEl.classList.remove("running");
+      if (speedEl) speedEl.textContent = "0.0 km/h";
+      if (speechEl && this.gpsRunner.isTracking && this.gpsRunner.isPaused) {
+        speechEl.textContent = `"잠시 숨 고르는 중... 준비되면 다시 달려요! 🐾"`;
+      }
+    }
+  }
+
+  // ⚡ 1km 구간별 스플릿 랩 기록 테이블 렌더링 (고정 높이 스크롤)
+  renderLiveLapsTable(stats) {
+    const tbody = document.getElementById("live-laps-tbody");
+    const countBadge = document.getElementById("live-laps-count");
+    if (!tbody) return;
+
+    const laps = stats.laps || [];
+    if (countBadge) {
+      countBadge.textContent = `${laps.length} KM 완료`;
+    }
+
+    if (laps.length === 0 && stats.distanceKm < 0.05) {
+      tbody.innerHTML = `
+        <tr class="lap-row-empty">
+          <td colspan="5">1km를 달리면 첫 구간 스플릿이 자동 기록됩니다 🏃</td>
+        </tr>
+      `;
+      return;
+    }
+
+    let rowsHtml = "";
+
+    // 1. 완료된 1km 랩 목록
+    laps.forEach((lap) => {
+      const diffSec = lap.lapTimeSec - 330;
+      let diffBadge = "";
+      if (diffSec <= -3) {
+        diffBadge = `<span class="lap-diff-tag faster">▲ ${Math.abs(diffSec)}초 단축</span>`;
+      } else if (diffSec >= 3) {
+        diffBadge = `<span class="lap-diff-tag slower">▼ ${diffSec}초 지연</span>`;
+      } else {
+        diffBadge = `<span class="lap-diff-tag">유지</span>`;
+      }
+
+      rowsHtml += `
+        <tr>
+          <td><strong>${lap.km} km</strong></td>
+          <td>${lap.lapTimeFormatted}</td>
+          <td>${lap.pace}</td>
+          <td>${lap.speedKmh} km/h</td>
+          <td>${diffBadge}</td>
+        </tr>
+      `;
+    });
+
+    // 2. 현재 진행 중인 구간 (Current Lap)
+    if (stats.currentLap && this.gpsRunner.isTracking) {
+      const cur = stats.currentLap;
+      rowsHtml += `
+        <tr class="current-lap-row">
+          <td><strong>${cur.km} km <span style="font-size:9px;">(진행중)</span></strong></td>
+          <td>${cur.lapTimeFormatted} (${cur.meters}m)</td>
+          <td>${cur.currentPace}</td>
+          <td>${cur.currentSpeedKmh} km/h</td>
+          <td><span class="lap-diff-tag" style="background:rgba(0,240,255,0.15); color:#00F0FF;">측정 중</span></td>
+        </tr>
+      `;
+    }
+
+    tbody.innerHTML = rowsHtml;
+  }
+
+  // 1km 랩 달성 시 축하 사운드 및 피드백
+  handleLapAchieved(lap) {
+    if (this.motionSound) {
+      this.motionSound.playRepBeep(lap.km);
+      if (this.motionSound.speakCoaching) {
+        this.motionSound.speakCoaching(`${lap.km}킬로미터 완주. 구간 페이스 ${lap.pace}.`);
+      }
     }
   }
 

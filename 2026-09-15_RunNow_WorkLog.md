@@ -1,75 +1,103 @@
-# 2026-09-15 RunNow 프로젝트 작업일지 (WorkLog)
+# 2026-09-15 RunNow 작업일지
 
-## 📌 기본 정보
-- **프로젝트**: RunNow (Mobile React Native Expo App)
-- **일자**: 2026년 9월 15일
-- **지시자**: 이건우 대표님 (BeausCreators CEO)
-- **담당 에이전트**: 프론트엔드/모바일 개발자 유나 (Yuna)
-
----
-
-## 🎯 주요 업무 요약
-
-### 1. 바닐라 Web ➡️ React Native Expo 전면 아키텍처 전환 완료
-- **추진 배경**: Android (Google Play Store) 및 Apple (iOS App Store) 모바일 앱 마켓 동시 개발 및 배포 지원.
-- **주요 변경 사항**:
-  1. 기존 웹 소스코드(`index.html`, `styles.css`, 바닐라 `app.js` 등)를 `legacy_web/`으로 안전 격리 보관.
-  2. 루트 디렉토리에 **Expo SDK 57 + React Native 0.86 + React Navigation 7.x** 환경 초기화 및 구축.
-  3. `app.json`에 `com.beauscreators.runnow` Android 패키지명 및 iOS 번들 식별자(Bundle Identifier), 다크 OLED 테마 구성 완료.
-
-### 2. 순수 도메인 코어 로직 마이그레이션 (`src/core`)
-- `firebaseClient.js`: 웹 `localStorage` 의존성을 탈피하고 `@react-native-async-storage/async-storage` 기반의 비동기 인증 및 클라우드 동기화 구조로 전면 리팩토링.
-- `tamagotchi.js`, `challenge.js`, `quests.js`, `catalog.js`, `firebaseConfig.js` 등 비즈니스 로직 포팅 완료.
-- 펫 및 운동 그래픽 에셋(`assets/pets`, `assets/exercises`)을 네이티브 루트 에셋으로 통합.
-
-### 3. 6대 메인 화면 네이티브 UI 구현 (`src/screens`)
-- **디자인 토큰 (`src/theme/colors.js`)**: Nike Run Club x Cyberpunk Volt 네온 테마 전면 적용.
-- **런고치 & 라이브 런 (`HomeScreen.js`)**: 
-  - 다마고치 룸 진화체 (단계별 아바타, 3대 바이탈, 4대 케어 액션)
-  - NRC 스타일 72px 고대비 볼트 라이브 러닝 HUD (거리, 페이스, 시간, 칼로리, 반려펫 동반자 부스터)
-- **3주 습관 챌린지 (`ChallengeScreen.js`)**: 3대 챕터 로드맵, 21일 일일 미션 체크리스트 및 실시간 XP/VC 지급.
-- **퀘스트 센터 (`QuestScreen.js`)**: 일일/주간 미션 진행 현황 및 보상 원클릭 수령.
-- **볼트 상점 (`ShopScreen.js`)**: 20종 인게임 아이템 카탈로그 및 볼트코인 즉시 차감 구매.
-- **1:1 AI 케어팀 (`CareTeamScreen.js`)**: 4인 전담 코치진(레오, 루나, 엘리, 닥터 케이) 선택 및 대화형 인터페이스.
-- **맞춤 식단 (`DietScreen.js`)**: 잔여 칼로리 연산, 3대 영양소 매크로 게이지, 250ml 원클릭 수분 트래커.
-
-### 4. 무결성 및 시스템 검증
-- `npx expo-doctor` 검사 결과: **21/21 항목 무결성 100% 통과 (No issues detected!)**.
+## 1. 업무 개요
+- **일자**: 2026-09-15
+- **담당자**: 거누 (CTO / 개발 총괄)
+- **요청자**: 이건우 대표님 (BSC CEO)
+- **주요 업무**: Git 및 터미널 핵심 명령어 교육 가이드 및 전사 표준 엑셀 치트시트 제작 및 바탕화면 배포
 
 ---
 
-### 5. 웹 가독성·코치 선택·TTS 보이스 긴급 개선 및 상용 웹 동기화
-- **운동 화면 가독성 개선**: 어두운 배경에 묻히던 상태 텍스트 색상을 순백색(`#FFFFFF`)으로 변경하여 100% 시인성 확보.
-- **1:1 전담 코치 사전 지정 UI 추가**: Care Team 화면에 `⭐ 전담 지정` 버튼을 신설하여 원하는 코치(루나/레오)를 영구 고정(`RUNNOW_ASSIGNED_COACH`).
-- **레오 코치 TTS 음성 보정**: 남성 목소리 우선 필터링 및 피치(Pitch)를 `0.7`로 극단적 하향 변조하여 중후한 남성 PT 음성 구현.
-- **상용 웹 정본 동기화**: `projects\Runnow`의 `index.html`, `app.js`, `careTeam.js`, `motionSound.js`에 전면 반영 및 Firebase Hosting 배포 완료.
+## 2. 세부 진행 내역
+
+### 1) Git 및 터미널 명령어 실무 교육 가이드 제공
+- Git 3단계 라이프사이클(Working Directory -> Staging Area -> Repository -> Remote) 기반 체계적 정리
+- 4대 일상 작업 루틴 (`status`, `add`, `commit`, `push`) 및 브랜치(`branch`, `switch`, `merge`), 협업(`pull`, `fetch`), 임시보관(`stash`), 취소/복구(`restore`, `reset`, `revert`) 가이드
+- 터미널(PowerShell, Linux/Mac, Git Bash) 기본 조작(`cd`, `pwd`, `ls`, `mkdir`, `cp`, `mv`, `cat`, `rm`) 및 Windows 전용 명령어 비교표 안내
+- 안전 수칙: 데이터 유실 방지를 위한 `rm -rf` 및 `git reset --hard` 주의사항 강조
+
+### 2) 프리미엄 엑셀 치트시트(`.xlsx`) 자동 생성 및 다중 배포
+- **파일명**: `Git_및_터미널_명령어_총정리_치트시트.xlsx` (영문: `Git_and_Terminal_Command_Guide.xlsx`)
+- **디자인 스타일**: Dark Navy 타이틀 바, Royal Blue 헤더, 얼터네이트 지브라 패턴 행, 가독성 높은 Consolas 코드 폰트, 중요도 및 주의사항 색상 뱃지, 열 너비 자동 최적화 및 틀 고정(Freeze Panes) 적용
+- **시트 구성**:
+  1. `🚀 Git 명령어 총정리` (36개 핵심 명령어 및 실무 팁)
+  2. `💻 터미널 CLI 명령어` (28개 Windows PowerShell vs Linux/Mac 명령어)
+  3. `⚡ 단축키 및 실무 꿀팁` (생산성 단축키, 특수 기호, Git 실무 팁, 안전수칙)
+- **배포 경로**:
+  - 대표님 바탕화면: `C:\Users\USER\OneDrive\Desktop\` 및 `C:\Users\USER\Desktop\`
+  - 프로젝트 로컬 문서: `c:\BeausCreators\02.BSC_Branch\projects\Runnow\docs\`
 
 ---
 
-### 6. 대표님 확정 폴더 아키텍처 및 라이프사이클 헌장
-- **[웹(Web)]**: `C:\BeausCreators\02.BSC_Branch\projects\Runnow`만 관리. 상용 웹 수정은 오직 여기서만 진행.
-- **[앱(App) 개발]**: `C:\BeausCreators\02.BSC_Branch\sandbox\Runnow_APP_V`에서 React Native Expo 모바일 앱 구축에만 집중.
-- **[앱(App) 승격]**: 앱 완성 시 `C:\BeausCreators\02.BSC_Branch\projects\Runnow_App`으로 승격하여 웹과 나란히 독립 배치 (웹 속에 앱을 넣지 않음).
-- **[인프라/DB]**: Firebase DB와 회원 인증은 웹과 앱이 100% 공유.
+## 3. 결과 및 확인
+- 엑셀 파일 정상 생성 확인 및 무결성 검증 완료
+- 바탕화면 바로 열기 가능 확인
 
 ---
 
-### 7. AI 모션 HUD 소비자 심리학 기반 텍스트 가독성 전면 리팩토링 & 캐시 버스팅
-- **소비자 심리학적 분석 및 유료 구독 유저 경험 개선**:
-  - **거리 인지 가독성 (2m 거리 시인성 100%)**: 유저가 폰을 바닥/거치대에 두고 2m 뒤로 물러나 운동할 때 흐릿하거나 장황한 매뉴얼식 텍스트는 시각적 피로와 이탈 유발.
-  - **장황한 설명문 폐기 & 직관적 액션 키워드 혁신**:
-    - 기존: "전신이 나오게 시작 자세를 잡으면 AI가 준비 상태를 확인한 뒤, 3초 카운트다운이 끝나야 횟수를 셉니다." (장황한 설명조 문장)
-    - 혁신: "카메라 앞 2m에 서면 AI가 전신을 스캔하여 자동 시작합니다." (25px 볼드 화이트 타이포그래피 + 3초 카운트다운/관절 각도 칩)
-  - **유료 구독자의 신뢰를 떨어뜨리는 방어적 문구 폐기**:
-    - 기존: "🔧 인식이 계속 안 되나요? 완화 모드로 시작 (판정 정확도 낮음)" -> AI 성능 불신 및 환불 심리 유발
-    - 혁신: "📐 조명/거리 자동 보정 모드 켜기" -> 테크니컬하고 든든한 프리미엄 기술 지원으로 신뢰감 증대
-  - **촌스러운 연노랑 경고창 완전 폐기**:
-    - 하단 피드백 박스(`.pose-feedback`)의 연노랑/갈색(`#FFF6D8`) 폐기 -> 나이키/애플 스타일 다크 네온 HUD 바(`rgba(13, 19, 34, 0.95)` + 사이언 보더 + 15px 볼드 순백색 텍스트)로 격상.
-  - **코치 HUD 럭셔리 브랜딩**:
-    - `코치 레오` + `⚡ VIP 1:1` 골드 뱃지 + `LIVE 스캔 중` 사이언 뱃지 + `실시간 모션 바이오 피드백 ON` 네온 인디케이터.
-    - 말풍선: `"이건우 대표님, 카메라 앞 2m에 서주세요! 레오가 전담 마크 들어갑니다! 🔥"`
-- **모바일 브라우저 캐시 버스팅 적용**:
-  - `styles.css?v=8.2_premium_hud` 및 `app.js?v=8.2_premium_hud`로 버전 쿼리스트링 갱신하여 모바일 폰에서 새로고침 시 즉각 최신 디자인 반영.
+## 4. 추가 (2026-09-15 · 소하) — 전사 Web→Expo 앱 전환 운영표준 HQ 등재
+
+- **지시**: 이건우 대표님 — 앞으로 앱은 웹 제작 후 React Native(Expo)로 전환. 웹 원본 비파괴·복제본 실험.
+- **산출**: `docs/2026-09-15_BSC_Web우선_ReactNative_Expo앱_전환_운영표준_보고서.md`
+- **맵**: `projects/Directory_Map.md`에 `sandbox/Runnow_mb_v` 예정 및 전사 파이프라인 표기
+- **HQ**: Spoke `sync_hq` Dual-Write → `01.BSC_HQ/1.Documents/01.보고서/2026-09-15/`
+
+---
+
+### 8. 코치 HUD 카메라 외부 분리(화면 가림 0%), 카메라 영역 60vh 확장 및 한국인 성우 오디오 팩 60종 탑재
+- **카메라 화면 가림(Occlusion) 원천 분리**:
+  - 기존: 코치 HUD(`.pt-coach-live-hud`)가 카메라 박스 내부에 `position: absolute; top: 10px;`로 떠 있어 상단 35%를 가리고 유저의 머리와 얼굴을 완전히 덮는 문제 발생.
+  - 개선: 코치 HUD를 카메라 컨테이너(`.pose-stage`) **완전 외부 상단 독립 카드로 분리**하여 카메라 내부 신체 가림 0% 달성.
+- **카메라 영역 대폭 확대 (Wide Viewport)**:
+  - 기존: `height: 400px` 고정으로 좁고 답답했던 뷰포트.
+  - 개선: `min-height: 520px; height: 60vh; max-height: 680px;`로 1.5배 이상 세로 화각을 확장하여 2m 거리에서 머리부터 발끝까지 전신과 플랭크 자세가 시원하게 포착되도록 개선.
+- **인-카메라 배지 및 마스코트 정리**:
+  - 횟수/각도 배지를 상단 모서리(`top: 14px`)로 밀착시켜 인체 중심부 시야를 100% 개방.
+  - 운동 중 바닥/발목을 가리던 파트너 댕댕이 박스를 카메라 외부로 이동.
+- **100% 진짜 한국인 성우 실사 오디오 팩 60종 탑재 (`motionSound.js`)**:
+  - 구형 브라우저 합성 기계음(`window.speechSynthesis`)의 한계를 근본적으로 타파.
+  - 최첨단 한국인 인공신경망 성우 모델(남성 레오: `ko-KR-InJoonNeural`, 여성 루나: `ko-KR-SunHiNeural`)로 **총 60종의 스튜디오급 고음질 MP3 에셋** 생성 및 탑재 (`assets/audio/coaches/leo/`, `luna/`).
+  - **카운트 1~20 ("하나!", "둘!", "셋!" ... "스물!")**, **카운트다운 ("삼, 이, 일, 시작합니다!")**, **현장감 넘치는 추임새 ("좋습니다, 나이스!", "깊이 완벽합니다!", "절반 돌파!", "마지막 하나 더!", "완벽합니다, 세트 완수!")**를 0ms 무지연 오디오 엔진으로 즉각 재생.
 - **Firebase Hosting 배포 완료**:
   - 라이브: `https://runnow-37af9.web.app`
   - 프리뷰: `https://runnow-37af9--dev-irl7g2ve-xsgd93yu.web.app`
+
+---
+
+### 9. 1km 구간별 스플릿 랩(Lap Splits) 자동 기록, 실시간 듀얼 속도(km/h), 고스트 러너 비교 및 다마고치 펫 러닝 애니메이션 트랙 탑재 (2026-09-15 · 거누)
+
+- **지시 사항 (이건우 대표님)**:
+  1. 달리기 시 매 1km 통과마다 속도와 페이스가 지속적으로 갱신·기록되는 시스템 구축.
+  2. 현재 속도와 평균 속도가 동시에 실시간으로 나오는 HUD 구성.
+  3. 지난날(과거) 속도와 실시간으로 비교되는 시스템(Ghost Runner Comparison).
+  4. 1km 랩 기록이 화면 아래로 무한정 늘어나지 않고, 고정 높이 스크롤 안에서 가독성 높게 조회되는 UI.
+  5. 달릴 때 다마고치 펫(강아지 🐶, 고양이 🐱)이 함께 달리는 라이브 애니메이션 트랙 추가.
+
+- **핵심 구현 상세**:
+  1. **정밀 1km 랩 분할 알고리즘 (`gpsRunner.js`)**:
+     - 누적 이동 거리가 매 1,000m 돌파 시마다 `checkLapSplit(runningSeconds)`가 자동 트리거되어 구간 랩 생성.
+     - 구간별 소요 시간(초/포맷), 구간 페이스(분'초"), 구간 평균 속도(`km/h`)를 산출하여 `this.laps` 배열에 영구 보존.
+     - 정지 대기 시간은 분모에서 제외하여 왜곡 없는 순수 이동 페이스 및 시속 산출.
+     - 현재 달리고 있는 진행 중인 구간(예: 3km 진행 중 345m)도 실시간으로 집계하여 표시.
+     - 48개 전수 단위 테스트 (`tests/gpsRunner.test.mjs`) ALL PASS 검증 완료.
+  2. **실시간 듀얼 속도 HUD 및 4-Grid 체계 (`index.html`, `styles.css`)**:
+     - 기존 3-Grid(페이스, 시간, 칼로리)에서 4-Grid(`hud-grid-4`)로 확장.
+     - 네온 볼트 컬러(`#CCFF00`, 900 bold)로 현재 속도(`km/h`)를 시원하게 표시하고, 하단 서브 텍스트에 평균 속도(`km/h`)를 상시 표기.
+  3. **과거 기록 실시간 비교 뱃지 (Ghost Runner System)**:
+     - `localStorage`의 지난 러닝 기록(`RUNNOW_LAST_RUN`)을 실시간 기준점(속도/시간)으로 삼아 페이스 대조.
+     - 지난 기록 대비 빠를 경우: `▲ +0.8 km/h 더 빠름 (지난번보다 앞서 달리는 중! 🔥)` (네온 골드/볼트 뱃지).
+     - 지난 기록 대비 느릴 경우: `▼ -0.5 km/h (지난번보다 뒤처짐, 페이스 업! 💨)` (코랄 레드 뱃지).
+  4. **다마고치 펫 실시간 러닝 트랙 (`#live-pet-track`)**:
+     - 러닝 시작 시 네온 사이언(`#00F0FF`) 트랙 레인이 뒤로 흘러가는 시각 효과(`@keyframes trackLaneFlow`).
+     - 유저의 다마고치 펫(강아지 🐶 또는 고양이 🐱)이 속도에 비례해 위아래로 역동적으로 통통 튀며 달림 (`@keyframes petRunBounce`).
+     - 펫 머리 위에 실시간 격려 말풍선(`"대표님, 1km 랩타임 최고예요! 멍멍! 🐾"`)과 실시간 속도 태그 탑재.
+  5. **1KM 구간별 스플릿 랩 고정 스크롤 카드 (`#live-laps-card`)**:
+     - 화면이 길어지는 현상을 방지하기 위해 `max-height: 180px; overflow-y: auto;`의 슬림형 고정 스크롤 컨테이너 적용.
+     - 헤더에 완주한 킬로미터 수(`2 KM 완료`) 배지 표시.
+     - 각 랩 행에 구간(km), 랩타임, 페이스, 속도(km/h), 그리고 지난날 기준 대비 단축/지연 배지(`▲ 10초 단축`, `▼ 5초 지연`) 직관적 시각화.
+     - 현재 진행 중인 구간은 사이언 글로우(`#00F0FF`)로 하이라이팅.
+
+- **배포 및 검증**:
+  - `projects/Runnow` ➔ `sandbox/Runnow_APP_V/legacy_web/` 양방향 100% 동기화.
+  - 내부 테스트 채널 배포: `https://runnow-37af9--dev-irl7g2ve.web.app`
+  - Edge Headless CDP를 통한 모바일 뷰포트(430x1200) 실측 캡처 검증 완료.

@@ -149,6 +149,10 @@ export class GPSRunner {
     this._onVisibility = null;
     this.rejectedByAccuracy = 0;
     this.lastAccuracy = null;
+    this.laps = [];
+    this.lastLapMeters = 0;
+    this.lastLapTimeSec = 0;
+    this.onLapAchieved = options.onLapAchieved || (() => {});
   }
 
   setWeight(weightKg) {
@@ -603,6 +607,36 @@ export class GPSRunner {
     this.filter.process(lat, lng, accuracy, timeMs, null);
   }
 
+  
+  // 1km 구간별 스플릿 랩 자동 감지 및 기록
+  checkLapSplit(runningSeconds) {
+    if (!this.laps) this.laps = [];
+    while (this.totalMeters >= (this.laps.length + 1) * 1000) {
+      const lapIndex = this.laps.length + 1;
+      const lapElapsedSec = Math.max(1, Math.round(runningSeconds - (this.lastLapTimeSec || 0)));
+      const lapPace = this.formatPace(lapElapsedSec);
+      const lapSpeedKmh = parseFloat((3600 / lapElapsedSec).toFixed(1));
+
+      const lapData = {
+        km: lapIndex,
+        lapTimeSec: lapElapsedSec,
+        lapTimeFormatted: this.formatTime(lapElapsedSec),
+        pace: lapPace,
+        speedKmh: lapSpeedKmh,
+        cumulativeTimeSec: Math.round(runningSeconds),
+        cumulativeTimeFormatted: this.formatTime(Math.round(runningSeconds))
+      };
+
+      this.laps.push(lapData);
+      this.lastLapMeters = lapIndex * 1000;
+      this.lastLapTimeSec = runningSeconds;
+
+      if (typeof this.onLapAchieved === "function") {
+        this.onLapAchieved(lapData);
+      }
+    }
+  }
+
   getStats() {
     // 1) 거리 계산: m는 순수 정수(int), km는 소수점 3자리
     const metersInt = Math.floor(this.totalMeters);
@@ -614,7 +648,10 @@ export class GPSRunner {
     // 이걸 포함하면 실제보다 훨씬 느리게 나오고, 60분/km를 넘으면 --'--"로 표시됩니다.
     const runningSeconds = Math.max(0, this.elapsedSeconds - (this.movingStartedSec ?? 0));
 
+    this.checkLapSplit(runningSeconds);
+
     let paceStr = `--'--"`;
+    let avgSpeedKmh = "0.0";
     if (distanceKm >= 0.005 && runningSeconds > 0) {
       const secPerKm = Math.round(runningSeconds / distanceKm);
       const paceMin = Math.floor(secPerKm / 60);
@@ -622,7 +659,25 @@ export class GPSRunner {
       if (paceMin < 60) {
         paceStr = `${paceMin}'${paceSec < 10 ? '0' : ''}${paceSec}"`;
       }
+      avgSpeedKmh = (distanceKm / (runningSeconds / 3600)).toFixed(1);
     }
+
+    const currentPaceSec = this.getCurrentPaceSeconds();
+    const currentPaceStr = this.formatPace(currentPaceSec);
+    const currentSpeedKmh = (currentPaceSec && currentPaceSec > 0)
+      ? (3600 / currentPaceSec).toFixed(1)
+      : "0.0";
+
+    const currentLapProgressM = Math.max(0, Math.floor(this.totalMeters - this.laps.length * 1000));
+    const currentLapTimeSec = Math.max(0, Math.round(runningSeconds - this.lastLapTimeSec));
+    const currentLap = {
+      km: this.laps.length + 1,
+      meters: currentLapProgressM,
+      lapTimeSec: currentLapTimeSec,
+      lapTimeFormatted: this.formatTime(currentLapTimeSec),
+      currentPace: currentPaceStr,
+      currentSpeedKmh: currentSpeedKmh
+    };
 
     // 3) 활동 칼로리 (ACSM 대사 방정식)
     //    거리만으로 계산하면 걷기와 달리기가 같아집니다.
@@ -640,10 +695,14 @@ export class GPSRunner {
       elapsedSeconds: this.elapsedSeconds,
       formattedTime: this.formatTime(this.elapsedSeconds),
       pace: paceStr,
+      avgSpeedKmh: avgSpeedKmh,
+      currentSpeedKmh: currentSpeedKmh,
+      currentPace: currentPaceStr,
+      laps: [...this.laps],
+      currentLap: currentLap,
       calories: caloriesInt,
       gpsAccuracy: this.gpsAccuracy,
       runningSeconds,
-      currentPace: this.formatPace(this.getCurrentPaceSeconds()),
       lastAccuracy: this.lastAccuracy,
       rejectedByAccuracy: this.rejectedByAccuracy,
       skippedResumeSegments: this.skippedResumeSegments,
