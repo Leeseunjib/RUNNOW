@@ -89,7 +89,10 @@ export default function RunnowWebScreen() {
       <WebView
         ref={webRef}
         source={{ uri: RUNNOW_URL }}
-        style={styles.web}
+        cacheEnabled={false}
+        cacheMode="LOAD_NO_CACHE"
+        thirdPartyCookiesEnabled={true}
+        sharedCookiesEnabled={true}
         // 웹의 GPS·카메라·localStorage가 앱 안에서도 그대로 동작해야 한다.
         geolocationEnabled
         javaScriptEnabled
