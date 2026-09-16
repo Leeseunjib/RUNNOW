@@ -1,3 +1,23 @@
+# 앱 GPS 잠금 대응 (2026-09-16)
+
+웹 테스터 이슈. 폰을 잠그면 기록이 꺼짐. 이 폴더(Expo)에서만 고친다. 웹 SSOT는 건드리지 않는다.
+
+- [x] 1. `expo-location` + `expo-task-manager` 설치
+      → 검증: package.json에 SDK 57 호환 버전
+- [x] 2. `app.json`에 백그라운드 위치·포그라운드 서비스 플러그인
+- [x] 3. 전역 `TaskManager.defineTask` + 싱글톤 세션
+- [x] 4. `GPSRunner.startNativeSession` (브라우저 GPS/WakeLock 없이 벽시계 시간)
+- [x] 5. HomeScreen 가짜 타이머 제거, 실 GPS 연결
+- [x] 6. `expo prebuild`로 AndroidManifest 권한 5종 생성 확인
+      → 검증: 백그라운드 위치 · 포그라운드 서비스(location) 권한 모두 포함
+- [x] 7. EAS 내부 배포(APK) 프로필 및 프로젝트 연결
+      → `eas.json`에 `preview`만. production/submit 프로필 없음
+- [ ] 8. 설치 APK로 잠금 테스트 (Expo Go로는 불가)
+      → 검증: 러닝 시작 → 폰 잠금 2분 → 해제 시 시간과 거리가 이어짐
+- [ ] 9. 아이폰. Mac 또는 Apple 계정 EAS 빌드 필요 (미착수)
+
+---
+
 # 분석 후 조치 체크리스트 (2026-09-15)
 
 397건 테스트 통과 상태에서 발견한 항목을 순서대로 처리합니다.

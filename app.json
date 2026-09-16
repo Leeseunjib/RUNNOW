@@ -6,9 +6,26 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "러닝 거리와 페이스를 기록하려면 위치 권한이 필요합니다.",
+          "locationAlwaysAndWhenInUsePermission": "화면을 잠근 채 달려도 거리를 이어 기록하려면 위치 권한이 필요합니다.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ]
+    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.beauscreators.runnow"
+      "bundleIdentifier": "com.beauscreators.runnow",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "location"
+        ]
+      }
     },
     "android": {
       "package": "com.beauscreators.runnow",
@@ -21,6 +38,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5ab20314-d7f2-491d-a169-37665763d238"
+      }
+    },
+    "owner": "beauscreators"
   }
 }

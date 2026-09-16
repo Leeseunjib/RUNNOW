@@ -1,5 +1,63 @@
 # RUNNOW 컨텍스트 노트 (의사결정 기록)
 
+## 2026-09-16 — 앱에서 폰 잠금 중에도 GPS 기록
+
+### 테스터 이슈
+웹에서 전원 버튼으로 잠그면 러닝이 꺼진다. 웹은 Wake Lock으로 자동 꺼짐만 막을 수 있고, 잠금 자체는 OS가 브라우저를 재운다.
+
+### 왜 이 폴더에서 하나
+`Runnow_APP_V`가 Expo 앱 분기. 웹 `projects/Runnow`는 그대로 둔다. 웹에 토글을 만들어도 잠금 중 GPS는 불가능하다.
+
+### 현재 앱 화면의 함정
+HomeScreen GPS 탭은 초당 0.0031km를 더하는 가짜 타이머다. 웹 `gpsRunner`는 RN 화면에 연결되지 않았다. 이 상태로는 앱을 만들어도 잠그면 똑같이 멈춘다.
+
+### 채택한 구조
+- `expo-location` + `expo-task-manager` 백그라운드 위치
+- 안드로이드 포그라운드 서비스 알림 ("RUNNOW 러닝 기록 중")
+- 아이폰 Always 권한 + `UIBackgroundModes: location`
+- 거리 필터는 기존 `GPSRunner.handleGeoSuccess`를 재사용
+- 경과 시간은 `setInterval`이 아니라 시작 시각 벽시계. 잠금 중에도 JS가 멈춰도 해제 시 시간이 맞다
+- 백그라운드에서는 잠금 점프를 버리지 않는다. 웹의 `resumeFromHidden`은 GPS가 죽은 구간용이고, 앱은 그 구간을 받는 것이 목적이다
+
+### 전제
+Expo Go에서는 백그라운드 위치가 동작하지 않는다. 설치형 빌드가 필요하다.
+
+### 왜 로컬 빌드가 아니라 EAS인가
+이 PC 환경을 실측한 결과 로컬 안드로이드 빌드가 불가능했다.
+- Android SDK가 `platforms`는 android-34까지, `build-tools`는 34.0.0만 설치됨. `cmdline-tools`와 `ndk` 없음
+- RN 0.86 / Expo 57은 더 높은 SDK를 요구하므로 대용량 추가 설치가 선행되어야 함
+- `adb devices` 결과 연결된 폰 없음. AVD도 없음 (`~/.android/avd` 부재)
+
+설치할 폰도 없는 상태라 로컬 빌드는 검증 수단이 되지 못한다. EAS 클라우드 빌드로
+`distribution: internal` APK를 만들면 테스터가 링크로 받아 설치할 수 있고,
+스토어를 거치지 않으므로 내부 테스트 전용 원칙에도 맞는다.
+
+`eas.json`에는 `preview` 프로필만 둔다. production/submit 프로필을 만들지 않는 것이
+실수로 스토어 트랙에 올리는 경로를 원천 차단한다.
+
+EAS 프로젝트: `@beauscreators/runnow` (`5ab20314-d7f2-491d-a169-37665763d238`)
+
+### app.json 권한은 플러그인에 맡긴다
+처음에는 `android.permissions` 배열에 5개를 직접 적었는데, `expo prebuild`가
+같은 권한을 정규화된 이름으로 한 번 더 넣어 중복 10개가 됐다. 배열을 지우고
+`expo-location` 플러그인 옵션만 남긴 뒤 생성된 `AndroidManifest.xml`을 다시 확인해
+`ACCESS_BACKGROUND_LOCATION` · `FOREGROUND_SERVICE` · `FOREGROUND_SERVICE_LOCATION` ·
+fine · coarse 5개가 모두 들어간 것을 확인했다. 포그라운드 서비스 선언
+(`LocationTaskService`, `foregroundServiceType="location"`)은 라이브러리 자체 manifest가 제공한다.
+
+`/android`는 `.gitignore` 대상이므로 EAS는 `app.json`에서 매번 다시 생성한다.
+생성물을 커밋하지 않으니 설정이 정본으로 남는다.
+
+### 남은 한계
+아이폰은 Windows에서 로컬 빌드가 불가능하다. Apple 개발자 계정으로 EAS 빌드를 하거나 Mac이 필요하다.
+`userInterfaceStyle: dark`는 `expo-system-ui` 미설치 경고가 있다. 잠금 이슈와 무관해 이번에는 손대지 않았다.
+
+### 하지 않은 것
+웹 PWA를 WebView로 감싸는 방식. 잠그면 또 꺼진다.
+
+---
+
+
 ## 2026-09-04 — AI 모션 인식 안정화 & 난이도 분화
 
 ### 왜 카운트가 부정확했는가 (코드 근거)

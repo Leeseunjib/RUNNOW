@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import { firebaseCloud } from './src/core/firebaseClient';
+import { stopOrphanedTracking } from './src/core/nativeLocation';
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
@@ -9,7 +10,11 @@ export default function App() {
   useEffect(() => {
     // 앱 시작 시 필요한 초기화 작업 수행
     const initApp = async () => {
-      // Firebase 세션 확인 등
+      try {
+        await stopOrphanedTracking();
+      } catch (err) {
+        console.warn('고아 GPS 세션 정리 실패:', err);
+      }
       const session = await firebaseCloud.getCurrentSession();
       if (session) {
         console.log('User is logged in:', session.uid);

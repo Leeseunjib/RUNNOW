@@ -10,6 +10,7 @@ import {
   Animated,
   Image,
   Alert,
+  AppState,
 } from 'react-native';
 import { COLORS } from '../theme/colors';
 import { TYPOGRAPHY } from '../theme/typography';
@@ -17,6 +18,12 @@ import { DOG_STAGES, CAT_STAGES } from '../core/tamagotchi';
 import AdSenseBanner from '../components/AdSenseBanner';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { firebaseCloud } from '../core/firebaseClient';
+import { runSession, subscribeRunSession, persistRunSession, restoreRunSession } from '../core/runSession';
+import {
+  requestRunPermissions,
+  startBackgroundLocation,
+  stopBackgroundLocation,
+} from '../core/nativeLocation';
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('tamagotchi'); // 'tamagotchi' | 'runner'
@@ -42,6 +49,7 @@ export default function HomeScreen() {
   const [runDistance, setRunDistance] = useState(0.0);
   const [currentPace, setCurrentPace] = useState("0'00\"");
   const [runCalories, setRunCalories] = useState(0);
+  const [gpsAccuracy, setGpsAccuracy] = useState('대기중');
 
   // 1. Firebase 및 로컬 캐시 데이터 초기 로드
   useEffect(() => {
@@ -86,8 +94,36 @@ export default function HomeScreen() {
     loadFirebaseData();
   }, []);
 
+  useEffect(() => {
+    restoreRunSession().then((restored) => {
+      if (!restored) return;
+      applyRunStats(runSession.getStats());
+      if (runSession.isTracking && !runSession.isPaused) setIsRunning(true);
+    });
+  }, []);
+
   const timerRef = useRef(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  const applyRunStats = (stats) => {
+    if (!stats) return;
+    setRunSeconds(stats.elapsedSeconds || 0);
+    setRunDistance(stats.distanceKm || 0);
+    setRunCalories(stats.calories || 0);
+    setCurrentPace(stats.currentPace && stats.currentPace !== `--'--"` ? stats.currentPace : stats.pace);
+    if (stats.gpsAccuracy) setGpsAccuracy(stats.gpsAccuracy);
+  };
+
+  useEffect(() => {
+    return subscribeRunSession(applyRunStats);
+  }, []);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') applyRunStats(runSession.getStats());
+    });
+    return () => sub.remove();
+  }, []);
 
   // 펄스 애니메이션
   useEffect(() => {
@@ -107,18 +143,11 @@ export default function HomeScreen() {
     ).start();
   }, []);
 
-  // 러닝 타이머 제어
+  // 화면이 켜져 있을 때만 1초마다 벽시계 시간을 반영한다. 잠금 중 거리는 백그라운드 태스크가 쌓는다.
   useEffect(() => {
     if (isRunning) {
       timerRef.current = setInterval(() => {
-        setRunSeconds((prev) => {
-          const nextSec = prev + 1;
-          const nextDist = +(nextSec * 0.0031).toFixed(2); // 시뮬레이션 약 5분 20초 페이스
-          setRunDistance(nextDist);
-          setRunCalories(Math.round(nextDist * 65));
-          setCurrentPace("5'18\"");
-          return nextSec;
-        });
+        applyRunStats(runSession.getStats());
       }, 1000);
     } else if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -170,19 +199,68 @@ export default function HomeScreen() {
     Alert.alert('💤 꿀잠 휴식 완료!', '에너지가 100% 가득 찼습니다!');
   };
 
-  const handleToggleRun = () => {
+  const handleToggleRun = async () => {
     if (!isRunning) {
-      setIsRunning(true);
-    } else {
-      setIsRunning(false);
+      try {
+        if (!runSession.isTracking) {
+          const perm = await requestRunPermissions();
+          if (!perm.ok) {
+            const webMsg = perm.stage === 'web'
+              ? '잠금 중 기록은 폰 앱 개발 빌드에서만 동작합니다. Expo Go가 아니라 설치 빌드로 열어 주세요.'
+              : '러닝 기록을 위해 위치 권한을 허용해 주세요.';
+            Alert.alert('위치 권한 필요', webMsg);
+            return;
+          }
+          runSession.startNativeSession();
+          await persistRunSession();
+          await startBackgroundLocation();
+          applyRunStats(runSession.getStats());
+          if (!perm.background) {
+            Alert.alert(
+              '잠금 시 기록이 끊길 수 있습니다',
+              '폰 설정 → 위치에서 RUNNOW를 "항상 허용"으로 바꿔 주세요.'
+            );
+          }
+        } else {
+          runSession.resumeRun();
+          await persistRunSession();
+          await startBackgroundLocation();
+          applyRunStats(runSession.getStats());
+        }
+        setIsRunning(true);
+      } catch (err) {
+        console.warn('러닝 시작 실패:', err);
+        Alert.alert('GPS를 시작하지 못했습니다', String(err?.message || err));
+      }
+      return;
     }
+
+    runSession.pauseRun();
+    await persistRunSession();
+    try {
+      await stopBackgroundLocation();
+    } catch (err) {
+      console.warn('러닝 일시정지 GPS 중지 실패:', err);
+    }
+    applyRunStats(runSession.getStats());
+    setIsRunning(false);
   };
 
-  const handleFinishRun = () => {
+  const handleFinishRun = async () => {
     setIsRunning(false);
-    const addedKm = runDistance;
+    try {
+      await stopBackgroundLocation();
+    } catch (err) {
+      console.warn('러닝 종료 GPS 중지 실패:', err);
+    }
+
+    const runStats = runSession.stopRun();
+    const addedKm = runStats.distanceKm || 0;
     const addedXp = Math.round(addedKm * 100);
     const addedCoins = Math.round(addedKm * 50);
+    const elapsed = runStats.elapsedSeconds || runSeconds;
+    const calories = runStats.calories || runCalories;
+    const pace = runStats.currentPace && runStats.currentPace !== `--'--"` ? runStats.currentPace : runStats.pace;
 
     const updatedStats = {
       ...stats,
@@ -193,6 +271,8 @@ export default function HomeScreen() {
     };
 
     setStats(updatedStats);
+    runSession.reset();
+    await persistRunSession();
 
     // 1. 로컬 영구 캐시 저장
     AsyncStorage.setItem('RUNNOW_GLOBAL_PET', JSON.stringify(updatedStats)).catch(() => {});
@@ -201,9 +281,9 @@ export default function HomeScreen() {
     if (userId) {
       firebaseCloud.saveWorkout(userId, {
         distanceKm: addedKm,
-        durationSeconds: runSeconds,
-        calories: runCalories,
-        pace: currentPace,
+        durationSeconds: elapsed,
+        calories,
+        pace,
         type: 'gps_run',
       });
       firebaseCloud.syncUser(userId, {
@@ -215,8 +295,8 @@ export default function HomeScreen() {
 
     Alert.alert(
       '🏁 러닝 완료 & Firebase 클라우드 저장!',
-      `거리: ${addedKm} km\n시간: ${formatTime(runSeconds)}\n획득 보상: +${addedCoins} VC, +${addedXp} XP\n\nFirebase 클라우드와 안전하게 동기화되었습니다!`,
-      [{ text: '확인', onPress: () => { setRunSeconds(0); setRunDistance(0); } }]
+      `거리: ${addedKm} km\n시간: ${formatTime(elapsed)}\n획득 보상: +${addedCoins} VC, +${addedXp} XP\n\nFirebase 클라우드와 안전하게 동기화되었습니다!`,
+      [{ text: '확인', onPress: () => { setRunSeconds(0); setRunDistance(0); setRunCalories(0); setGpsAccuracy('대기중'); } }]
     );
   };
 
@@ -402,7 +482,7 @@ export default function HomeScreen() {
             <View style={styles.hudCard}>
               <View style={styles.gpsStatusRow}>
                 <View style={styles.gpsDot} />
-                <Text style={styles.gpsStatusText}>GPS 위성 신호 양호 (정밀도 ±3m)</Text>
+                <Text style={styles.gpsStatusText}>{gpsAccuracy}</Text>
               </View>
 
               {/* 초대형 NRC 스타일 거리 지표 */}

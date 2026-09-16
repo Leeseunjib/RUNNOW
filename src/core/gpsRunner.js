@@ -149,6 +149,9 @@ export class GPSRunner {
     this._onVisibility = null;
     this.rejectedByAccuracy = 0;
     this.lastAccuracy = null;
+    this.sessionStartedAt = null;
+    this.pauseStartedAt = null;
+    this.pausedMs = 0;
   }
 
   setWeight(weightKg) {
@@ -160,7 +163,7 @@ export class GPSRunner {
   // 기록 손실을 막는 유일한 방법입니다.
   async requestWakeLock() {
     try {
-      if ("wakeLock" in navigator) {
+      if (typeof navigator !== "undefined" && "wakeLock" in navigator) {
         this.wakeLock = await navigator.wakeLock.request("screen");
       }
     } catch (err) {
@@ -180,6 +183,7 @@ export class GPSRunner {
   // 화면이 꺼졌다 켜지면 그 사이 이동은 기록되지 않았는데 좌표만 멀리 튀어 있습니다.
   // 그 한 구간을 거리로 인정하면 실제로 달리지 않은 거리가 들어갑니다.
   startVisibilityWatch() {
+    if (typeof document === "undefined") return;
     this.stopVisibilityWatch();
     this._onVisibility = () => {
       if (document.visibilityState === "visible") {
@@ -192,10 +196,55 @@ export class GPSRunner {
   }
 
   stopVisibilityWatch() {
-    if (this._onVisibility) {
+    if (this._onVisibility && typeof document !== "undefined") {
       document.removeEventListener("visibilitychange", this._onVisibility);
       this._onVisibility = null;
     }
+  }
+
+  getElapsedMs() {
+    if (!this.sessionStartedAt) return this.elapsedSeconds * 1000;
+    const end = this.isPaused && this.pauseStartedAt ? this.pauseStartedAt : Date.now();
+    return Math.max(0, end - this.sessionStartedAt - this.pausedMs);
+  }
+
+  syncElapsed() {
+    if (this.sessionStartedAt) {
+      this.elapsedSeconds = Math.floor(this.getElapsedMs() / 1000);
+    }
+  }
+
+  // 네이티브 앱용. 브라우저 GPS/WakeLock 없이 세션만 열고, 좌표는 백그라운드 태스크가 넣는다.
+  startNativeSession() {
+    if (this.timerId) {
+      clearInterval(this.timerId);
+      this.timerId = null;
+    }
+    this.isTracking = true;
+    this.isPaused = false;
+    this.isSimulation = false;
+    this.runMode = "gps";
+    this.totalMeters = 0;
+    this.elapsedSeconds = 0;
+    this.sessionStartedAt = Date.now();
+    this.pauseStartedAt = null;
+    this.pausedMs = 0;
+    this.positions = [];
+    this.lastValidPos = null;
+    this.movingStartedSec = null;
+    this.rejectedByAccuracy = 0;
+    this.lastAccuracy = null;
+    this.skippedResumeSegments = 0;
+    this.stationarySamples = 0;
+    this.recentFixes = [];
+    this.smoothedAltitude = null;
+    this.lastAltitude = null;
+    this.elevationGainM = 0;
+    this.resumeFromHidden = false;
+    this.filter.reset();
+    this._deniedAlerted = false;
+    this.gpsAccuracy = "GPS 신호 연결 중...";
+    this.emitUpdate();
   }
 
   startRun(useSimulation = false) {
@@ -242,16 +291,15 @@ export class GPSRunner {
 
     if (this.isSimulation || this.runMode === "treadmill") return;
 
-    if (!window.isSecureContext) {
+    if (typeof window !== "undefined" && !window.isSecureContext) {
       this.gpsAccuracy = "보안(HTTPS) 환경 필요";
       this.emitUpdate();
       return;
     }
 
-    if (!navigator.geolocation) {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
       this.gpsAccuracy = "GPS 미지원 기기";
       this.emitUpdate();
-      alert("이 브라우저/기기는 위치 정보(GPS)를 지원하지 않습니다.");
       return;
     }
 
@@ -356,6 +404,7 @@ export class GPSRunner {
 
   handleGeoSuccess(position) {
     if (this.isPaused) return;
+    this.syncElapsed();
     const { latitude, longitude, accuracy, speed, altitude, altitudeAccuracy } = position.coords;
     // 브라우저 처리 시각이 아니라 GPS가 측정한 시각을 씁니다.
     // 처리 지연이 섞이면 속도 계산과 필터의 시간 간격이 왜곡됩니다.
@@ -471,10 +520,19 @@ export class GPSRunner {
   }
 
   pauseRun() {
+    if (this.isPaused) return;
+    this.syncElapsed();
     this.isPaused = true;
+    this.pauseStartedAt = Date.now();
+    this.resumeFromHidden = true;
   }
 
   resumeRun() {
+    if (!this.isPaused) return;
+    if (this.pauseStartedAt) {
+      this.pausedMs += Date.now() - this.pauseStartedAt;
+      this.pauseStartedAt = null;
+    }
     this.isPaused = false;
   }
 
@@ -487,7 +545,7 @@ export class GPSRunner {
       clearInterval(this.timerId);
       this.timerId = null;
     }
-    if (this.watchId != null && navigator.geolocation) {
+    if (this.watchId != null && typeof navigator !== "undefined" && navigator.geolocation) {
       navigator.geolocation.clearWatch(this.watchId);
       this.watchId = null;
     }
@@ -518,6 +576,9 @@ export class GPSRunner {
     this.isSimulation = false;
     this.runMode = "gps";
     this.gpsAccuracy = "대기중";
+    this.sessionStartedAt = null;
+    this.pauseStartedAt = null;
+    this.pausedMs = 0;
     this.emitUpdate();
   }
 
@@ -604,6 +665,7 @@ export class GPSRunner {
   }
 
   getStats() {
+    this.syncElapsed();
     // 1) 거리 계산: m는 순수 정수(int), km는 소수점 3자리
     const metersInt = Math.floor(this.totalMeters);
     const distanceKm = parseFloat((this.totalMeters / 1000).toFixed(3));
