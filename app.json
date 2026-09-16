@@ -24,11 +24,17 @@
       "infoPlist": {
         "UIBackgroundModes": [
           "location"
-        ]
+        ],
+        "NSCameraUsageDescription": "AI 자세 코칭으로 운동 동작을 인식하려면 카메라가 필요합니다.",
+        "NSMicrophoneUsageDescription": "운동 코칭 음성 안내를 위해 마이크 권한이 필요합니다."
       }
     },
     "android": {
       "package": "com.beauscreators.runnow",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#08090C",
         "foregroundImage": "./assets/android-icon-foreground.png",

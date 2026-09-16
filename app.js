@@ -1,25 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import AppNavigator from './src/navigation/AppNavigator';
-import { firebaseCloud } from './src/core/firebaseClient';
+import RunnowWebScreen from './src/screens/RunnowWebScreen';
 import { stopOrphanedTracking } from './src/core/nativeLocation';
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // 앱 시작 시 필요한 초기화 작업 수행
     const initApp = async () => {
+      // 앱이 강제 종료된 뒤 남아 있는 위치 추적 세션을 정리한다.
       try {
         await stopOrphanedTracking();
       } catch (err) {
         console.warn('고아 GPS 세션 정리 실패:', err);
-      }
-      const session = await firebaseCloud.getCurrentSession();
-      if (session) {
-        console.log('User is logged in:', session.uid);
-      } else {
-        console.log('User is not logged in');
       }
       setIsReady(true);
     };
@@ -28,12 +21,12 @@ export default function App() {
   }, []);
 
   if (!isReady) {
-    return null; // TODO: 스플래시 화면 렌더링
+    return null;
   }
 
   return (
     <SafeAreaProvider>
-      <AppNavigator />
+      <RunnowWebScreen />
     </SafeAreaProvider>
   );
 }
