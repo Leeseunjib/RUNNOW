@@ -1,5 +1,51 @@
 # RUNNOW 컨텍스트 노트 (의사결정 기록)
 
+## 2026-09-16 (2) — 앱은 현재 RUNNOW 제품을 그대로 띄운다
+
+### 대표님 지시
+"https://runnow-37af9--dev-irl7g2ve.web.app/ 이것처럼 나오도록 해야 할 거 아니야.
+최신 프로젝트 지금 Runnow 프로젝트 그대로를 보고 작업해야 하는데."
+
+### 발견한 사고
+이 저장소 `expo-app` 브랜치의 커밋 `c455164`(2026-09-15)가 현재 RUNNOW 제품을
+**34개 파일 삭제**로 걷어내고 손으로 다시 그린 RN 골격만 남겼다. 지워진 것에
+`index.html`, 웹 `app.js`(3,937줄), `styles.css`, `sw.js`, `tests/` 전체(397건),
+`functions/`(AI 코치·PayPal), `firebase.json`, `firestore.rules`,
+`scripts/sync_hq.mjs`가 포함된다. 커밋마다 post-commit 훅이 실패한 것도 이 때문이다.
+
+제품 자체는 `develop` · `master` · `origin`에 온전하다. 손실은 없다.
+
+내 잘못은 그 골격을 현재 제품으로 단정하고 APK를 빌드한 것이다. 최신 제품이
+어디 있는지 먼저 확인해야 했다.
+
+### 채택한 구조 — WebView 셸
+앱은 내부 테스트 채널의 현재 RUNNOW를 그대로 표시한다. 화면을 RN으로 다시 그리지 않는다.
+- 웹 SSOT는 **읽기만** 한다. 웹 코드 수정 없음
+- `RunnowWebScreen`이 `RUNNOW_URL`을 전체화면으로 띄운다
+- `geolocationEnabled` · `domStorageEnabled` · `mediaCapturePermissionGrantType`로
+  웹의 GPS · localStorage · AI 모션 카메라가 앱 안에서 그대로 동작한다
+- 주입 스크립트는 웹 DOM을 **바꾸지 않고 클릭만 관찰**한다.
+  `btn-start-live` → 네이티브 백그라운드 위치 시작, `btn-stop-run` → 중지
+
+### 왜 RN 재작성이 아닌가
+웹은 3,937줄 화면 로직에 AI 모션·퀘스트·100업적·PayPal·케어팀이 모두 얽혀 있다.
+RN으로 다시 그리면 화면마다 원본과 어긋나고, 웹을 고칠 때마다 두 번 고쳐야 한다.
+WebView 셸은 웹을 수정하는 순간 앱도 같이 최신이 된다.
+
+### 주소는 내부 테스트만
+`src/core/appConfig.js`의 `RUNNOW_URL`은 dev 채널이다. 상용 주소는 하드코딩하지 않는다.
+상용 승급은 대표님 직접 지시 후에만 바꾼다.
+
+### 남은 작업
+잠금 중에는 WebView의 JS도 멈춘다. 지금은 포그라운드 서비스로 앱이 죽지 않게 하고
+네이티브가 좌표를 계속 받는 단계까지다. 그 좌표를 웹 화면 숫자에 이어 붙이려면
+웹 쪽에 수신 지점이 필요하므로, 대표님 승인 후 별도로 다룬다.
+
+### 손대지 않은 것
+RN 골격 화면 6개(`HomeScreen` 등)는 지우지 않고 그대로 남겼다. 렌더링만 하지 않는다.
+
+---
+
 ## 2026-09-16 — 앱에서 폰 잠금 중에도 GPS 기록
 
 ### 테스터 이슈
