@@ -13,6 +13,14 @@ import {
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { firebaseConfig } from "./firebaseConfig.js";
 
+// 러닝 기록·펫·챌린지·프로필처럼 쓰면서 쌓이는 데이터는 기기(localStorage)에만 남깁니다.
+// Firestore 미러링을 끄면 개인 운동 기록이 서버로 나가지 않고, 읽기도 막아야
+// 옛 클라우드 값이 최신 로컬 기록을 덮어쓰지 않습니다.
+//
+// 로그인·결제·구독·VIP AI는 이 스위치의 영향을 받지 않습니다. 구독 권한을 기기에
+// 맡기면 위조로 유료 기능이 열리고, 결제 검증도 서버에서만 가능하기 때문입니다.
+const LOCAL_ONLY_ACTIVITY_DATA = true;
+
 class FirebaseCloudClient {
   constructor() {
     this.app = null;
@@ -193,6 +201,7 @@ class FirebaseCloudClient {
   }
 
   async getUser(userId) {
+    if (LOCAL_ONLY_ACTIVITY_DATA) return null;
     if (!this.isInitialized || !this.db || !userId) return null;
     try {
       const col = this.getCollectionName("users");
@@ -205,6 +214,7 @@ class FirebaseCloudClient {
   }
 
   async getTamagotchi(userId) {
+    if (LOCAL_ONLY_ACTIVITY_DATA) return null;
     if (!this.isInitialized || !this.db || !userId) return null;
     try {
       const col = this.getCollectionName("tamagotchi");
@@ -217,6 +227,7 @@ class FirebaseCloudClient {
   }
 
   async getChallenge(userId) {
+    if (LOCAL_ONLY_ACTIVITY_DATA) return null;
     if (!this.isInitialized || !this.db || !userId) return null;
     try {
       const col = this.getCollectionName("challenges_progress");
@@ -229,6 +240,7 @@ class FirebaseCloudClient {
   }
 
   async syncUser(userId, userData) {
+    if (LOCAL_ONLY_ACTIVITY_DATA) return false;
     if (!this.isInitialized || !this.db || !userId) return false;
     if (!this.auth?.currentUser || this.auth.currentUser.uid !== userId) return false;
     try {
@@ -247,6 +259,7 @@ class FirebaseCloudClient {
   }
 
   async saveWorkout(userId, workoutData) {
+    if (LOCAL_ONLY_ACTIVITY_DATA) return null;
     if (!this.isInitialized || !this.db || !userId) return null;
     if (!this.auth?.currentUser || this.auth.currentUser.uid !== userId) return null;
     try {
@@ -265,6 +278,7 @@ class FirebaseCloudClient {
   }
 
   async syncTamagotchi(userId, petData) {
+    if (LOCAL_ONLY_ACTIVITY_DATA) return false;
     if (!this.isInitialized || !this.db || !userId) return false;
     if (!this.auth?.currentUser || this.auth.currentUser.uid !== userId) return false;
     try {
@@ -282,6 +296,7 @@ class FirebaseCloudClient {
   }
 
   async syncChallenge(userId, challengeData) {
+    if (LOCAL_ONLY_ACTIVITY_DATA) return false;
     if (!this.isInitialized || !this.db || !userId) return false;
     if (!this.auth?.currentUser || this.auth.currentUser.uid !== userId) return false;
     try {
@@ -302,7 +317,7 @@ class FirebaseCloudClient {
 export const firebaseCloud = new FirebaseCloudClient();
 
 // careTeam.js 등 모듈 스코프 밖(IIFE)에서도 서버 호출을 쓸 수 있도록 전역에 노출합니다.
-// 노출하지 않으면 VIP 서버 AI 경로가 조용히 건너뛰어져 BYOK로만 동작합니다.
+// 노출하지 않으면 VIP 서버 AI 경로가 조용히 건너뛰어집니다.
 if (typeof window !== "undefined") {
   window.firebaseCloud = firebaseCloud;
 }

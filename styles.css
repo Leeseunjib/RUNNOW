@@ -1,40 +1,39 @@
 /* ==========================================================================
    RUNNOW Multi-Theme Modern Design System (No SF / No Neon)
    Supported Themes:
-   1) Webtoon Clean (Default - Naver Webtoon Green & Warm White)
-   2) Modern Minimal (Nike Black & White)
+   1) Modern Minimal (Default - Nike Black & White)
+   2) Webtoon Clean (Naver Webtoon Green & Warm White)
    3) Nature Forest (Sage Green & Earth Beige)
    4) Soft Pastel (Coral Pink & Cream Peach)
    ========================================================================== */
 
-/* 1. Default Theme: Naver Webtoon Edition */
-:root, [data-theme="webtoon"] {
-  --theme-name: 'webtoon';
-  --bg-deep: #F4F6F8;
-  --bg-subtle: #EBF0F4;
-  --surface-card: #FFFFFF;
-  --surface-elevated: #F8FAFC;
-  --surface-glass: rgba(255, 255, 255, 0.95);
-  
-  --primary-accent: #00C73C;       /* Naver Webtoon Signature Green */
-  --primary-accent-hover: #00B035;
-  --primary-accent-subtle: rgba(0, 199, 60, 0.12);
-  --primary-accent-text: #FFFFFF;
+/* 1. Default Theme: Modern Minimalist (Nike Pure B&W) */
+:root, [data-theme="minimal"] {
+  --theme-name: 'minimal';
+  --bg-deep: #111111;
+  --bg-subtle: #1C1C1E;
+  --surface-card: #242426;
+  --surface-elevated: #2C2C2E;
+  --surface-glass: rgba(36, 36, 38, 0.95);
 
-  --secondary-accent: #FF9500;     /* Warm Amber */
-  --secondary-subtle: rgba(255, 149, 0, 0.12);
+  --primary-accent: #FFFFFF;
+  --primary-accent-hover: #E5E5EA;
+  --primary-accent-subtle: rgba(255, 255, 255, 0.15);
+  --primary-accent-text: #111111;
 
-  --highlight-color: #3B82F6;      /* Joyful Sky Blue */
-  
-  --border-card: #E2E8F0;
-  --border-subtle: #EDF2F7;
-  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  --card-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --secondary-accent: #E5E5EA;
+  --secondary-subtle: rgba(255, 255, 255, 0.1);
+  --highlight-color: #0A84FF;
 
-  --text-main: #191F28;
-  --text-sub: #4E5968;
-  --text-muted: #8B95A1;
-  
+  --border-card: #3A3A3C;
+  --border-subtle: #2C2C2E;
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --card-shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.6);
+
+  --text-main: #FFFFFF;
+  --text-sub: #D1D1D6;
+  --text-muted: #8E8E93;
+
   --font-ui: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Inter', 'Segoe UI', Roboto, sans-serif;
   --fs-xs: 11px;
   --fs-sm: 12px;
@@ -55,32 +54,32 @@
   --radius-pill: 9999px;
 }
 
-/* 2. Modern Minimalist (Nike Pure B&W) */
-[data-theme="minimal"] {
-  --theme-name: 'minimal';
-  --bg-deep: #111111;
-  --bg-subtle: #1C1C1E;
-  --surface-card: #242426;
-  --surface-elevated: #2C2C2E;
-  --surface-glass: rgba(36, 36, 38, 0.95);
-  
-  --primary-accent: #FFFFFF;
-  --primary-accent-hover: #E5E5EA;
-  --primary-accent-subtle: rgba(255, 255, 255, 0.15);
-  --primary-accent-text: #111111;
+/* 2. Naver Webtoon Edition */
+[data-theme="webtoon"] {
+  --theme-name: 'webtoon';
+  --bg-deep: #F4F6F8;
+  --bg-subtle: #EBF0F4;
+  --surface-card: #FFFFFF;
+  --surface-elevated: #F8FAFC;
+  --surface-glass: rgba(255, 255, 255, 0.95);
 
-  --secondary-accent: #E5E5EA;
-  --secondary-subtle: rgba(255, 255, 255, 0.1);
-  --highlight-color: #0A84FF;
-  
-  --border-card: #3A3A3C;
-  --border-subtle: #2C2C2E;
-  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  --card-shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.6);
+  --primary-accent: #00C73C;
+  --primary-accent-hover: #00B035;
+  --primary-accent-subtle: rgba(0, 199, 60, 0.12);
+  --primary-accent-text: #FFFFFF;
 
-  --text-main: #FFFFFF;
-  --text-sub: #D1D1D6;
-  --text-muted: #8E8E93;
+  --secondary-accent: #FF9500;
+  --secondary-subtle: rgba(255, 149, 0, 0.12);
+  --highlight-color: #3B82F6;
+
+  --border-card: #E2E8F0;
+  --border-subtle: #EDF2F7;
+  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --card-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.1);
+
+  --text-main: #191F28;
+  --text-sub: #4E5968;
+  --text-muted: #8B95A1;
 }
 
 /* 3. Nature Forest (Sage Green & Earth Beige) */
@@ -4871,6 +4870,12 @@ body {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4) !important;
 }
 
+/* 보정을 끈 정밀 판정 모드. 기본 상태가 아니라는 걸 색으로 구분합니다. */
+.pose-relax-btn.is-precise {
+  border-color: rgba(255, 159, 10, 0.45) !important;
+  color: #FF9F0A !important;
+}
+
 /* 파트너 댕댕이가 운동 중 화면 하단을 가리지 않도록 처리 */
 .pose-mascot {
   position: relative !important;
@@ -5247,6 +5252,37 @@ body {
   display: flex !important;
   gap: 8px !important;
   width: 100% !important;
+}
+
+.gemma-engine-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 8px 0 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border-card);
+  background: var(--primary-accent-subtle);
+}
+
+#gemma-engine-status {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+.btn-gemma-load {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  background: var(--primary-accent);
+  color: var(--primary-accent-text);
 }
 
 .btn-coach-action {

@@ -556,9 +556,12 @@
         this.tamagotchi.addXp(summary.xpGained);
         this.userProfile.coins += summary.vcGained;
 
-        if (summary.statIncreases.might) this.tamagotchi.might = (this.tamagotchi.might || 10) + summary.statIncreases.might;
-        if (summary.statIncreases.agility) this.tamagotchi.agility = (this.tamagotchi.agility || 10) + summary.statIncreases.agility;
-        if (summary.statIncreases.spirit) this.tamagotchi.spirit = (this.tamagotchi.spirit || 10) + summary.statIncreases.spirit;
+        // 직접 더하면 0~100 상한을 우회합니다. app.js와 같은 경로를 씁니다.
+        for (const key of ["might", "agility", "spirit"]) {
+          if (summary.statIncreases[key]) {
+            summary.statIncreases[key] = this.tamagotchi.applyStatGrowth(key, summary.statIncreases[key]);
+          }
+        }
 
         const payload = {
           exerciseType: summary.exerciseId,

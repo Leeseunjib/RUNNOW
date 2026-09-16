@@ -36,7 +36,8 @@ export const EXERCISE_TYPES = {
     description: "팔꿈치 각도를 90도까지 굽힌 후 상체를 밀어올리는 푸시업 동작을 인식합니다.",
     cover: "./assets/exercises/pushup.jpg",
     rom: { contracted: 90, extended: 150, gaugeTop: 160 },
-    requiredLandmarks: [11, 12, 13, 14, 15, 16, 23, 24]
+    requiredLandmarks: [11, 12, 13, 14, 15, 16, 23, 24],
+    setupHint: "폰을 몸 옆 바닥에 눕혀 두고 엎드리세요. 머리부터 발끝까지 화면에 들어와야 인식됩니다."
   },
   SITUP: {
     id: "situp",
@@ -53,7 +54,8 @@ export const EXERCISE_TYPES = {
     description: "상체와 골반 각도를 75도 이하로 끌어올리는 코어 크런치 동작을 인식합니다.",
     cover: "./assets/exercises/situp.jpg",
     rom: { contracted: 75, extended: 130, gaugeTop: 140 },
-    requiredLandmarks: [11, 12, 23, 24, 25, 26]
+    requiredLandmarks: [11, 12, 23, 24, 25, 26],
+    setupHint: "폰을 몸 옆 바닥에 눕혀 두고 누우세요. 상체와 무릎이 한 화면에 들어와야 합니다."
   },
   JUMPINGJACK: {
     id: "jumpingjack",
@@ -71,7 +73,10 @@ export const EXERCISE_TYPES = {
     cover: "./assets/exercises/jumpingjack.jpg",
     // 점핑잭은 각도가 아니라 "손 올림 + 발 벌림"을 0~180 합성값으로 환산해 판정합니다.
     rom: { contracted: 40, extended: 140, gaugeTop: 180 },
-    requiredLandmarks: [11, 12, 15, 16, 27, 28]
+    // 골반(23·24)은 판정 수식이 직접 쓰지는 않지만, 몸통 방향·어깨폭 보정과
+    // 운동자 잠금(poseSignature)이 골반을 읽습니다. 필수에서 빠져 있으면
+    // 추측된 골반 좌표로 그 판정들이 돌아갑니다.
+    requiredLandmarks: [11, 12, 15, 16, 23, 24, 27, 28]
   },
   PLANK: {
     id: "plank",
@@ -89,7 +94,8 @@ export const EXERCISE_TYPES = {
     cover: "./assets/exercises/plank.jpg",
     // 플랭크는 180도를 중심으로 한 허용 밴드로 판정합니다.
     rom: { center: 180, tolerance: 25, holdBlockSec: 5 },
-    requiredLandmarks: [11, 12, 23, 24, 27, 28]
+    requiredLandmarks: [11, 12, 23, 24, 27, 28],
+    setupHint: "폰을 몸 옆 바닥에 눕혀 두고 엎드리세요. 어깨-골반-발목이 한 화면에 들어와야 합니다."
   },
   LUNGE: {
     id: "lunge",
@@ -211,10 +217,55 @@ const MAX_TRACK_GAP_SEC = 0.6;        // 이보다 오래 끊기면 추적을 �
 // 잠금이 풀려(SUBJECT_RELEASE_MS) 누구든 새로 시작할 수 있습니다.
 const REACQUIRE_TOLERANCE = 0.6;
 
-// 준비 게이트를 오래 통과하지 못할 때의 탈출구
+// 자동 보정을 끈 정밀 판정 모드에서 준비 게이트를 오래 통과하지 못할 때의 탈출구
 // 좁은 방·어두운 조명·폰 각도 때문에 전신이 안 잡히면 영영 카운트를 시작할 수 없습니다.
-const RELAX_OFFER_MS = 12000;         // 이 시간 넘게 막히면 완화 모드를 제안
-const RELAXED_MIN_VISIBILITY = 0.25;  // 완화 모드의 관절 신뢰도 하한
+const RELAX_OFFER_MS = 12000;         // 이 시간 넘게 막히면 보정을 다시 켜라고 안내
+const RELAXED_MIN_VISIBILITY = 0.25;  // 자동 보정의 관절 신뢰도 하한
+
+// 엎드려서 하는 운동(푸시업·플랭크)의 몸통 방향 허용치. 0도가 완전 수평입니다.
+// 팔꿈치 각도만 보면 의자에 앉아 손을 뻗었다 당기는 동작도 푸시업으로 세어집니다.
+// 서거나 앉은 몸통은 70~90도라 이 문턱에서 걸러집니다.
+const PRONE_MAX_TORSO_TILT = 45;
+
+// 어깨와 골반이 이보다 가까우면 기울기를 계산하지 않습니다.
+// 상반신만 보일 때 모델이 하반신을 추측해 관절을 한 점에 뭉쳐 놓는 일이 있고,
+// 거의 겹친 두 점의 atan2는 방향이 아니라 노이즈입니다.
+const MIN_TORSO_SPAN = 0.06;
+
+// 서서 하는 운동(스쿼트·런지·점핑잭)의 몸통 방향 최소치.
+// 침대에 누워 팔다리를 휘저어도 관절 각도는 같은 구간을 오갑니다.
+// 깊은 스쿼트에서 상체가 앞으로 많이 숙여지는 것까지는 허용해야 하므로
+// 수평(0도)만 막고 문턱을 낮게 잡았습니다.
+const UPRIGHT_MIN_TORSO_TILT = 35;
+
+// 무릎이 발목보다 이만큼은 위에 있어야 "서 있다"고 봅니다.
+// 몸통 방향만으로는 책상에 앉은 자세를 걸러낼 수 없습니다. 앉아서 상체를 세운 채
+// 다리만 앞으로 뻗었다 당기면 무릎 각도가 90도와 170도를 오가며 스쿼트로 세어집니다.
+// 이때 정강이는 화면에서 거의 수평이라 무릎과 발목의 높이 차가 사라집니다.
+// 화면 확대율에 따라 절대값이 달라지므로 몸통 길이에 대한 비율로 비교합니다.
+const MIN_SHIN_RISE_RATIO = 0.35;
+
+// 윗몸일으키기 시작 자세(등을 바닥에 댄 상태)의 몸통 기울기 허용치.
+// 엎드림 기준(45도)보다 더 엄격합니다. 허벅지가 수평인 의자에 앉으면 몸통 기울기가
+// 그대로 (180 - 골반각도)가 되어, 골반각 140도로 등받이에 기대면 40도가 나옵니다.
+// 45도로는 그 자세가 통과해 의자에서 앞뒤로 흔드는 동작이 세어집니다.
+// 바닥에 누우면 무릎을 세운 상태에서도 5~20도라 30도면 여유가 있습니다.
+const SITUP_MAX_START_TILT = 30;
+
+// 런지 수축 시점에 뒷무릎이 이보다 펴져 있으면 런지로 보지 않습니다.
+// 판정값이 좌우 최소값이라, 서서 한쪽 무릎만 접었다 펴도 사이클이 완성됩니다.
+// 제자리에 선 다리는 175~180도로 유지되고, 얕은 런지의 뒷무릎은 130~145도입니다.
+const LUNGE_MAX_REAR_KNEE = 150;
+
+// 점핑잭 발 벌림 기준을 어깨폭으로 재는데, 측면에서 찍으면 두 어깨가 겹쳐
+// 어깨폭이 0.02까지 내려갑니다. 그러면 기준이 무너져 발을 모아도 "벌림"으로 읽히고,
+// 합성값이 90에 갇혀 한 번도 카운트되지 않습니다(오탐이 아니라 영구 오누락).
+// 어깨폭은 보통 몸통 길이의 0.7~0.8배라, 이 비율 미만이면 측면 촬영으로 봅니다.
+const JACK_MIN_SHOULDER_RATIO = 0.25;
+
+// 정면이라도 몸이 비스듬하면 어깨폭이 줄어 기준이 헐거워집니다.
+// 몸통 길이에 대한 하한을 둬서 기준이 무한히 낮아지지 않게 합니다.
+const JACK_SHOULDER_FLOOR_RATIO = 0.45;
 
 // 준비 게이트 안내 문구에 쓰는 랜드마크 한글 이름
 const LANDMARK_LABELS = {
@@ -262,11 +313,20 @@ export class MotionTracker {
     this.lastCountdownSecond = null;
     this.blockedReason = "";
     this.lastBlockedReason = null;
+    this.postureBlockHint = "";
 
-    // 준비 게이트가 계속 막힐 때 완화 모드를 제안하기 위한 누적 시간
+    // 조명·거리 자동 보정은 기본으로 켭니다.
+    // 좁은 방이나 어두운 조명에서 준비 게이트가 막히면 카운트를 아예 시작할 수 없어,
+    // 판정 정확도보다 "시작이 되는 것"이 먼저입니다. 관절 신뢰도 하한만 낮추므로
+    // 가동범위 기준은 그대로이고, 정밀 판정을 원하면 끌 수 있습니다.
+    this.relaxedTracking = options.relaxed !== false;
+    this.relaxedDefault = this.relaxedTracking;
+    // 보정이 실제로 판정을 떠받치고 있는 순간만 화면에 알리기 위한 플래그
+    this.relaxAssisting = false;
+
+    // 정밀 판정 모드에서 준비 게이트가 계속 막힐 때 보정을 권하기 위한 누적 시간
     this.calibrationBlockedMs = 0;
     this.relaxOffered = false;
-    this.relaxedTracking = false;
 
     // 운동자 잠금 상태. 준비 자세를 잡은 사람의 신체 서명을 기억해 그 사람만 추적합니다.
     this.subjectLock = null;      // { center:{x,y}, scale, ratio }
@@ -397,7 +457,9 @@ export class MotionTracker {
   resetExerciseStats() {
     this.clearSubjectLock();
     this.repLog = [];
-    this.relaxedTracking = false;
+    // 보정 On/Off는 사용자의 설정이므로 세션이 바뀌어도 그대로 이어갑니다.
+    this.relaxedTracking = this.relaxedDefault;
+    this.relaxAssisting = false;
     this.relaxOffered = false;
     this.calibrationBlockedMs = 0;
     this.repCount = 0;
@@ -762,6 +824,7 @@ export class MotionTracker {
       difficulty: this.difficulty,
       engine: this.engineType,
       relaxed: this.relaxedTracking,
+      relaxAssisting: this.relaxAssisting,
       personCount: this.visiblePersonCount,
       exercise: this.currentExercise
     });
@@ -860,6 +923,104 @@ export class MotionTracker {
     return { angle, vis };
   }
 
+  // 화면상 몸통이 수평에 가까운지 판정합니다. 0도면 수평(엎드림), 90도면 수직(서거나 앉음).
+  // 어깨-골반-발목 사잇각은 서 있어도 180도라서 방향을 구분하지 못합니다.
+  // 그래서 각도가 아니라 어깨→골반 벡터의 기울기를 봅니다.
+  torsoTiltFromHorizontal(landmarks, minVis) {
+    let best = null;
+    for (const [s, h] of [[11, 23], [12, 24]]) {
+      const sp = landmarks[s];
+      const hp = landmarks[h];
+      if (!sp || !hp) continue;
+      const vis = Math.min(sp.visibility ?? 1, hp.visibility ?? 1);
+      if (vis < minVis) continue;
+      const dx = Math.abs(hp.x - sp.x);
+      const dy = Math.abs(hp.y - sp.y);
+      if (Math.hypot(dx, dy) < MIN_TORSO_SPAN) continue;
+      const tilt = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+      if (!best || vis > best.vis) best = { tilt, vis };
+    }
+    return best;
+  }
+
+  // 엎드린 자세가 맞는지 확인합니다. 아니면 그 이유를 남겨 화면에 안내합니다.
+  // 측정이 안 될 때 통과시키면 관절을 못 보는 상황이 전부 합격이 되므로 불합격 처리합니다.
+  checkProneOrientation(landmarks, minVis) {
+    const torso = this.torsoTiltFromHorizontal(landmarks, minVis);
+    if (!torso) {
+      this.postureBlockHint = "어깨와 골반을 구분할 수 없습니다. 폰을 몸 옆에 두고 전신이 들어오게 맞춰 주세요";
+      return false;
+    }
+    if (torso.tilt > PRONE_MAX_TORSO_TILT) {
+      this.postureBlockHint = "바닥에 엎드려 주세요. 폰은 몸 옆에 눕혀 두면 전신이 잘 잡힙니다";
+      return false;
+    }
+    this.postureBlockHint = "";
+    return true;
+  }
+
+  // 어깨→골반 길이. 화면 확대율이 달라도 비교할 수 있게 기준 길이로 씁니다.
+  torsoLength(landmarks, minVis) {
+    let best = null;
+    for (const [s, h] of [[11, 23], [12, 24]]) {
+      const sp = landmarks[s];
+      const hp = landmarks[h];
+      if (!sp || !hp) continue;
+      const vis = Math.min(sp.visibility ?? 1, hp.visibility ?? 1);
+      if (vis < minVis) continue;
+      const len = Math.hypot(hp.x - sp.x, hp.y - sp.y);
+      if (len < MIN_TORSO_SPAN) continue;
+      if (!best || vis > best.vis) best = { len, vis };
+    }
+    return best;
+  }
+
+  // 서서 하는 운동이 맞는지 확인합니다.
+  // 몸통이 수평이 아니어야 하고(누운 자세 차단), 정강이가 서 있어야 합니다(앉은 자세 차단).
+  // 측정이 안 될 때 통과시키면 관절을 못 보는 상황이 전부 합격이 되므로 불합격 처리합니다.
+  checkUprightOrientation(landmarks, minVis, requireStandingLegs) {
+    const torso = this.torsoTiltFromHorizontal(landmarks, minVis);
+    if (!torso) {
+      this.postureBlockHint = "어깨와 골반을 구분할 수 없습니다. 전신이 화면에 들어오게 맞춰 주세요";
+      return false;
+    }
+    if (torso.tilt < UPRIGHT_MIN_TORSO_TILT) {
+      this.postureBlockHint = "바닥에 누운 자세로는 셀 수 없습니다. 바르게 서서 시작해 주세요";
+      return false;
+    }
+
+    if (requireStandingLegs) {
+      const torsoLen = this.torsoLength(landmarks, minVis);
+      if (!torsoLen) {
+        this.postureBlockHint = "몸통을 인식하지 못했습니다. 카메라에서 2m 떨어져 전신을 맞춰 주세요";
+        return false;
+      }
+
+      // 좌우 중 더 잘 보이는 다리로 판정합니다. 한쪽이 가려져도 진행되게 합니다.
+      let rise = null;
+      for (const [k, a] of [[25, 27], [26, 28]]) {
+        const kp = landmarks[k];
+        const ap = landmarks[a];
+        if (!kp || !ap) continue;
+        if (Math.min(kp.visibility ?? 1, ap.visibility ?? 1) < minVis) continue;
+        const v = (ap.y - kp.y) / torsoLen.len;   // y는 아래로 갈수록 커집니다
+        if (rise === null || v > rise) rise = v;
+      }
+
+      if (rise === null) {
+        this.postureBlockHint = "무릎과 발목이 보이지 않습니다. 발끝까지 화면에 들어오게 맞춰 주세요";
+        return false;
+      }
+      if (rise < MIN_SHIN_RISE_RATIO) {
+        this.postureBlockHint = "앉은 자세로는 셀 수 없습니다. 일어서서 무릎과 발목이 세로로 보이게 해 주세요";
+        return false;
+      }
+    }
+
+    this.postureBlockHint = "";
+    return true;
+  }
+
   // 좌우를 무조건 평균내면 측면 촬영에서 가려진 쪽 추정치가 값을 오염시킵니다.
   // 양쪽 모두 선명하고 값이 비슷할 때만 평균내고, 아니면 더 잘 보이는 쪽을 씁니다.
   bestSideAngle(landmarks, leftTriple, rightTriple, minVis) {
@@ -956,21 +1117,38 @@ export class MotionTracker {
     lock.ratio += a * (sig.ratio - lock.ratio);
   }
 
-  // 인식 완화 모드. 관절 신뢰도 기준만 낮춰 준비 게이트를 통과할 수 있게 합니다.
+  // 조명·거리 자동 보정 On/Off. 관절 신뢰도 기준만 낮춰 준비 게이트를 통과할 수 있게 합니다.
   // 가동범위 판정 기준은 그대로라 "덜 굽혀도 인정"되는 것은 아닙니다.
-  startRelaxedMode() {
-    if (this.relaxedTracking) return false;
-    this.relaxedTracking = true;
+  setRelaxedTracking(on, options = {}) {
+    const next = on !== false;
+    if (next === this.relaxedTracking) return next;
+
+    this.relaxedTracking = next;
+    this.relaxedDefault = next;
+    this.relaxAssisting = false;
     this.calibrationBlockedMs = 0;
     this.readyStableMs = 0;
     this.smoothedAngle = null;
-    this.emitFeedback("인식 완화 모드로 전환했습니다. 시작 자세를 잡아 주세요", true);
+
+    // 보정을 끄면 기준이 엄격해져 세트 중간에 판정이 섞입니다. 준비 단계로 되돌립니다.
+    if (!next && (this.phase === "counting" || this.phase === "countdown")) {
+      this.enterPhase("calibrating");
+    }
+
+    // 사용자에게 보정 On/Off를 알리지 않습니다. 내부 판정 기준일 뿐이고,
+    // 화면에 뜨면 켜야 하는 기능처럼 보입니다.
     this.onPhaseChange({
       phase: this.phase,
-      relaxed: true,
+      relaxed: next,
       exercise: this.currentExercise,
       difficulty: this.difficulty
     });
+    return next;
+  }
+
+  startRelaxedMode() {
+    if (this.relaxedTracking) return false;
+    this.setRelaxedTracking(true);
     return true;
   }
 
@@ -1150,7 +1328,8 @@ export class MotionTracker {
     if (missing.length > 0) {
       blocker = this.describeMissing(missing);
     } else if (!measure) {
-      blocker = "관절 인식이 불안정합니다. 조명을 밝게 하고 카메라를 정면으로 두세요";
+      blocker = this.postureBlockHint
+        || "관절 인식이 불안정합니다. 조명을 밝게 하고 카메라를 정면으로 두세요";
     } else if (!measure.inStartPose) {
       blocker = measure.startPoseHint || "시작 자세를 잡아 주세요";
     }
@@ -1161,15 +1340,9 @@ export class MotionTracker {
       this.emitFeedback(blocker, false);
       // 계속 막히면 탈출구를 제안합니다. 그대로 두면 영영 카운트를 시작할 수 없습니다.
       this.calibrationBlockedMs += delta;
-      if (!this.relaxOffered && !this.relaxedTracking && this.calibrationBlockedMs >= RELAX_OFFER_MS) {
-        this.relaxOffered = true;
-        this.onPhaseChange({
-          phase: "calibrating",
-          canRelax: true,
-          blockedReason: this.blockedReason,
-          exercise: this.currentExercise,
-          difficulty: this.difficulty
-        });
+      if (!this.relaxedTracking && this.calibrationBlockedMs >= RELAX_OFFER_MS) {
+        // 버튼을 기다리며 12초를 보내게 하지 않습니다. 시스템이 켭니다.
+        this.setRelaxedTracking(true, { silent: true });
       }
     } else {
       this.calibrationBlockedMs = 0;
@@ -1459,12 +1632,6 @@ export class MotionTracker {
     this.ctx.fillStyle = this.blockedReason ? "#FF9F0A" : "#CCFF00";
     this.ctx.font = `600 ${Math.max(12, Math.round(width / 44))}px sans-serif`;
     this.drawTextUnmirrored(hint, cx, cy + radius + 30);
-
-    if (this.relaxedTracking) {
-      this.ctx.fillStyle = "#FF9F0A";
-      this.ctx.font = `700 ${Math.max(11, Math.round(width / 50))}px sans-serif`;
-      this.drawTextUnmirrored("인식 완화 모드 · 판정 정확도가 낮아집니다", cx, cy + radius + 52);
-    }
     this.ctx.restore();
   }
 
@@ -1519,6 +1686,12 @@ export class MotionTracker {
     const missing = this.findMissingLandmarks(landmarks, th.minVisibility);
     const measure = missing.length === 0 ? this.measurePose(landmarks, th) : null;
 
+    // 보정이 기본으로 켜져 있으므로, 실제로 보정 덕분에 판정이 되는 순간만 알립니다.
+    // 항상 경고를 띄우면 조명이 좋은 환경에서도 잔소리가 됩니다.
+    this.relaxAssisting = this.relaxedTracking
+      && missing.length === 0
+      && this.findMissingLandmarks(landmarks, this.difficulty.minVisibility).length > 0;
+
     if (measure) {
       this.currentAngle = measure.angle;
       this.depthProgress = measure.progress;
@@ -1555,7 +1728,9 @@ export class MotionTracker {
     if (!measure) {
       // 카운팅 중 전신을 놓치면 페이즈는 유지하되 판정만 멈춥니다.
       this.emitFeedback(
-        missing.length ? this.describeMissing(missing) : "관절 인식이 불안정합니다. 카메라 정면으로 서 주세요",
+        missing.length
+          ? this.describeMissing(missing)
+          : (this.postureBlockHint || "관절 인식이 불안정합니다. 카메라 정면으로 서 주세요"),
         false
       );
       this.emitLiveStateThrottled();
@@ -1576,12 +1751,19 @@ export class MotionTracker {
   measurePose(landmarks, th) {
     const exId = this.currentExercise.id;
     const minVis = th.minVisibility;
+    // 자세 게이트에서 막힌 이유를 담습니다. 비어 있으면 자세 때문이 아닙니다.
+    this.postureBlockHint = "";
     const gaugeSpan = Math.max(1, th.gaugeTop - th.contracted);
     const rangeProgress = (angle) =>
       Math.max(0, Math.min(100, Math.round(((th.gaugeTop - angle) / gaugeSpan) * 100)));
 
     if (exId === "squat" || exId === "lunge") {
       const isSquat = exId === "squat";
+
+      // 무릎 각도만 보면 책상에 앉아 다리를 뻗었다 당기는 동작도 스쿼트가 됩니다.
+      // 서 있는 자세인지 먼저 확인하고, 확인이 안 되면 판정 자체를 하지 않습니다.
+      if (!this.checkUprightOrientation(landmarks, minVis, true)) return null;
+
       let raw = null;
       let sideDelta = null;
 
@@ -1598,6 +1780,16 @@ export class MotionTracker {
         if (usable.length === 0) return null;
         raw = Math.min(...usable.map((c) => c.angle));
         if (l && r && l.vis >= minVis && r.vis >= minVis) sideDelta = l.angle - r.angle;
+
+        // 더 깊은 쪽만 보면 서서 한쪽 무릎만 접었다 펴는 동작도 런지가 됩니다.
+        // 런지는 뒷무릎도 함께 내려가므로, 한쪽만 굽은 순간은 수축으로 인정하지 않습니다.
+        if (usable.length === 2) {
+          const rear = Math.max(...usable.map((c) => c.angle));
+          if (raw <= th.contracted && rear > LUNGE_MAX_REAR_KNEE) {
+            this.postureBlockHint = "뒷무릎도 함께 내려 주세요. 한쪽 다리만 굽히면 런지로 세지 않습니다";
+            return null;
+          }
+        }
       }
 
       const angle = this.smoothAngle(raw);
@@ -1644,10 +1836,16 @@ export class MotionTracker {
     if (exId === "pushup") {
       const elbow = this.bestSideAngle(landmarks, [11, 13, 15], [12, 14, 16], minVis);
       if (!elbow) return null;
+
+      // 팔꿈치만 보면 앉아서 손을 뻗었다 당기는 동작도 푸시업이 됩니다.
+      // 엎드린 자세인지 먼저 확인하고, 확인이 안 되면 판정 자체를 하지 않습니다.
+      if (!this.checkProneOrientation(landmarks, minVis)) return null;
+
       const angle = this.smoothAngle(elbow.angle);
       const sideDelta = elbow.sideDelta ?? null;
-      const torso = this.bestSideAngle(landmarks, [11, 23, 27], [12, 24, 28], minVis);
-      const formOk = !torso || torso.angle > 140;
+      // 허리 처짐은 몸통 선을 실제로 측정했을 때만 지적합니다.
+      const bodyLine = this.bestSideAngle(landmarks, [11, 23, 27], [12, 24, 28], minVis);
+      const formOk = !bodyLine || bodyLine.angle > 140;
 
       return {
         angle,
@@ -1680,6 +1878,23 @@ export class MotionTracker {
       const angle = this.smoothAngle(hip.angle);
       const sideDelta = hip.sideDelta ?? null;
 
+      // 시작 자세(등을 바닥에 댄 상태)일 때만 몸통 수평을 요구합니다.
+      // 올라온 순간에는 몸통이 세워지는 것이 정상이라 항상 검사하면 정상 동작이 막힙니다.
+      // 이 게이트가 없으면 사무용 의자에 앉아 등받이에 기댔다 숙이는 동작만으로
+      // 골반 각도가 130도와 75도를 오가며 윗몸일으키기로 세어집니다.
+      if (angle >= th.extended) {
+        const torso = this.torsoTiltFromHorizontal(landmarks, minVis);
+        if (!torso) {
+          this.postureBlockHint = "어깨와 골반을 구분할 수 없습니다. 폰을 몸 옆에 두고 전신을 맞춰 주세요";
+          return null;
+        }
+        if (torso.tilt > SITUP_MAX_START_TILT) {
+          this.postureBlockHint = "등을 바닥에 대고 누운 자세에서 시작해 주세요. 앉은 자세로는 셀 수 없습니다";
+          return null;
+        }
+      }
+      this.postureBlockHint = "";
+
       return {
         angle,
         badgeText: `${angle}°`,
@@ -1708,6 +1923,10 @@ export class MotionTracker {
     if (exId === "plank") {
       const line = this.bestSideAngle(landmarks, [11, 23, 27], [12, 24, 28], minVis);
       if (!line) return null;
+
+      // 바르게 선 사람도 어깨-골반-발목이 180도라 일직선 조건만으로는 플랭크와 구분되지 않습니다.
+      if (!this.checkProneOrientation(landmarks, minVis)) return null;
+
       const angle = this.smoothAngle(line.angle);
       const diff = Math.abs(th.plankCenter - angle);
       const isStraight = diff <= th.plankTolerance;
@@ -1740,14 +1959,34 @@ export class MotionTracker {
       const ra = landmarks[28];
       if (!ls || !rs || !lw || !rw || !la || !ra) return null;
 
+      // 누운 채 팔다리를 휘저어도 "손 올림 + 발 벌림" 조건은 그대로 성립합니다.
+      // 서 있는 자세인지 확인합니다. 점프 동작이라 정강이 검사까지 걸면
+      // 공중에 뜬 순간이 오판되므로 몸통 방향만 봅니다.
+      if (!this.checkUprightOrientation(landmarks, minVis, false)) return null;
+
       const shoulderY = Math.min(ls.y, rs.y);
-      const headY = landmarks[0] ? landmarks[0].y : shoulderY - 0.08;
+
+      // 코는 필수 랜드마크가 아니라 저신뢰 추측치일 수 있습니다. 머리가 화면 위로
+      // 잘리면 모델이 얼굴을 몸통 쪽으로 뭉쳐 놓는데, 그 값을 기준선으로 쓰면
+      // 기준이 아래로 내려와 가슴 높이의 손도 "머리 위"로 읽힙니다.
+      const nose = landmarks[0];
+      const noseOk = nose && (nose.visibility ?? 0) >= minVis;
+      const headY = noseOk ? nose.y : shoulderY - 0.08;
       let reachY = shoulderY;
       if (th.jackReach === "nose") reachY = headY;
       else if (th.jackReach === "overhead") reachY = headY - 0.06;
 
       const handsUp = lw.y < reachY && rw.y < reachY;
-      const shoulderWidth = this.calculateDistance(ls, rs) || 0.2;
+
+      const torsoLen = this.torsoLength(landmarks, minVis);
+      const rawShoulderWidth = this.calculateDistance(ls, rs) || 0;
+      if (torsoLen && rawShoulderWidth < torsoLen.len * JACK_MIN_SHOULDER_RATIO) {
+        this.postureBlockHint = "카메라를 정면으로 보고 서 주세요. 옆으로 서면 발 벌림을 잴 수 없습니다";
+        return null;
+      }
+      const shoulderWidth = torsoLen
+        ? Math.max(rawShoulderWidth, torsoLen.len * JACK_SHOULDER_FLOOR_RATIO)
+        : (rawShoulderWidth || 0.2);
       const feetApart = this.calculateDistance(la, ra) > shoulderWidth * th.jackFeetRatio;
 
       // 손 올림 / 발 벌림을 0(완전 오픈) ~ 180(완전 클로즈) 합성값으로 환산합니다.

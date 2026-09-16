@@ -25,6 +25,22 @@ function formatRemaining(ms) {
   return `${m}분`;
 }
 
+// 게이지(포만감·체력·행복도) 감소 전용 헬퍼.
+// floor는 "더 이상 깎지 않는 선"일 뿐 회복선이 아니다. Math.max(floor, ...)로 쓰면
+// 이미 floor 아래로 지친 펫이 시간만 흘러도 floor까지 올라가 버리고,
+// 그러면 간식·휴식 버튼 없이 방치만 해도 컨디션이 낫는 무료 회복 경로가 생긴다.
+function decayGauge(current, loss, floor) {
+  return Math.max(Math.min(current, floor), current - loss);
+}
+
+// 근력·민첩·정신력은 0~100 스케일이다. 화면 수치와 스탯 퀘스트(stat_all_80 /
+// stat_all_100)가 이 스케일을 전제로 하므로, 상한이 없으면 장거리 런 한 번에
+// 최종 스탯 퀘스트까지 전부 뚫려 성장 목표가 사라진다.
+const STAT_MAX = 100;
+function clampStat(value) {
+  return Math.min(STAT_MAX, Math.max(0, Math.round(value)));
+}
+
 export const DOG_STAGES = [
   {
     "stage": 1,
@@ -499,9 +515,10 @@ export class TamagotchiEngine {
     this.happiness = initialData.happiness !== undefined ? initialData.happiness : 100;
     this.energy = initialData.energy !== undefined ? initialData.energy : 100;
     
-    this.might = initialData.might !== undefined ? initialData.might : 10;
-    this.agility = initialData.agility !== undefined ? initialData.agility : 10;
-    this.spirit = initialData.spirit !== undefined ? initialData.spirit : 10;
+    // 상한 도입 전 저장본에는 100을 넘는 스탯이 남아 있으므로 복원 시점에 정규화한다
+    this.might = clampStat(initialData.might !== undefined ? initialData.might : 10);
+    this.agility = clampStat(initialData.agility !== undefined ? initialData.agility : 10);
+    this.spirit = clampStat(initialData.spirit !== undefined ? initialData.spirit : 10);
     
     this.statusCondition = initialData.statusCondition || "HEALTHY";
     this.lastFed = initialData.lastFed || Date.now();
@@ -537,16 +554,16 @@ export class TamagotchiEngine {
     if (elapsedHours >= 0.02) { // 약 1분 이상 경과 시 계산
       // 1. 포만감: 시간당 -7.5% 자연 소모 (최소 15%까지 감소)
       const hungerLoss = Math.round(elapsedHours * 7.5);
-      this.hunger = Math.max(15, this.hunger - hungerLoss);
+      this.hunger = decayGauge(this.hunger, hungerLoss, 15);
 
       // 2. 체력: 시간당 -4% 자연 소모 (최소 20%까지 감소)
       const energyLoss = Math.round(elapsedHours * 4.0);
-      this.energy = Math.max(20, this.energy - energyLoss);
+      this.energy = decayGauge(this.energy, energyLoss, 20);
 
       // 3. 행복도: 배고프면(포만감 < 40%) -5%/h, 든든하면 -2%/h 완만 소모
       const happyRate = this.hunger < 40 ? 5.5 : 2.0;
       const happyLoss = Math.round(elapsedHours * happyRate);
-      this.happiness = Math.max(15, this.happiness - happyLoss);
+      this.happiness = decayGauge(this.happiness, happyLoss, 15);
 
       this.lastMetabolicTick = now;
       this.evaluateCondition();
@@ -660,6 +677,15 @@ export class TamagotchiEngine {
     return this.level * 250;
   }
 
+  // 스탯을 상한 안에서 올리고 "실제로 오른 양"을 돌려준다.
+  // 완주 모달이 statGrowth를 그대로 표시하므로, 상한에 걸려 2만 올랐는데 +85라고
+  // 뜨면 사용자는 보상을 떼였다고 느낀다.
+  applyStatGrowth(key, delta) {
+    const before = this[key];
+    this[key] = clampStat(before + delta);
+    return this[key] - before;
+  }
+
   addKmAndWorkout(km, durationSec, paceSec = 360) {
     this.totalKm = parseFloat((this.totalKm + km).toFixed(2));
     
@@ -683,9 +709,9 @@ export class TamagotchiEngine {
       workoutType = "🌿 기분 좋은 데일리 런 (회복 특화)";
     }
 
-    this.might += statGrowth.might;
-    this.agility += statGrowth.agility;
-    this.spirit += statGrowth.spirit;
+    statGrowth.might = this.applyStatGrowth("might", statGrowth.might);
+    statGrowth.agility = this.applyStatGrowth("agility", statGrowth.agility);
+    statGrowth.spirit = this.applyStatGrowth("spirit", statGrowth.spirit);
 
     const earnedXp = Math.round(km * 50 + (durationSec / 60) * 5);
     this.xp += earnedXp;
@@ -702,10 +728,12 @@ export class TamagotchiEngine {
     const runEnergyBurn = Math.round(km * 10 + 4); // 3km 달리면 -34% 땀 흘림
     const runHappyBoost = Math.round(km * 6 + 10); // 함께 달려서 신남 +28%
 
-    this.hunger = Math.max(10, this.hunger - runHungerBurn);
-    this.energy = Math.max(15, this.energy - runEnergyBurn);
+    this.hunger = decayGauge(this.hunger, runHungerBurn, 10);
+    this.energy = decayGauge(this.energy, runEnergyBurn, 15);
     this.happiness = Math.min(100, this.happiness + runHappyBoost);
     this.lastMetabolicTick = Date.now();
+    // 러닝으로 게이지가 바닥났는데 상태 배지가 "건강"으로 남아 있으면 돌봐야 할 때를 놓친다
+    this.evaluateCondition();
     this.saveState();
 
     return {
@@ -714,6 +742,8 @@ export class TamagotchiEngine {
       totalKm: this.totalKm,
       stage: this.getStage(),
       statGrowth,
+      // 완주 모달(+N XP)과 워크아웃 로그가 이 값을 읽는다. 빠지면 "+0 XP"로 표시된다
+      earnedXp,
       workoutType
     };
   }
@@ -728,7 +758,7 @@ export class TamagotchiEngine {
     this.hunger = Math.min(100, this.hunger + 35);
     this.happiness = Math.min(100, this.happiness + 15);
     this.energy = Math.min(100, this.energy + 10);
-    this.might += 2;
+    this.applyStatGrowth("might", 2);
     this.xp += 20;
     this.lastFed = Date.now();
     this.lastMetabolicTick = Date.now();
@@ -747,10 +777,11 @@ export class TamagotchiEngine {
     if (this.energy < 15) return { success: false, msg: "💤 펫이 지쳐있어요. 달콤한 휴식을 취하게 해주세요!" };
     this.markAction("play");
     this.happiness = Math.min(100, this.happiness + 30);
-    this.energy = Math.max(10, this.energy - 18);
-    this.hunger = Math.max(10, this.hunger - 8); // 신나게 뛰놀아서 살짝 출출해짐
-    this.agility += 3;
+    this.energy = decayGauge(this.energy, 18, 10);
+    this.hunger = decayGauge(this.hunger, 8, 10); // 신나게 뛰놀아서 살짝 출출해짐
+    this.applyStatGrowth("agility", 3);
     this.xp += 25;
+    this.evaluateCondition();
     this.saveState();
     return { success: true, msg: "🎾 신나게 공놀이를 하며 트랙을 달렸어요! (행복도 +30, 스피드 +3, 체력 -18)" };
   }
@@ -762,7 +793,7 @@ export class TamagotchiEngine {
     this.markAction("rest");
     this.energy = Math.min(100, this.energy + 45);
     this.happiness = Math.min(100, this.happiness + 10);
-    this.spirit += 4;
+    this.applyStatGrowth("spirit", 4);
     this.xp += 15;
     this.evaluateCondition();
     this.saveState();
@@ -777,9 +808,13 @@ export class TamagotchiEngine {
     this.happiness = 100;
     this.energy = 100;
     this.statusCondition = "HEALTHY";
-    this.might += 5;
-    this.agility += 5;
-    this.spirit += 5;
+    this.applyStatGrowth("might", 5);
+    this.applyStatGrowth("agility", 5);
+    this.applyStatGrowth("spirit", 5);
+    // 대사 기준 시각을 갱신하지 않으면, 타이머가 없는 런타임에서 다음 대사 계산이
+    // 구제 이전의 누적 시간을 그대로 적용해 코인으로 산 풀충전이 즉시 깎인다
+    this.lastMetabolicTick = Date.now();
+    this.saveState();
     return { success: true, msg: "⚡ [볼트 긴급구제 성공!] 번개 오라로 모든 컨디션이 100% 풀충전되었습니다! (전 스탯 +5)" };
   }
 

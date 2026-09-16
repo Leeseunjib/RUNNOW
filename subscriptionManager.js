@@ -3,14 +3,14 @@
 export const SUBSCRIPTION_PLANS = {
   PRO_BYOK: {
     id: "pro_monthly",
-    name: "RUNNOW PRO 스마트 (구글 AI 연동)",
+    name: "RUNNOW PRO 스마트",
     badge: "스마트 러너를 위한 알뜰 선택",
     priceKRW: 9900,
     priceUSD: 7.99,
     periodName: "/ 월",
     durationDays: 30,
-    discountTag: "BYOK FREE AI",
-    desc: "광고 100% 제거 • 펫 무제한 진화 • 내 구글 AI 키 연동 시 코치 대화 무제한"
+    discountTag: "스마트 실속",
+    desc: "광고 100% 제거 • 펫 무제한 진화 • 코치 대화"
   },
   VIP_CARE: {
     id: "vip_monthly",

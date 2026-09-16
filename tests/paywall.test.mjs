@@ -71,19 +71,16 @@ function extractGatedTabs() {
 }
 
 // --- 6. 상품 설명이 실제 기능과 어긋나지 않는다 ---------------------------
-// AI 코치는 사용자 본인의 구글 키 연동(BYOK)이 필요합니다. 서버가 키를 제공하는
-// 경로가 없는 동안 "설정 없이 즉시"라고 파는 것은 사실과 다릅니다.
+// AI 코치는 유료 권한에서 바로 씁니다. 사용자 구글 키를 요구하지 않습니다.
 {
   const careSrc = readFileSync(new URL("../careTeam.js", import.meta.url), "utf8");
   const fnSrc = readFileSync(new URL("../functions/index.js", import.meta.url), "utf8");
 
-  // 서버가 키를 대신 쓰는 경로가 실제로 존재하는가.
-  // 클라이언트 호출과 서버 함수가 둘 다 있어야 성립합니다.
   const hasServerKeyPath = careSrc.includes("chatWithCoach")
     && fnSrc.includes("exports.chatWithCoach");
 
   check("VIP 서버 AI 경로 존재", hasServerKeyPath, true);
-  check("PRO용 BYOK 경로도 유지", careSrc.includes("RUNNOW_USER_GEMINI_KEY"), true);
+  check("클라이언트 구글 키 경로 없음", careSrc.includes("RUNNOW_USER_GEMINI_KEY"), false);
 
   // 서버 경로가 없다면 "설정 없이"라고 팔 수 없습니다.
   if (!hasServerKeyPath) {

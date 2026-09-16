@@ -65,11 +65,43 @@
       }
     }
 
-    getCachedData() {
+    // 실제 행정동 이름을 받아옵니다. 키가 필요 없는 공개 엔드포인트를 씁니다.
+    // 위경도 구간 판별만으로는 "수도권/경기"까지가 한계라, 폰 날씨가 "원미동"이라고
+    // 말하는 것과 나란히 두면 앱이 위치를 못 잡은 것처럼 보입니다.
+    async reverseGeocode(lat, lon) {
+      try {
+        const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=ko`;
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const j = await res.json();
+        // 동 > 시/군/구 > 시도 순으로 가장 좁은 이름을 씁니다.
+        const dong = j.locality || "";
+        const city = j.city || j.principalSubdivision || "";
+        if (dong && city && dong !== city) return `${city} ${dong}`;
+        return dong || city || null;
+      } catch (e) {
+        console.warn("[WeatherService] 지명 조회 실패, 좌표 구간 추정으로 대체:", e);
+        return null;
+      }
+    }
+
+    // 캐시는 좌표까지 같이 봐야 합니다. 시간만 보면 직전에 조회한 다른 도시의
+    // 날씨가 최대 15분간 현재 위치의 날씨로 표시됩니다. 실제로 부천에서 앱을 열면
+    // 수원 기온이 떠 있었습니다.
+    cacheKeyFor(coords) {
+      const lat = Number(coords && coords.lat);
+      const lon = Number(coords && coords.lon);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return "unknown";
+      // 소수 2자리(약 1km)면 같은 동네로 봅니다. GPS가 미세하게 흔들려도 재조회하지 않습니다.
+      return `${lat.toFixed(2)},${lon.toFixed(2)}`;
+    }
+
+    getCachedData(coords = this.currentCoords) {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return null;
         const parsed = JSON.parse(raw);
+        if (parsed.key !== this.cacheKeyFor(coords)) return null;
         if (Date.now() - parsed.timestamp < CACHE_TTL_MS) {
           return parsed.data;
         }
@@ -82,6 +114,7 @@
     saveCachedData(data) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          key: this.cacheKeyFor(data),
           timestamp: Date.now(),
           data: data
         }));
@@ -105,12 +138,13 @@
           async (pos) => {
             const lat = parseFloat(pos.coords.latitude.toFixed(4));
             const lon = parseFloat(pos.coords.longitude.toFixed(4));
-            const guessedName = this.guessKoreanLocationName(lat, lon);
+            const placeName = await this.reverseGeocode(lat, lon);
 
             this.currentCoords = {
-              name: guessedName || "현재 위치 (GPS)",
+              name: placeName || this.guessKoreanLocationName(lat, lon),
               lat: lat,
-              lon: lon
+              lon: lon,
+              isGps: true
             };
             this.currentCity = "custom_gps";
             resolve(this.currentCoords);
@@ -125,10 +159,12 @@
     }
 
     /**
-     * 위경도 기반 대한민국 주요 시/도 구역 근사 판별
+     * 지명 조회가 실패했을 때만 쓰는 위경도 구간 근사 판별.
+     * 구간 경계는 임의값이라 동 단위로는 믿을 수 없습니다. 지명 조회를 먼저 시도합니다.
      */
     guessKoreanLocationName(lat, lon) {
-      if (lat >= 37.4 && lat <= 37.7 && lon >= 126.8 && lon <= 127.2) {
+      // 서울 서쪽 경계가 약 126.76이라 기존 126.8 기준에서는 강서구·부천이 탈락했습니다.
+      if (lat >= 37.4 && lat <= 37.7 && lon >= 126.75 && lon <= 127.2) {
         return "현재 위치 (서울권 GPS)";
       } else if (lat >= 37.1 && lat <= 37.9 && lon >= 126.5 && lon <= 127.8) {
         return "현재 위치 (수도권/경기 GPS)";
@@ -156,6 +192,19 @@
       return Promise.reject(new Error("존재하지 않는 도시 프리셋"));
     }
 
+    // 시간별 배열에서 현재 시각에 해당하는 값을 고릅니다.
+    // 시각 문자열은 API가 요청한 타임존으로 돌려주므로, 기기 시계와 무관하게
+    // API가 알려준 현재 시각을 기준으로 맞추는 편이 안전합니다.
+    pickCurrentHourValue(times, values, currentTime) {
+      if (!Array.isArray(times) || !Array.isArray(values) || values.length === 0) return 0;
+      if (currentTime) {
+        const hourKey = String(currentTime).slice(0, 13);   // YYYY-MM-DDTHH
+        const idx = times.findIndex((t) => String(t).slice(0, 13) === hourKey);
+        if (idx >= 0 && Number.isFinite(values[idx])) return values[idx];
+      }
+      return Number.isFinite(values[0]) ? values[0] : 0;
+    }
+
     /**
      * 공공 실시간 기상청 및 대기질 API 하이브리드 호출
      * @param {boolean} forceRefresh - 캐시 무시 강제 갱신
@@ -174,10 +223,10 @@
 
       try {
         // 1. 기상청/Open-Meteo 고정밀 실시간 기상 데이터 호출
-        const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&hourly=precipitation_probability&timezone=Asia%2FTokyo`;
-        
+        const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&hourly=precipitation_probability&timezone=Asia%2FSeoul`;
+
         // 2. 에어코리아/공공 대기질 데이터 호출 (PM10, PM2.5)
-        const airUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm10,pm2_5,european_aqi&timezone=Asia%2FTokyo`;
+        const airUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm10,pm2_5,european_aqi&timezone=Asia%2FSeoul`;
 
         const [weatherRes, airRes] = await Promise.all([
           fetch(weatherUrl).catch(e => null),
@@ -187,29 +236,41 @@
         let weatherJson = weatherRes && weatherRes.ok ? await weatherRes.json() : null;
         let airJson = airRes && airRes.ok ? await airRes.json() : null;
 
-        // API 장애 시 폴백(Fallback) 안전 데이터
-        const current = weatherJson?.current || {
-          temperature_2m: 21.0,
-          apparent_temperature: 20.5,
-          relative_humidity_2m: 50,
-          precipitation: 0,
-          weather_code: 0,
-          wind_speed_10m: 3.5
-        };
+        // 실측을 못 받았으면 수치를 지어내지 않고 실패로 처리합니다.
+        // 예전에는 여기서 21.0℃·맑음을 채워 넣고 그 값으로 러닝 지수까지 계산했습니다.
+        // 비 오는 날에도 "골든 아워"가 떠서, 그 말을 믿고 나간 사용자는 앱을 다시
+        // 신뢰하지 않습니다. 캐시에는 넣지 않습니다. 실패를 15분간 붙잡아 두면
+        // 네트워크가 돌아와도 복구되지 않습니다.
+        const isLive = Boolean(weatherJson?.current);
+        if (!isLive) {
+          const fallback = this.getFallbackData();
+          this.weatherData = fallback;
+          this.notifyListeners();
+          return fallback;
+        }
 
-        const currentAir = airJson?.current || {
-          pm10: 22,
-          pm2_5: 11,
-          european_aqi: 25
-        };
+        const current = weatherJson.current;
 
-        const hourlyProb = weatherJson?.hourly?.precipitation_probability;
-        const precipProb = Array.isArray(hourlyProb) && hourlyProb.length > 0 ? hourlyProb[0] : 0;
+        // 대기질만 실패한 경우는 기상 정보를 살립니다. 대신 등급을 단정하지 않습니다.
+        const currentAir = airJson?.current || { pm10: null, pm2_5: null, european_aqi: null };
+        const hasAir = Boolean(airJson?.current);
+
+        // 배열 첫 칸은 오늘 0시입니다. 그대로 쓰면 자정의 강수확률로 러닝 지수를
+        // 깎게 됩니다. API가 돌려준 현재 시각과 같은 시간대의 값을 찾아 씁니다.
+        const precipProb = this.pickCurrentHourValue(
+          weatherJson?.hourly?.time,
+          weatherJson?.hourly?.precipitation_probability,
+          weatherJson?.current?.time
+        );
 
         const wmoInfo = WMO_WEATHER_MAP[current.weather_code] || { label: "맑음", icon: "☀️", runningScoreMod: 5 };
 
         // 대기질 등급 계산 (한국 환경부 기준: PM10 30이하 좋음, 80이하 보통, 81이상 나쁨 / PM2.5 15이하 좋음, 35이하 보통, 36이상 나쁨)
-        const airGrade = this.evaluateAirGrade(currentAir.pm10, currentAir.pm2_5);
+        // 대기질을 못 받았을 때 "좋음"으로 단정하면 미세먼지 나쁨인 날에 밖으로 내보냅니다.
+        // 등급을 비우고 러닝 지수에서는 감점하지 않습니다(없는 정보로 벌점을 줄 수도 없음).
+        const airGrade = hasAir
+          ? this.evaluateAirGrade(currentAir.pm10, currentAir.pm2_5)
+          : { grade: "unknown", label: "확인 불가", penalty: 0, desc: "대기질 정보를 받아오지 못했습니다." };
 
         // 러닝 쾌적 지수 산출 (0 ~ 100점)
         const runningIndex = this.calculateRunningIndex({
@@ -228,6 +289,8 @@
 
         const result = {
           locationName: name,
+          isGps: Boolean(this.currentCoords.isGps),
+          isLive,
           lat,
           lon,
           temp: Math.round(current.temperature_2m * 10) / 10,
@@ -240,8 +303,8 @@
           weatherLabel: wmoInfo.label,
           weatherIcon: wmoInfo.icon,
           airQuality: {
-            pm10: Math.round(currentAir.pm10),
-            pm2_5: Math.round(currentAir.pm2_5),
+            pm10: hasAir ? Math.round(currentAir.pm10) : null,
+            pm2_5: hasAir ? Math.round(currentAir.pm2_5) : null,
             grade: airGrade.grade, // "good" | "normal" | "bad"
             label: airGrade.label, // "좋음 🟢" | "보통 🟡" | "나쁨 🔴"
             desc: airGrade.desc
@@ -403,41 +466,47 @@
       };
     }
 
+    // 네트워크가 끊겼을 때의 표시용 데이터.
+    // 예전에는 "20.5℃ 맑음 · 95점 골든 아워"를 실측처럼 보여줬습니다. 비 오는 날에도
+    // 골든 아워가 떠서 그 말을 믿고 나간 사용자를 속이는 셈이었습니다.
+    // 이제 수치를 지어내지 않고 데이터가 없다는 사실을 그대로 전합니다.
     getFallbackData() {
       return {
-        locationName: "서울 (기본)",
-        lat: 37.5665,
-        lon: 126.9780,
-        temp: 20.5,
-        apparentTemp: 20.0,
-        humidity: 52,
-        windSpeed: 3.2,
-        precipitation: 0,
-        precipProb: 10,
-        weatherCode: 0,
-        weatherLabel: "맑음",
-        weatherIcon: "☀️",
+        locationName: this.currentCoords.name || "위치 미확인",
+        isGps: Boolean(this.currentCoords.isGps),
+        isLive: false,
+        lat: this.currentCoords.lat,
+        lon: this.currentCoords.lon,
+        temp: null,
+        apparentTemp: null,
+        humidity: null,
+        windSpeed: null,
+        precipitation: null,
+        precipProb: null,
+        weatherCode: null,
+        weatherLabel: "정보 없음",
+        weatherIcon: "📡",
         airQuality: {
-          pm10: 24,
-          pm2_5: 12,
-          grade: "good",
-          label: "좋음 🟢",
-          desc: "미세먼지 청정! 심호흡하며 달리기 최고입니다."
+          pm10: null,
+          pm2_5: null,
+          grade: "unknown",
+          label: "확인 불가",
+          desc: "대기질 정보를 받아오지 못했습니다."
         },
         runningIndex: {
-          score: 95,
-          status: "👑 골든 러닝 타임 (최상)",
-          level: "golden",
-          color: "#00F0FF"
+          score: null,
+          status: "기상 정보 없음",
+          level: "unknown",
+          color: "#8A94A6"
         },
         coachingBriefing: {
           coach: "레오",
           role: "수석 러닝 코치",
-          mood: "hyped",
-          badge: "🔥 골든 러닝 지수 95 달성",
-          message: "기온 20.5℃, 미세먼지 '좋음' 청정 구역! 달리기 딱 좋은 골든 아워입니다. 지금 15분만 달려도 하루 도파민이 폭발합니다! 🔥"
+          mood: "warm",
+          badge: "📡 기상 정보 연결 실패",
+          message: "지금 기상 데이터를 받아오지 못했습니다. 네트워크를 확인하고 새로고침해 주세요. 실외 상황을 직접 확인한 뒤 출발하시는 편이 안전합니다."
         },
-        updatedAt: "방금 전"
+        updatedAt: "연결 실패"
       };
     }
 

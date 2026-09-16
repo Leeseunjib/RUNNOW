@@ -110,9 +110,13 @@ class AppController {
     this.targetMotionReps = 10;
     const savedLevel = localStorage.getItem("RUNNOW_MOTION_LEVEL");
     this.motionLevelId = DIFFICULTY_LEVELS[savedLevel] ? savedLevel : DEFAULT_DIFFICULTY;
+    // 조명·거리 자동 보정은 시스템이 켭니다. 이 화면 자체가 이미 구독자 전용이라
+    // 다시 버튼을 누르면 "켜짐"을 터치해 꺼 버리는 일이 생깁니다.
+    this.motionRelaxed = true;
     this.motionTracker = new MotionTracker({
       weightKg: this.userProfile.weightKg,
       difficulty: this.motionLevelId,
+      relaxed: true,
       onRepCount: (data) => this.handleMotionRepCount(data),
       onFeedback: (data) => this.handleMotionFeedback(data),
       onStateUpdate: (data) => this.handleMotionStateUpdate(data),
@@ -204,7 +208,7 @@ class AppController {
   }
 
   initThemeSystem() {
-    const savedTheme = localStorage.getItem("RUNNOW_THEME") || "webtoon";
+    const savedTheme = localStorage.getItem("RUNNOW_THEME") || "minimal";
     this.applyTheme(savedTheme);
 
     const themeBar = document.getElementById("app-theme-bar");
@@ -274,6 +278,7 @@ class AppController {
     this.renderShopView("all");
     this.updateHeaderStats();
     this.updateSubscriptionUi(this.subscriptionManager.isSubscribed());
+    this.warmOnDeviceCoachIfEligible();
     this.routeAppViews();
     this.exposeCareBridge();
 
@@ -566,6 +571,7 @@ class AppController {
       if (targetTabId === "tab-shop") this.renderShopView("all");
       if (targetTabId === "tab-settings") this.updateProfileFormInputs();
       if (targetTabId === "tab-careteam" && window.CareTeam) {
+        this.warmOnDeviceCoachIfEligible();
         window.CareTeam.renderAll();
       }
       if (targetTabId === "tab-diet" && window.DietManager) {
@@ -1287,6 +1293,7 @@ class AppController {
 
   applyMotionExerciseUi(exKey) {
     this.motionTracker.setExercise(exKey);
+    this.applyMotionRelaxed(true, { silent: true });
     const curEx = this.motionTracker.currentExercise;
     const title = curEx.name.replace("AI ", "");
     const setText = (id, value) => {
@@ -1295,7 +1302,9 @@ class AppController {
     };
 
     setText("motion-standby-title", `${curEx.name} 트레이닝`);
-    setText("motion-standby-desc", "카메라 앞 2m에 서면 AI가 전신을 스캔하여 자동 시작합니다.");
+    // 엎드려서 하는 종목은 "서면 시작"이 아닙니다. 종목별 촬영 안내를 씁니다.
+    setText("motion-standby-desc", curEx.setupHint
+      || "카메라 앞 2m에 서면 AI가 전신을 스캔하여 자동 시작합니다.");
     setText("motion-page-title", title);
     setText("motion-hud-icon", curEx.icon);
     setText("motion-rep-unit", curEx.shortName || title.toUpperCase());
@@ -1349,10 +1358,10 @@ class AppController {
       this.renderMotionPtCoachHud();
       const coachName = this.currentMotionCoachId === "leo" ? "코치 레오" : "코치 루나";
       const welcomeMsg = this.currentMotionCoachId === "leo"
-        ? `"대표님, 레오가 전담 마크 들어갑니다! 파이팅 넘치게 한 세트 뽑아봅시다! 🔥"`
-        : `"대표님, 루나가 섬세하게 자세 봐드릴게요! 바른 자세로 안전하게 함께해요. ✨"`;
+        ? "레오가 같이 볼게요. 시작해요."
+        : "루나가 자세를 같이 볼게요.";
       if (this.motionSound) {
-        this.motionSound.speakCoaching(this.currentMotionCoachId === "leo" ? "코치 레오로 변경되었습니다. 파이팅!" : "코치 루나로 변경되었습니다. 함께해요!");
+        this.motionSound.speakCoaching(this.currentMotionCoachId === "leo" ? "레오로 바꿨어요." : "루나로 바꿨어요.");
       }
       const bubble = document.getElementById("motion-coach-speech-text");
       if (bubble) bubble.textContent = welcomeMsg;
@@ -1374,12 +1383,12 @@ class AppController {
     const userName = (this.userProfile && this.userProfile.name) ? this.userProfile.name : "대표님";
     if (elSpeech && (!this.motionTracker || !this.motionTracker.isRunning)) {
       elSpeech.textContent = isLeo
-        ? `"${userName}, 카메라 앞 2m에 서주세요! 레오가 전담 마크 들어갑니다! 🔥"`
-        : `"${userName}, 카메라 앞 2m에서 전신을 맞춰주세요. 정밀 코칭 준비 완료! ✨"`;
+        ? `${userName}님, 카메라 앞에 서 주세요.`
+        : `${userName}님, 전신이 보이게 서 주세요.`;
     }
     if (elBadge) {
       elBadge.className = "pt-status-pill scanning";
-      elBadge.textContent = "LIVE 스캔 중";
+      elBadge.textContent = "준비 중";
     }
   }
 
@@ -1421,19 +1430,26 @@ class AppController {
   updateMotionPtCoachFeedback(feedback) {
     const elSpeech = document.getElementById("motion-coach-speech-text");
     const elBadge = document.getElementById("motion-coach-badge");
-    const isLeo = this.currentMotionCoachId === "leo";
 
     if (!elBadge || !elSpeech) return;
 
-    if (feedback.isGood) {
+    // 준비 단계의 안내까지 "PERFECT FORM"으로 바꿔 말하면, 아직 아무것도 세지 않는데
+    // 칭찬받는 화면이 됩니다. 실제로 카운트 중일 때만 칭찬합니다.
+    const isCounting = this.motionTracker.phase === "counting";
+
+    if (feedback.isGood && isCounting) {
       elBadge.className = "pt-status-pill perfect";
       elBadge.textContent = "🔥 PERFECT FORM!";
-      elSpeech.textContent = isLeo ? `"아주 좋습니다! 바로 그 가동 범위입니다!"` : `"자세가 너무 예뻐요. 그대로 유지하세요!"`;
+    } else if (feedback.isGood) {
+      elBadge.className = "pt-status-pill scanning";
+      elBadge.textContent = "👀 자세 스캔 중";
     } else {
       elBadge.className = "pt-status-pill warning";
       elBadge.textContent = "⚠️ 자세 피드백";
-      elSpeech.textContent = `"${feedback.text}"`;
     }
+
+    // 코치가 엔진과 다른 말을 하면 사용자는 무엇을 믿어야 할지 알 수 없습니다.
+    elSpeech.textContent = `"${feedback.text}"`;
   }
 
   updateMotionTargetLabels() {
@@ -1557,6 +1573,7 @@ class AppController {
 
         const exKey = card.dataset.exercise;
         this.motionTracker.setExercise(exKey);
+        this.applyMotionRelaxed(true, { silent: true });
 
         const curEx = this.motionTracker.currentExercise;
         const standbyTitle = document.getElementById("motion-standby-title");
@@ -1613,6 +1630,9 @@ class AppController {
         try {
           this.motionSound.ensureAudioUnlocked();
           this.motionTracker.setWeight(this.userProfile.weightKg);
+          // 카메라가 켜질 때마다 보정을 다시 켭니다. 지난 세션에서 꺼져 있어도
+          // 이번 운동은 버튼을 누르지 않고 바로 시작합니다.
+          this.applyMotionRelaxed(true, { silent: true });
 
           await this.motionTracker.startCamera(videoEl, canvasEl, {
             onStreamReady: () => {
@@ -1639,16 +1659,6 @@ class AppController {
           btnStartCamera.disabled = false;
           btnStartCamera.innerHTML = `<span>카메라와 랜드마크 시작</span>`;
         }
-      });
-    }
-
-    // 3-2. 인식 완화 모드 (준비 게이트를 오래 통과 못 할 때만 노출)
-    const btnRelaxTracking = document.getElementById("btn-relax-tracking");
-    if (btnRelaxTracking) {
-      btnRelaxTracking.addEventListener("click", () => {
-        this.motionTracker.startRelaxedMode();
-        btnRelaxTracking.hidden = true;
-        this.motionSound.speakCoaching("인식 완화 모드로 전환했습니다. 판정 정확도가 낮아질 수 있습니다.");
       });
     }
 
@@ -1750,15 +1760,14 @@ class AppController {
     this.tamagotchi.addXp(summary.xpGained);
     this.userProfile.coins += summary.vcGained;
 
-    // 3대 스탯 직접 누적
-    if (summary.statIncreases.might) {
-      this.tamagotchi.might = (this.tamagotchi.might || 10) + summary.statIncreases.might;
-    }
-    if (summary.statIncreases.agility) {
-      this.tamagotchi.agility = (this.tamagotchi.agility || 10) + summary.statIncreases.agility;
-    }
-    if (summary.statIncreases.spirit) {
-      this.tamagotchi.spirit = (this.tamagotchi.spirit || 10) + summary.statIncreases.spirit;
+    // 3대 스탯 누적. 직접 더하면 0~100 상한을 우회해 stat_all_100 퀘스트가
+    // 장거리 운동 한 번에 뚫리고 화면 수치도 깨집니다. 반드시 펫 쪽 함수를 씁니다.
+    // 실제로 오른 양을 로그에 되돌려 적어야 "+85"라고 기록됐는데 2만 오른
+    // 불일치가 남지 않습니다.
+    for (const key of ["might", "agility", "spirit"]) {
+      if (summary.statIncreases[key]) {
+        summary.statIncreases[key] = this.tamagotchi.applyStatGrowth(key, summary.statIncreases[key]);
+      }
     }
 
     // 3. Firebase Sandbox & Firestore에 운동 로그 저장
@@ -1869,9 +1878,9 @@ class AppController {
     const seconds = summary.durationSec % 60;
     const timeStr = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
-    if (titleEl) titleEl.textContent = `${summary.exerciseName} 완벽 완수!`;
+    if (titleEl) titleEl.textContent = `${summary.exerciseName.replace(/^AI /, "")} 끝!`;
     if (subTitleEl) {
-      subTitleEl.textContent = `${summary.difficultyName} 난이도로 관절 각도를 정밀 판정했습니다.`;
+      subTitleEl.textContent = "잘 버텼어요. 이 기록이 펫에게도 쌓입니다.";
     }
     this.renderFormReport(summary.formReport);
     if (repsEl) repsEl.textContent = `${summary.reps} REPS`;
@@ -1916,8 +1925,6 @@ class AppController {
     this.lastCoachSpeakAt = 0;
     if (angleEl) angleEl.textContent = "180°";
 
-    const relaxBtn = document.getElementById("btn-relax-tracking");
-    if (relaxBtn) relaxBtn.hidden = true;
     const engineTag = document.getElementById("motion-engine-tag");
     if (engineTag) engineTag.hidden = true;
 
@@ -2001,25 +2008,22 @@ class AppController {
     this.updateSubscriptionUi(this.subscriptionManager.isSubscribed());
   }
 
-  // 현재 구동 중인 AI 엔진 표시. 인식 문제를 신고받았을 때 원인 파악이 빨라집니다.
-  renderMotionEngineTag(data) {
+  // 엔진 이름·보정 여부는 사용자에게 보여 주지 않습니다.
+  // "Tasks Vision · 보정 중" 같은 표기는 내부 진단용이라 운동 화면을 제품이 아니라
+  // 데모처럼 보이게 합니다.
+  renderMotionEngineTag() {
     const tagEl = document.getElementById("motion-engine-tag");
-    if (!tagEl) return;
-    if (!data.engine) {
-      tagEl.hidden = true;
-      return;
-    }
+    if (tagEl) tagEl.hidden = true;
+  }
 
-    const engineName = data.engine === "tasks_vision"
-      ? "Tasks Vision · 다중 인원"
-      : "Pose Classic · 1인";
-    const parts = [engineName];
-    if (data.personCount > 1) parts.push(`${data.personCount}명 감지`);
-    if (data.relaxed) parts.push("완화");
-
-    const text = parts.join(" · ");
-    if (tagEl.textContent !== text) tagEl.textContent = text;
-    tagEl.hidden = false;
+  // 조명·거리 자동 보정 On/Off. 화면에는 버튼을 두지 않습니다.
+  // 꺼진 채로 저장되면 다음 운동에서 또 눌러야 해서, 켤 때는 저장하지 않고
+  // 끌 일 자체가 제품 경로에 없습니다.
+  applyMotionRelaxed(on, options = {}) {
+    const next = on !== false;
+    this.motionTracker.setRelaxedTracking(next, { silent: options.silent });
+    this.motionRelaxed = this.motionTracker.isRelaxed();
+    return this.motionRelaxed;
   }
 
   // 난이도 적용 + 칩 UI / 설명 문구 동기화
@@ -2044,24 +2048,17 @@ class AppController {
   // 준비 → 카운트다운 → 카운팅 페이즈 전환 콜백
   handleMotionPhaseChange(data) {
     const pill = document.getElementById("motion-coaching-pill");
-    const relaxBtn = document.getElementById("btn-relax-tracking");
-
-    // 완화 모드로 전환됐으면 제안 버튼은 역할이 끝났습니다.
-    if (data.relaxed && relaxBtn) relaxBtn.hidden = true;
 
     if (data.phase === "calibrating") {
       if (pill && data.blockedReason) {
         pill.textContent = data.blockedReason;
         pill.classList.remove("is-good");
       }
-      // 12초 넘게 준비를 통과하지 못한 경우에만 탈출구를 보여줍니다.
-      if (data.canRelax && relaxBtn && !this.motionTracker.isRelaxed()) {
-        relaxBtn.hidden = false;
-      }
+      // 예전에는 여기서 버튼을 누르라고 했습니다. 버튼을 없앴으므로
+      // 막혀 있으면 보정을 시스템이 켭니다.
+      if (data.canRelax) this.applyMotionRelaxed(true, { silent: true });
       return;
     }
-
-    if (relaxBtn) relaxBtn.hidden = true;
 
     if (data.phase === "countdown") {
       if (pill) {
@@ -2633,6 +2630,18 @@ class AppController {
       }
       if (textSub) textSub.textContent = "⚡ BASIC";
     }
+    this.warmOnDeviceCoachIfEligible();
+  }
+
+  isPaidCoachEligible() {
+    return this.subscriptionManager.isSubscribed() || this.isTesterDevice();
+  }
+
+  // 유료·테스트 권한이면 코치 엔진을 미리 받아 둡니다. 받기 버튼은 없습니다.
+  warmOnDeviceCoachIfEligible() {
+    if (!this.isPaidCoachEligible()) return;
+    const g = window.GemmaOnDevice;
+    if (g && typeof g.warmForPaidUser === "function") g.warmForPaidUser();
   }
 
   bindSubscriptionEvents() {

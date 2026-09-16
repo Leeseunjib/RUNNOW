@@ -11,7 +11,6 @@
 (function() {
   const SCHEDULE_STORAGE_KEY = "RUNNOW_USER_SCHEDULES";
   const CHAT_STORAGE_KEY_PREFIX = "RUNNOW_CHAT_";
-  const GEMINI_API_KEY_STORAGE = "RUNNOW_USER_GEMINI_KEY";
 
   // 상황별 실사 인공신경망 성우 오디오 매핑 테이블 (50+종 지원)
   const SITUATIONAL_AUDIO_MAP = [
@@ -66,7 +65,7 @@
       voiceGender: "M",
       pitch: 0.7,
       rate: 1.05,
-      systemPrompt: "너는 RunNow의 남성 전담 파워 PT 코치 '레오'다. 활력 넘치고 열정적이며 유저의 한계를 끌어올려 주는 든든한 형/오빠 같은 파이팅 톤으로 대화한다. 유저를 '대표님' 또는 '러너님'으로 부르며 운동과 러닝, 코어 강화 루틴을 적극 권장한다.",
+      systemPrompt: "너는 RunNow의 남성 전담 PT 코치 '레오'다. 헬스장에서 옆에 서서 이야기하는 형/오빠다. 기운은 있으되, 다친 사람 앞에서 파이팅을 강요하지 않는다. 유저를 '대표님' 또는 '러너님'으로 부른다.",
       intro: "대표님, 반갑습니다! 남성 전담 코치 레오입니다. 오늘 목표 칼로리 버닝과 하체 강화, 제가 확실하게 끌어드리겠습니다! 어떤 운동 플랜을 짤까요?",
       introAudio: "./assets/audio/careteam/leo_intro.mp3"
     },
@@ -80,7 +79,7 @@
       voiceGender: "F",
       pitch: 1.1,
       rate: 0.98,
-      systemPrompt: "너는 RunNow의 여성 전담 러닝 코치 '루나'다. 차분하고 섬세하며 유연성과 페이스메이커에 특화된 친절한 언니/누나 톤으로 대화한다. 유저를 '대표님' 또는 '러너님' 부르며 조급하지 않고 오래 달릴 수 있는 즐거운 루틴을 이끌어준다.",
+      systemPrompt: "너는 RunNow의 여성 전담 PT 코치 '루나'다. 차분하고 따뜻한 언니/누나다. 조급하게 루틴을 밀어붙이지 않고, 먼저 몸 상태를 듣는다. 유저를 '대표님' 또는 '러너님'으로 부른다.",
       intro: "안녕하세요 대표님! 섬세한 자세 교정과 꾸준한 루틴을 책임지는 코치 루나예요. 무리하지 않고 오래 지속할 수 있는 즐거운 러닝 플랜을 함께 세워봐요.",
       introAudio: "./assets/audio/careteam/luna_intro.mp3"
     },
@@ -187,7 +186,7 @@
       localStorage.setItem("RUNNOW_TTS_ENABLED", String(this.ttsEnabled));
       const btn = document.getElementById("btn-toggle-tts");
       if (btn) {
-        btn.textContent = this.ttsEnabled ? "🔊 음성 켜짐" : "🔇 음성 꺼짐";
+        btn.textContent = this.ttsEnabled ? "음성 켜짐" : "음성 꺼짐";
         btn.classList.toggle("active", this.ttsEnabled);
       }
     }
@@ -197,7 +196,7 @@
       if (window.RunNowBridge && window.RunNowBridge.syncAssignedCoach) {
          window.RunNowBridge.syncAssignedCoach(this.currentCoachId);
       }
-      alert(COACH_PROFILES[this.currentCoachId].name + " 코치가 1:1 전담 코치로 지정되었습니다!\\n운동 시작 시 해당 코치가 우선적으로 배정됩니다.");
+      alert(COACH_PROFILES[this.currentCoachId].name + " 코치를 전담으로 두었습니다.");
     }
 
     // 진짜 사람 같은 성우 오디오 및 고음질 자연어 음성 재생 엔진
@@ -289,60 +288,101 @@
       this.saveChats();
 
       const profile = COACH_PROFILES[this.currentCoachId];
-      const geminiKey = localStorage.getItem(GEMINI_API_KEY_STORAGE);
+      const schedules = this.parseSchedulesFromText(text);
+      let vipExhaustedMsg = "";
+      const gemma = window.GemmaOnDevice;
+      const systemPrompt = gemma && typeof gemma.buildSystemPrompt === "function"
+        ? gemma.buildSystemPrompt(profile.systemPrompt, this.buildLiveCoachContext())
+        : profile.systemPrompt;
 
-      // 2-0. VIP 구독자는 서버가 키를 대신 씁니다(설정 불필요).
-      //      구독 확인과 사용량 상한은 전부 서버가 판단하므로 여기서는 시도만 합니다.
-      //      실패하면 아래 BYOK/로컬 경로로 자연스럽게 내려갑니다.
+      if (gemma && gemma.canRun() && !gemma.isReady() && typeof gemma.warmForPaidUser === "function") {
+        gemma.warmForPaidUser();
+      }
+
+      // 1) 온디바이스 대화. 유료 이용이면 앱 시작과 함께 받아 둡니다.
+      if (gemma && gemma.isReady()) {
+        try {
+          const aiText = await gemma.reply({
+            coachId: this.currentCoachId,
+            systemPrompt,
+            chats: this.chats,
+            userText: text
+          });
+          if (aiText) {
+            this.handleCoachReply(aiText, this.inferMood(text), schedules, matchedAudioUrl, "gemma4");
+            return;
+          }
+        } catch (err) {
+          console.warn("[CareTeam] 기기 대화 실패:", err);
+        }
+      }
+
+      // 2) VIP 클라우드. 기기가 아직 준비 중일 때만 이어갑니다.
       if (window.firebaseCloud && typeof window.firebaseCloud.chatWithCoach === "function") {
         try {
-          const res = await window.firebaseCloud.chatWithCoach(profile.systemPrompt, text);
+          const res = await window.firebaseCloud.chatWithCoach(systemPrompt, text);
           if (res && res.reply) {
-            const schedules = this.parseSchedulesFromText(text);
-            this.handleCoachReply(res.reply, "cheer", schedules, matchedAudioUrl);
+            this.handleCoachReply(res.reply, "cheer", schedules, matchedAudioUrl, "gemini-vip");
             this.lastServerUsage = res.usage || null;
             return;
           }
         } catch (err) {
-          // VIP가 아니거나(permission-denied) 한도 초과(resource-exhausted)면
-          // 사용자에게 사유를 그대로 알려야 혼란이 없습니다.
           const code = err && err.code ? String(err.code) : "";
           if (code.includes("resource-exhausted")) {
-            this.handleCoachReply(err.message || "오늘의 대화 한도를 모두 사용하셨습니다.", "rest", []);
-            return;
-          }
-          if (!code.includes("permission-denied")) {
-            console.warn("[CareTeam] 서버 AI 호출 실패, BYOK/로컬로 폴백:", err);
+            vipExhaustedMsg = err.message || "오늘의 클라우드 대화 한도를 모두 사용하셨습니다.";
+          } else if (!code.includes("permission-denied")) {
+            console.warn("[CareTeam] 서버 AI 호출 실패:", err);
           }
         }
       }
 
-      // 2. BYOK Google Gemini 무료 연동 또는 룰 기반 스마트 엔진 분기
-      if (geminiKey && geminiKey.trim().length > 10) {
-        try {
-          const aiReply = await this.callGeminiApi(text, profile, geminiKey.trim());
-          if (aiReply) {
-            const schedules = this.parseSchedulesFromText(text);
-            this.handleCoachReply(aiReply.text, aiReply.mood || "cheer", schedules, matchedAudioUrl);
-            return;
-          }
-        } catch (err) {
-          console.warn("[CareTeam] BYOK Gemini 호출 실패, 로컬 스마트 템플릿으로 폴백:", err);
-        }
+      if (vipExhaustedMsg) {
+        this.handleCoachReply("오늘은 여기까지예요. 내일 이어서 이야기해요.", "rest", [], matchedAudioUrl, "limit");
+        return;
       }
 
-      // 로컬 스마트 템플릿 엔진 (비용 완전 $0원, 0.01초 응답)
       setTimeout(() => {
         const response = this.generateResponse(text);
-        this.handleCoachReply(response.reply, response.mood, response.newSchedules || response.newSchedule, matchedAudioUrl);
+        this.handleCoachReply(response.reply, response.mood, response.newSchedules || response.newSchedule, matchedAudioUrl, "template");
       }, 400);
     }
 
-    handleCoachReply(replyText, mood = "cheer", newSchedule = null, matchedAudioUrl = null) {
+    buildLiveCoachContext() {
+      const burned = window.RunNowBridge && typeof window.RunNowBridge.getTodayBurnedCalories === "function"
+        ? window.RunNowBridge.getTodayBurnedCalories()
+        : null;
+      const sched = Array.isArray(this.schedules)
+        ? this.schedules.filter((s) => !s.completed).slice(0, 4).map((s) => `${s.day} ${s.time} ${s.title}`).join(" / ")
+        : "";
+      const parts = [];
+      if (burned || burned === 0) parts.push("오늘 소모 칼로리: " + burned);
+      if (sched) parts.push("남은 일정: " + sched);
+      return parts.join(". ");
+    }
+
+    inferMood(userPrompt) {
+      if (userPrompt.includes("폭식") || userPrompt.includes("치킨") || userPrompt.includes("피자") || userPrompt.includes("죄책")) return "comfort";
+      if (userPrompt.includes("아파") || userPrompt.includes("통증") || userPrompt.includes("무릎")) return "warning";
+      if (userPrompt.includes("루틴") || userPrompt.includes("스케줄")) return "plan";
+      return "cheer";
+    }
+
+    stripCoachMarkup(text) {
+      return String(text || "")
+        .replace(/\*\*(.+?)\*\*/g, "$1")
+        .replace(/\*(.+?)\*/g, "$1")
+        .replace(/^#{1,6}\s+/gm, "")
+        .replace(/^\s*[-*]\s+/gm, "")
+        .replace(/`+/g, "")
+        .trim();
+    }
+
+    handleCoachReply(replyText, mood = "cheer", newSchedule = null, matchedAudioUrl = null, engine = "") {
       this.chats.push({ 
         sender: "coach", 
-        text: replyText, 
+        text: this.stripCoachMarkup(replyText), 
         mood: mood,
+        engine: engine,
         coachId: this.currentCoachId,
         time: new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) 
       });
@@ -412,44 +452,6 @@
         completed: false,
         coach: this.currentCoachId
       }));
-    }
-
-    /**
-     * [소비자 심리학 & 비용 $0원 방패] 소비자 본인의 구글 무료 API Key 직접 호출
-     */
-    async callGeminiApi(userPrompt, profile, apiKey) {
-      const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
-      const payload = {
-        contents: [{
-          role: "user",
-          parts: [{ text: `${profile.systemPrompt}\n\n[유저 질문/고백]: ${userPrompt}\n\n답변은 친절하고 전문적이며 2~3문장으로 간결하게, 유저의 마음을 편안하게 해주는 심리적 안도감과 실행 가능한 운동/식단 조언을 담아줘.` }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 250
-        }
-      };
-
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) throw new Error("Gemini API Error: " + res.status);
-      const data = await res.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) throw new Error("Empty Gemini response");
-
-      let mood = "cheer";
-      if (userPrompt.includes("폭식") || userPrompt.includes("치킨") || userPrompt.includes("피자") || userPrompt.includes("죄책")) mood = "comfort";
-      if (userPrompt.includes("아파") || userPrompt.includes("통증") || userPrompt.includes("무릎")) mood = "warning";
-      if (userPrompt.includes("루틴") || userPrompt.includes("스케줄")) mood = "plan";
-
-      return { text, mood };
     }
 
     /**
@@ -647,6 +649,9 @@
       document.querySelectorAll(".coach-chip").forEach(chip => {
         chip.classList.toggle("active", chip.getAttribute("data-coach") === this.currentCoachId);
       });
+      if (window.GemmaOnDevice && typeof window.GemmaOnDevice.refreshUi === "function") {
+        window.GemmaOnDevice.refreshUi();
+      }
     }
 
     renderChats() {
@@ -657,7 +662,9 @@
       let html = "";
       this.chats.forEach(c => {
         const isUser = c.sender === "user";
-        const moodBadge = c.mood ? this.getMoodBadge(c.mood) : "";
+        const engineBadge = !isUser ? this.getEngineBadge(c.engine) : "";
+        const moodBadge = !isUser && !engineBadge && c.mood ? this.getMoodBadge(c.mood) : "";
+        const topBadge = engineBadge || moodBadge;
         html += `
           <div class="chat-msg-row ${isUser ? 'user-row' : 'coach-row'}">
             ${!isUser ? `
@@ -666,7 +673,7 @@
               </div>
             ` : ''}
             <div class="chat-bubble ${isUser ? 'user' : 'coach'}">
-              ${!isUser && moodBadge ? `<div class="chat-mood-badge">${moodBadge}</div>` : ''}
+              ${topBadge ? `<div class="chat-mood-badge">${topBadge}</div>` : ''}
               <div class="chat-text">${this.escapeHtml(c.text)}</div>
               <div class="chat-time">${c.time}</div>
             </div>
@@ -677,14 +684,14 @@
       container.scrollTop = container.scrollHeight;
     }
 
+    getEngineBadge(engine) {
+      // 모델·경로 이름은 채팅에 올리지 않습니다. 사용자는 코치와 이야기하는 중입니다.
+      if (engine === "template") return "코치";
+      return "";
+    }
+
     getMoodBadge(mood) {
-      switch(mood) {
-        case "cheer": return "🔥 파이팅 모드";
-        case "comfort": return "💖 No-Guilt 안심 케어";
-        case "warning": return "🩺 안전 & 부상 방지";
-        case "plan": return "📅 스마트 일정 플래닝";
-        default: return "";
-      }
+      return "";
     }
 
     /**
@@ -697,23 +704,6 @@
         this.sendMessage(text);
         input.value = "";
       }
-    }
-
-    /**
-     * [비용 $0원 방패] 소비자 본인의 구글 Gemini 무료 API Key 저장/조회
-     */
-    setGeminiApiKey(key) {
-      if (!key) {
-        localStorage.removeItem(GEMINI_API_KEY_STORAGE);
-        alert("🔒 Google AI 연동이 해제되었습니다. 로컬 스마트 엔진으로 동작합니다 ($0원).");
-      } else {
-        localStorage.setItem(GEMINI_API_KEY_STORAGE, key.trim());
-        alert("✨ Google Gemini AI 무료 연동이 완료되었습니다! 이제 코치와 100% 실시간 자유 대화를 나눕니다. (대표님 비용 $0원)");
-      }
-    }
-
-    getGeminiApiKey() {
-      return localStorage.getItem(GEMINI_API_KEY_STORAGE) || "";
     }
 
     renderSchedules() {

@@ -54,12 +54,12 @@ const aiCoachSrc = readFileSync(new URL("../functions/aiCoach.js", import.meta.u
   check("서버 기본값이 aiCoach와 연결됨", fnIndexSrc.includes("default: aiCoach.DEFAULT_MODEL"), true);
 }
 
-// --- 3. 클라이언트(BYOK)와 서버(VIP)가 같은 모델을 쓴다 --------------------
-// 다르면 같은 코치가 요금제에 따라 다른 품질로 답합니다.
+// --- 3. 클라이언트는 구글 키를 직접 치지 않는다 ---------------------------
+// 대화 기준은 온디바이스 엔진입니다. VIP 클라우드만 서버 모델을 씁니다.
 {
-  const m = careSrc.match(/const GEMINI_MODEL = "([^"]+)"/);
-  check("클라이언트 모델 상수 존재", Boolean(m), true);
-  check("클라이언트·서버 모델 일치", m && m[1], ai.DEFAULT_MODEL);
+  check("클라이언트 generateContent 없음", careSrc.includes("generativelanguage.googleapis.com"), false);
+  check("클라이언트 구글 키 저장소 없음", careSrc.includes("RUNNOW_USER_GEMINI_KEY"), false);
+  check("VIP는 서버 기본 모델을 씀", fnIndexSrc.includes("model: aiCoach.DEFAULT_MODEL") || fnIndexSrc.includes("default: aiCoach.DEFAULT_MODEL"), true);
 }
 
 // --- 4. 공시 단가로 다시 계산해도 VIP가 흑자다 -----------------------------
@@ -80,15 +80,11 @@ const aiCoachSrc = readFileSync(new URL("../functions/aiCoach.js", import.meta.u
   console.log(`  (참고) 1회 $${perCall.toFixed(5)} · 월 최대 $${monthlyCost.toFixed(2)} · 마진 ${(((revenue - monthlyCost) / revenue) * 100).toFixed(0)}%`);
 }
 
-// --- 5. BYOK 실패를 사용자에게 알린다 --------------------------------------
-// 조용히 로컬 템플릿으로 내려가면 사용자는 AI가 답한 줄 알고 품질을 오해합니다.
+// --- 5. 구글 키 연동 경로가 남아 있지 않다 --------------------------------
 {
-  check("실패 안내 함수 존재", careSrc.includes("function byokFailureNotice"), true);
-  check("폴백 경로에서 안내를 사용", careSrc.includes("byokNotice = byokFailureNotice(err)"), true);
-  check("템플릿 답변 앞에 안내를 붙임", careSrc.includes("byokNotice ? `${byokNotice}"), true);
-
-  // 원인별로 조치가 다르므로 상태 코드를 버리지 않아야 합니다.
-  check("호출부가 상태 코드를 보존", careSrc.includes("err.status = res.status"), true);
+  check("BYOK 실패 안내 없음", careSrc.includes("function byokFailureNotice"), false);
+  check("callGeminiApi 없음", careSrc.includes("callGeminiApi"), false);
+  check("온디바이스가 대사집보다 앞", careSrc.indexOf("GemmaOnDevice") < careSrc.indexOf("generateResponse(text)"), true);
 }
 
 console.log(failed === 0 ? "\n✅ ALL PASS" : `\n❌ ${failed} FAILED`);
