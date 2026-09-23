@@ -211,25 +211,59 @@
         }
       }
 
-      // 2. BYOK Google Gemini 무료 연동 또는 룰 기반 스마트 엔진 분기
-      if (geminiKey && geminiKey.trim().length > 10) {
-        try {
-          const aiReply = await this.callGeminiApi(text, profile, geminiKey.trim());
-          if (aiReply) {
-            const schedules = this.parseSchedulesFromText(text);
-            this.handleCoachReply(aiReply.text, aiReply.mood || "cheer", schedules);
-            return;
-          }
-        } catch (err) {
-          console.warn("[CareTeam] BYOK Gemini 호출 실패, 로컬 스마트 템플릿으로 폴백:", err);
-        }
-      }
+      // 2. On-Device AI 엔진 브릿지 호출 (WebGPU / MediaPipe)
+      // 서버 비용 0원, 프라이버시 100% 보장되는 로컬 AI 코칭으로 라우팅합니다.
+      try {
+        if (window.ReactNativeWebView) {
+          console.log("[CareTeam] React Native 브릿지로 On-Device AI 추론 요청");
+          // 실제로는 비동기 브릿지 통신(Message Event)으로 응답을 받아야 합니다.
+          // window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ai-chat', text }));
+          
+          // 임시 모의 응답 (PH-LLM 시계열 다차원 컨텍스트 반영 모의)
+          setTimeout(async () => {
+            // 실제 구현에서는 bridge를 통해 네이티브의 onDeviceAI.js가 Health Connect 데이터(HRV, HR, Sleep)를 읽어서 반환
+            const isTired = Math.random() > 0.8; // 임의로 스트레스/피로 상태 모의
+            let aiReply = "";
+            let mood = "";
+            
+            // RL 엔진 추천 행동 획득 (가장 높은 Q값을 가진 액션)
+            let rlActionStr = "";
+            if (window.habitRL) {
+              const rlResult = await window.habitRL.suggestAction();
+              rlActionStr = rlResult.action;
+            }
 
-      // 로컬 스마트 템플릿 엔진 (비용 완전 $0원, 0.01초 응답)
-      setTimeout(() => {
-        const response = this.generateResponse(text);
-        this.handleCoachReply(response.reply, response.mood, response.newSchedules || response.newSchedule);
-      }, 400);
+            if (isTired) {
+              aiReply = `${profile.name}: 어제 수면이 부족하고 심박변이도(HRV)가 낮으시네요. 무리한 운동보다는 가벼운 20분 회복 걷기(Zone 1)를 추천드립니다!`;
+              mood = "warning";
+            } else {
+              if (rlActionStr === 'low_intensity') {
+                aiReply = `${profile.name}: 대표님은 보통 이 시간대에는 가벼운 운동을 선호하셨죠! 오늘 저녁은 가벼운 조깅이나 플랭크로 몸을 풀어볼까요?`;
+                mood = "comfort";
+              } else if (rlActionStr === 'high_intensity') {
+                aiReply = `${profile.name}: 수면 퀄리티도 좋고 심박(HR)도 안정적이네요! 유저님 패턴을 보니 지금 딱 뛸 타이밍입니다. 30분 인터벌 러닝에 도전해 볼까요?`;
+                mood = "cheer";
+              } else {
+                aiReply = `${profile.name}: 와, 수면 퀄리티도 좋고 에너지가 넘치네요! 오늘 하루도 기분 좋게 땀을 내봅시다!`;
+                mood = "cheer";
+              }
+            }
+            
+            const schedules = this.parseSchedulesFromText(text);
+            this.handleCoachReply(aiReply, mood, schedules);
+          }, 800);
+          return;
+        } else {
+          // 브릿지가 없으면 로컬 스마트 템플릿(Fallback) 엔진 사용
+          setTimeout(() => {
+            const response = this.generateResponse(text);
+            this.handleCoachReply(response.reply, response.mood, response.newSchedules || response.newSchedule);
+          }, 400);
+          return;
+        }
+      } catch (err) {
+        console.warn("[CareTeam] On-Device AI 호출 실패:", err);
+      }
     }
 
     handleCoachReply(replyText, mood = "cheer", newSchedule = null) {
@@ -435,12 +469,16 @@
       this.saveSchedules();
       if (item.completed) {
         alert(`🎉 [운동 완료!] '${item.title}' 일정을 완료하셨습니다. 목표 칼로리 달성!`);
+        if (window.habitRL) window.habitRL.updateQTable(10); // 강화학습 보상 부여 (+10)
+      } else {
+        if (window.habitRL) window.habitRL.updateQTable(-2); // 강화학습 페널티 부여 (-2)
       }
     }
 
     deleteSchedule(id) {
       this.schedules = this.schedules.filter(s => s.id !== id);
       this.saveSchedules();
+      if (window.habitRL) window.habitRL.updateQTable(-5); // 강화학습 강력 페널티 (-5)
     }
 
     initEvents() {

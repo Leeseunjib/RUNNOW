@@ -89,3 +89,54 @@ export function caloriesForMet(met, weightKg, seconds) {
 export function metForExercise(exerciseId) {
   return EXERCISE_MET[exerciseId] ?? 4.0;
 }
+
+// ==========================================
+// Health Connect 연동 패시브 성장 (Passive Growth) 로직
+// ==========================================
+
+/**
+ * 일일 걷기(걸음수) 패시브 칼로리 소모 계산
+ * 보폭 약 0.7m, 시속 4~5km 수준의 일상 걷기로 간주 (약 3.0 MET 적용)
+ */
+export function caloriesForPassiveSteps(steps, weightKg) {
+  const w = Number(weightKg) || 70;
+  const s = Number(steps) || 0;
+  if (s <= 0) return 0;
+  
+  // 1보 = 0.7m 가정 -> 전체 이동 거리(m)
+  const distanceM = s * 0.7;
+  // 시속 4.5km(초속 1.25m)로 걸었다고 가정 -> 소요 시간(초)
+  const seconds = distanceM / 1.25;
+  
+  // MET 3.0(일상적인 걷기)을 적용
+  return caloriesForMet(3.0, w, seconds);
+}
+
+/**
+ * 수면 시간에 따른 멘탈(Spirit) 회복 보너스 산출
+ * 7시간(420분) 기준선으로 초과 시 보너스 비율 제공
+ */
+export function mentalRecoveryFromSleep(sleepMinutes) {
+  const min = Number(sleepMinutes) || 0;
+  if (min < 300) return 0.5; // 5시간 미만: 페널티(절반 회복)
+  if (min >= 420) return 1.2; // 7시간 이상: 보너스(120% 회복)
+  return 1.0; // 기본 회복
+}
+
+/**
+ * 다차원 생체 데이터(HRV, HR, 수면)를 종합하여 다마고치의 컨디션(상태 이상) 결정
+ * - HRV가 낮거나 수면이 부족하면 Sick(질병) 또는 Tired(피로) 상태가 됨
+ */
+export function calculateTamagotchiStatus(sleepMinutes, avgHrv, avgHr) {
+  const sleep = Number(sleepMinutes) || 420;
+  const hrv = Number(avgHrv) || 45;
+  const hr = Number(avgHr) || 72;
+
+  // 스트레스(낮은 HRV + 높은 안정시 심박수) 또는 극단적 수면 부족
+  if (hrv < 25 && hr > 85) return 'sick'; 
+  if (sleep < 240) return 'sick';
+  
+  if (hrv < 35 || sleep < 300) return 'tired';
+
+  return 'normal';
+}
