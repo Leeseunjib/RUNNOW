@@ -216,8 +216,32 @@ exports.paypalWebhook = onRequest(
         return;
       }
 
+      const eventId = String(
+        (req.body && req.body.id) || req.headers["paypal-transmission-id"] || ""
+      ).trim();
       const eventType = req.body && req.body.event_type;
       const resource = (req.body && req.body.resource) || {};
+
+      // [SEC-06] 웹훅 재전송(Replay/중복 수신) 멱등성 잠금
+      if (eventId) {
+        const webhookRef = db.collection("processed_webhooks").doc(eventId);
+        const alreadyProcessed = await db.runTransaction(async (tx) => {
+          const snap = await tx.get(webhookRef);
+          if (snap.exists) return true;
+          tx.set(webhookRef, {
+            eventId,
+            eventType: String(eventType || ""),
+            resourceId: String(resource.id || ""),
+            processedAt: FieldValue.serverTimestamp()
+          });
+          return false;
+        });
+        if (alreadyProcessed) {
+          console.info(`[paypalWebhook] 이미 처리된 이벤트 무시 (${eventId})`);
+          res.status(200).send("already_processed");
+          return;
+        }
+      }
 
       // 환불·취소 계열 이벤트는 구독을 즉시 해지합니다.
       const revokeEvents = [
